@@ -20,6 +20,14 @@ import java.util.LinkedList;
 import java.util.logging.Logger;
 
 public class VelocityPlugin implements CommonPlugin {
+    /**
+     * Identifiant du plugin. Doit rester identique au champ {@code id} de
+     * {@code velocity-plugin.json} : Velocity impose le motif
+     * {@code [a-z][a-z0-9-_]{0,63}}, d'ou l'absence de majuscules, et cet
+     * identifiant determine aussi le nom du dossier de donnees.
+     */
+    public static final String PLUGIN_ID = "panelautostarter";
+
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
@@ -33,9 +41,13 @@ public class VelocityPlugin implements CommonPlugin {
         // binding pour java.util.logging.Logger : l'injection retombait sur celui
         // integre a Guice, qui nomme le logger d'apres la classe cible, d'ou le
         // "fr.farmvivi.panelautostarter.velocity.VelocityPlugin" a rallonge en
-        // console. On le nomme donc explicitement, ce qui aligne aussi les logs
-        // sur ceux du module BungeeCord, deja nommes d'apres le plugin.
-        this.logger = Logger.getLogger(PanelAutoStarter.NAME);
+        // console.
+        //
+        // On le nomme donc d'apres l'identifiant du plugin, comme le fait Velocity
+        // pour le logger SLF4J qu'il fournit : c'est ce qui donne [luckperms] ou
+        // [viaversion] en console. Le module BungeeCord garde de son cote un nom
+        // en CamelCase, conforme a l'usage de cette plateforme.
+        this.logger = Logger.getLogger(PLUGIN_ID);
         this.dataDirectory = dataDirectory;
     }
 

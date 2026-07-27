@@ -1,5 +1,5 @@
 {
-  "id": "panel_auto_starter",
+  "id": "panelautostarter",
   "name": "PanelAutoStarter",
   "version": "${project.version}",
   "main": "fr.farmvivi.panelautostarter.velocity.VelocityPlugin",
