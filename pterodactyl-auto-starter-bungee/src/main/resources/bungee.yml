@@ -1,5 +1,0 @@
-name: PterodactylAutoStarter
-author: FarmVivi
-version: ${project.version}
-main: fr.farmvivi.pterodactylautostarter.bungee.BungeePlugin
-description: Auto start and shutdown your pterodactyl servers depending on the number of players.

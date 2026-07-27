@@ -1,4 +1,4 @@
-# PterodactylAutoStarter
+# PanelAutoStarter
 
 Plugin pour BungeeCord et Velocity permettant de démarrer et arrêter automatiquement vos serveurs Pterodactyl en fonction du nombre de joueurs.
 

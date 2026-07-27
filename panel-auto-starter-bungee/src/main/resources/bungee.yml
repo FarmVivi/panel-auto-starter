@@ -1,0 +1,5 @@
+name: PanelAutoStarter
+author: FarmVivi
+version: ${project.version}
+main: fr.farmvivi.panelautostarter.bungee.BungeePlugin
+description: Auto start and shutdown your Pterodactyl & Pelican servers depending on the number of players.

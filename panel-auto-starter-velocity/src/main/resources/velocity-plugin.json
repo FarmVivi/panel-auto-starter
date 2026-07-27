@@ -1,0 +1,10 @@
+{
+  "id": "panel_auto_starter",
+  "name": "PanelAutoStarter",
+  "version": "${project.version}",
+  "main": "fr.farmvivi.panelautostarter.velocity.VelocityPlugin",
+  "authors": [
+    "FarmVivi"
+  ],
+  "dependencies": []
+}
