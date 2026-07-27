@@ -1,5 +1,6 @@
 package fr.farmvivi.panelautostarter;
 
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.Callback;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
@@ -71,7 +72,7 @@ public class MinecraftServerPingCacheTest {
         when(mockConfiguration.getLong(eq("server-start.idle-threshold"), anyLong())).thenReturn(300L);
 
         testServer = new MockCommonServer("test-server", "Test Server");
-        minecraftServer = new MinecraftServer(mockPlugin, testServer, mockPanelServer);
+        minecraftServer = new MinecraftServer(mockPlugin, testServer, mockPanelServer, mock(ServerMotd.class));
 
         // Le constructeur lance immediatement une premiere verification.
         schedulerCallback = testServer.getLastPingCallback();
@@ -173,7 +174,7 @@ public class MinecraftServerPingCacheTest {
         schedulerCallback.done(new MockCommonServerPing());
 
         MockCommonServer failing = new FailingOnceServer("test-server");
-        MinecraftServer server = new MinecraftServer(mockPlugin, failing, mockPanelServer);
+        MinecraftServer server = new MinecraftServer(mockPlugin, failing, mockPanelServer, mock(ServerMotd.class));
         ((FailingOnceServer) failing).armFailure();
 
         assertThrows(IllegalStateException.class, server::peekServerPing);

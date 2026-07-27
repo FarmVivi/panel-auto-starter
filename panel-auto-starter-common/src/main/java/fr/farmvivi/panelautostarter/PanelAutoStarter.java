@@ -7,6 +7,8 @@ import fr.farmvivi.panelautostarter.panel.PanelClient;
 import fr.farmvivi.panelautostarter.panel.PanelClientFactory;
 import fr.farmvivi.panelautostarter.panel.PanelConfig;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.motd.MotdStore;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
@@ -53,6 +55,7 @@ public final class PanelAutoStarter {
     private CommonProxy proxy;
     private Configuration config;
     private PanelClient panel;
+    private MotdStore motdStore;
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -81,6 +84,9 @@ public final class PanelAutoStarter {
 
             // Load config
             this.loadConfig();
+
+            // MOTD cache, kept on disk so it survives a proxy restart
+            this.motdStore = new MotdStore(this.plugin.getDataFolder());
 
             // Connect to the panel
             PanelConfig panelConfig = PanelConfig.from(config);
@@ -164,7 +170,9 @@ public final class PanelAutoStarter {
                 PanelServer panelServer = this.panel.retrieveServer(panelServerId);
 
                 // Add server to the servers list
-                servers.put(server, new MinecraftServer(this, server, panelServer));
+                ServerMotd motd = new ServerMotd(motdStore, server.getName(), proxy,
+                        message -> this.getLogger().warning(message));
+                servers.put(server, new MinecraftServer(this, server, panelServer, motd));
 
                 // Server registered
                 this.getLogger().info("Registered " + server.getName() + " server with panel identifier " + panelServerId);

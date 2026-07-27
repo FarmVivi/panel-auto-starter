@@ -15,6 +15,11 @@ public class BungeeFavicon implements CommonFavicon {
     }
 
     @Override
+    public String getEncoded() {
+        return favicon.getEncoded();
+    }
+
+    @Override
     public boolean equals(Object o) {
         return favicon.equals(o);
     }

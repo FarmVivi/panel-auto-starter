@@ -1,6 +1,7 @@
 package fr.farmvivi.panelautostarter;
 
 import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
@@ -45,7 +46,7 @@ public class MinecraftServerStartStopTest {
 
         minecraftServer = new MinecraftServer(mockPanelAutoStarter, 
             new MockCommonServer("test-server", "Test Server"), 
-            mockPanelServer);
+            mockPanelServer, mock(ServerMotd.class));
     }
 
     /**

@@ -4,6 +4,7 @@ import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -118,7 +119,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testPlayerAddedToQueueOfflineServer() {
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
         serversMap.put(targetServer, minecraftServer);
 
         CommonPlayer player = new MockCommonPlayer("QueuedPlayer");
@@ -162,7 +163,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testPlayerReceivesMessage() {
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
         serversMap.put(targetServer, minecraftServer);
 
         CommonPlayer player = new MockCommonPlayer("MessagePlayer");
@@ -181,7 +182,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testMultiplePlayersInQueue() {
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
         serversMap.put(targetServer, minecraftServer);
 
         CommonPlayer player1 = new MockCommonPlayer("Player1");

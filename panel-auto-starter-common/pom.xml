@@ -21,6 +21,20 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Adventure Text Serializer Gson -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-gson</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Gson : fourni par le proxy a l'execution -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Adventure Text Serializer ANSI -->
         <dependency>
             <groupId>net.kyori</groupId>

@@ -15,6 +15,11 @@ public class VelocityFavicon implements CommonFavicon {
     }
 
     @Override
+    public String getEncoded() {
+        return favicon.getBase64Url();
+    }
+
+    @Override
     public boolean equals(Object o) {
         return favicon.equals(o);
     }

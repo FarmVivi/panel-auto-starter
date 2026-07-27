@@ -34,6 +34,7 @@
 
         <!-- Dependency versions -->
         <adventure.version>5.2.0</adventure.version>
+        <gson.version>2.13.2</gson.version>
         <!-- bungeecord-api et bungeecord-config partagent la meme ligne de version -->
         <bungeecord.version>1.21-R0.4</bungeecord.version>
         <pterodactyl4j.version>2.BETA_142</pterodactyl4j.version>
@@ -86,6 +87,26 @@
                 <artifactId>adventure-text-serializer-ansi</artifactId>
                 <version>${adventure.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <!-- Adventure Text Serializer Gson : sert a persister le MOTD des
+                 serveurs sans perte. Le format legacy perdrait les degrades et
+                 les couleurs hexadecimales, courants dans les MOTD. -->
+            <dependency>
+                <groupId>net.kyori</groupId>
+                <artifactId>adventure-text-serializer-gson</artifactId>
+                <version>${adventure.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <!-- Gson est fourni par BungeeCord comme par Velocity : on le declare
+                 en provided pour ne pas en embarquer une seconde copie dans le
+                 jar shade. -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <!-- Adventure Text Serializer Legacy -->

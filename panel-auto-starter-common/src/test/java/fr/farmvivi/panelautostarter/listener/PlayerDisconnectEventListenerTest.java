@@ -3,6 +3,7 @@ package fr.farmvivi.panelautostarter.listener;
 import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
@@ -117,8 +118,8 @@ public class PlayerDisconnectEventListenerTest {
         CommonServer server1 = new MockCommonServer("server1");
         CommonServer server2 = new MockCommonServer("server2");
 
-        MinecraftServer minecraftServer1 = new MinecraftServer(mockPlugin, server1, null);
-        MinecraftServer minecraftServer2 = new MinecraftServer(mockPlugin, server2, null);
+        MinecraftServer minecraftServer1 = new MinecraftServer(mockPlugin, server1, null, mock(ServerMotd.class));
+        MinecraftServer minecraftServer2 = new MinecraftServer(mockPlugin, server2, null, mock(ServerMotd.class));
 
         when(mockEvent.getPlayer()).thenReturn(testPlayer);
 
@@ -143,7 +144,7 @@ public class PlayerDisconnectEventListenerTest {
         CommonPlayer player1 = new MockCommonPlayer("Player1");
         CommonPlayer player2 = new MockCommonPlayer("Player2");
 
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, server, null);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, server, null, mock(ServerMotd.class));
 
         when(mockEvent.getPlayer()).thenReturn(player1);
 
@@ -172,7 +173,7 @@ public class PlayerDisconnectEventListenerTest {
     @Test
     public void testSinglePlayerInQueue() {
         CommonServer server = new MockCommonServer("test-server");
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, server, null);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, server, null, mock(ServerMotd.class));
 
         when(mockEvent.getPlayer()).thenReturn(testPlayer);
         serversMap.put(server, minecraftServer);

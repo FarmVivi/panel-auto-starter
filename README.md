@@ -11,7 +11,7 @@ Works with both **Pterodactyl** and **Pelican**.
 - Automatically starts a server when a player tries to join it
 - Automatically stops idle servers
 - Queue system that holds players while the server boots
-- Custom server list ping (MOTD and favicon) reflecting the server state: offline, starting
+- Server list ping that reuses each server's own MOTD and favicon, decorated with a status badge when it is offline or starting
 - Works on BungeeCord and Velocity
 
 ## Compatibility
@@ -89,6 +89,24 @@ The plugin takes care of forwarding each backend's MOTD on a per-host basis. Vel
 With `disabled`, everyone gets their own MOTD back: the proxy on its address, each backend on its forced host, and the plugin's "offline" / "starting" screens when the server is unavailable.
 
 Side benefit: Velocity no longer contacts a backend on every client ping, since the plugin serves from its cache.
+
+### Offline and starting MOTD
+
+The plugin ships no images of its own. Whenever a server is seen online, its MOTD and favicon are cached on disk under `cache/` in the plugin folder — one `<server>.json` and one `<server>.png` per server. When the server goes offline or is booting, that MOTD is replayed so the entry keeps its identity in the server list instead of turning into a generic placeholder.
+
+The favicon is decorated to signal the state:
+
+| State | Favicon | Player count | Hover |
+|---|---|---|---|
+| Online | the server's own | real values | the server's own |
+| Starting | own, plus an amber badge | `0` | queued players |
+| Offline | desaturated, plus a red stop badge | `0` | how to start it |
+
+The description is stored in Adventure's JSON format, so gradients and hex colours survive the round trip. Deleting a pair of cache files forces the plugin to relearn that server's MOTD; the cache is written only when the MOTD actually changes.
+
+A server that has never been seen online has nothing cached, so the plugin leaves the proxy's own response untouched.
+
+Because the cache lives on disk rather than in memory, MOTDs are correct immediately after a proxy restart, even with every backend still down.
 
 ### Startup tuning
 

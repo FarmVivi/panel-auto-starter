@@ -3,6 +3,7 @@ package fr.farmvivi.panelautostarter;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import fr.farmvivi.panelautostarter.panel.PanelServerState;
 import net.kyori.adventure.text.Component;
@@ -19,6 +20,7 @@ public class MinecraftServer {
 
     private final CommonServer server;
     private final PanelServer panelServer;
+    private final ServerMotd motd;
     private final List<CommonPlayer> queue = new LinkedList<>();
     private MinecraftServerStatus status = MinecraftServerStatus.OFFLINE;
 
@@ -54,12 +56,23 @@ public class MinecraftServer {
     private long serverStartedTime = 0;
     private long lastTeleportTime = 0;
 
-    public MinecraftServer(PanelAutoStarter plugin, CommonServer server, PanelServer panelServer) {
+    public MinecraftServer(PanelAutoStarter plugin, CommonServer server, PanelServer panelServer, ServerMotd motd) {
         this.plugin = plugin;
         this.server = server;
         this.panelServer = panelServer;
+        this.motd = motd;
 
         scheduleServerStatusCheck();
+    }
+
+    /**
+     * Retourne le MOTD conservé pour ce serveur, réutilisé quand il n'est plus
+     * en ligne.
+     *
+     * @return le MOTD du serveur
+     */
+    public ServerMotd getMotd() {
+        return motd;
     }
 
     /**
@@ -75,6 +88,14 @@ public class MinecraftServer {
             long curMillis = System.currentTimeMillis();
             storePing(result, curMillis);
             updateServerStatus(result, curMillis);
+
+            // Le MOTD n'est conserve que depuis la surveillance, jamais depuis un
+            // rafraichissement declenche par un client : un seul ecrivain, et
+            // aucune ecriture disque sur le chemin d'un ping.
+            if (status.equals(MinecraftServerStatus.ONLINE)) {
+                motd.observeOnline(result);
+            }
+
             handleQueueAndShutdown(result, curMillis);
 
             // Re-scheduler : l'intervalle est calcule apres la mise a jour du

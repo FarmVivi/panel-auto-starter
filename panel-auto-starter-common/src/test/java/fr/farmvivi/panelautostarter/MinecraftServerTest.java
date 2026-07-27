@@ -1,6 +1,7 @@
 package fr.farmvivi.panelautostarter;
 
 import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
@@ -53,7 +54,7 @@ public class MinecraftServerTest {
         testServer = new MockCommonServer("test-server", "Test Server");
 
         // Initialiser MinecraftServer
-        minecraftServer = new MinecraftServer(mockPanelAutoStarter, testServer, mockPanelServer);
+        minecraftServer = new MinecraftServer(mockPanelAutoStarter, testServer, mockPanelServer, mock(ServerMotd.class));
     }
 
     // ========================= Tests de Queue =========================
