@@ -4,12 +4,12 @@ import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServerPing;
 import net.kyori.adventure.text.Component;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests d'intégration pour les interfaces communes.
@@ -19,7 +19,7 @@ public class CommonInterfacesTest {
     private CommonPlayer player;
     private CommonServer server;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         player = new MockCommonPlayer("TestPlayer");
         server = new MockCommonServer("test-server");
@@ -30,10 +30,10 @@ public class CommonInterfacesTest {
      */
     @Test
     public void testCommonPlayerContract() {
-        assertNotNull("Le UUID ne doit pas être null", player.getUniqueId());
-        assertTrue("Le joueur doit être online", player.isOnline());
-        assertEquals("Le username doit être correct", "TestPlayer", player.getUsername());
-        assertNotNull("Le display name ne doit pas être null", player.getDisplayName());
+        assertNotNull(player.getUniqueId(), "Le UUID ne doit pas être null");
+        assertTrue(player.isOnline(), "Le joueur doit être online");
+        assertEquals("TestPlayer", player.getUsername(), "Le username doit être correct");
+        assertNotNull(player.getDisplayName(), "Le display name ne doit pas être null");
     }
 
     /**
@@ -41,9 +41,9 @@ public class CommonInterfacesTest {
      */
     @Test
     public void testCommonServerContract() {
-        assertEquals("Le nom du serveur doit être correct", "test-server", server.getName());
-        assertNotNull("Le display name ne doit pas être null", server.getDisplayName());
-        assertEquals("Le nombre de joueurs doit être 0", 0, server.getPlayerCount());
+        assertEquals("test-server", server.getName(), "Le nom du serveur doit être correct");
+        assertNotNull(server.getDisplayName(), "Le display name ne doit pas être null");
+        assertEquals(0, server.getPlayerCount(), "Le nombre de joueurs doit être 0");
     }
 
     /**
@@ -55,7 +55,7 @@ public class CommonInterfacesTest {
         player.sendMessage(message);
 
         MockCommonPlayer mockPlayer = (MockCommonPlayer) player;
-        assertEquals("Le message string doit être enregistré", message, mockPlayer.getLastStringMessage());
+        assertEquals(message, mockPlayer.getLastStringMessage(), "Le message string doit être enregistré");
     }
 
     /**
@@ -67,7 +67,7 @@ public class CommonInterfacesTest {
         player.sendMessage(component);
 
         MockCommonPlayer mockPlayer = (MockCommonPlayer) player;
-        assertEquals("Le component doit être enregistré", component, mockPlayer.getLastMessage());
+        assertEquals(component, mockPlayer.getLastMessage(), "Le component doit être enregistré");
     }
 
     /**
@@ -75,11 +75,11 @@ public class CommonInterfacesTest {
      */
     @Test
     public void testPlayerServerConnection() {
-        assertNull("Le joueur ne doit pas avoir de serveur initialement", player.getServer());
+        assertNull(player.getServer(), "Le joueur ne doit pas avoir de serveur initialement");
 
         player.connectToServer(server);
 
-        assertEquals("Le joueur doit être connecté au serveur", server, player.getServer());
+        assertEquals(server, player.getServer(), "Le joueur doit être connecté au serveur");
     }
 
     /**
@@ -90,10 +90,10 @@ public class CommonInterfacesTest {
         CommonServer server2 = new MockCommonServer("server2");
 
         player.connectToServer(server);
-        assertEquals("Le joueur doit être sur server", server, player.getServer());
+        assertEquals(server, player.getServer(), "Le joueur doit être sur server");
 
         player.connectToServer(server2);
-        assertEquals("Le joueur doit être sur server2", server2, player.getServer());
+        assertEquals(server2, player.getServer(), "Le joueur doit être sur server2");
     }
 
     /**
@@ -103,8 +103,8 @@ public class CommonInterfacesTest {
     public void testServerPing() {
         MockCommonServerPing ping = new MockCommonServerPing(5, 20);
 
-        assertEquals("Le nombre de joueurs doit être 5", 5, ping.getOnlinePlayers());
-        assertEquals("Le nombre max doit être 20", 20, ping.getMaxPlayers());
+        assertEquals(5, ping.getOnlinePlayers(), "Le nombre de joueurs doit être 5");
+        assertEquals(20, ping.getMaxPlayers(), "Le nombre max doit être 20");
     }
 
     /**
@@ -115,7 +115,7 @@ public class CommonInterfacesTest {
         CommonPlayer player1 = new MockCommonPlayer("Player1");
         CommonPlayer player2 = new MockCommonPlayer("Player2");
 
-        assertNotEquals("Les UUIDs doivent être différents", player1.getUniqueId(), player2.getUniqueId());
+        assertNotEquals(player1.getUniqueId(), player2.getUniqueId(), "Les UUIDs doivent être différents");
     }
 
     /**
@@ -126,7 +126,7 @@ public class CommonInterfacesTest {
         UUID customUUID = UUID.randomUUID();
         CommonPlayer customPlayer = new MockCommonPlayer("Custom", customUUID);
 
-        assertEquals("Le UUID doit correspondre", customUUID, customPlayer.getUniqueId());
+        assertEquals(customUUID, customPlayer.getUniqueId(), "Le UUID doit correspondre");
     }
 
     /**
@@ -136,8 +136,8 @@ public class CommonInterfacesTest {
     public void testServerDisplayName() {
         CommonServer customServer = new MockCommonServer("internal-name", "Display Name");
 
-        assertEquals("Le nom interne doit être correct", "internal-name", customServer.getName());
-        assertEquals("Le display name doit être correct", "Display Name", customServer.getDisplayName());
+        assertEquals("internal-name", customServer.getName(), "Le nom interne doit être correct");
+        assertEquals("Display Name", customServer.getDisplayName(), "Le display name doit être correct");
     }
 
     /**
@@ -145,12 +145,12 @@ public class CommonInterfacesTest {
      */
     @Test
     public void testPlayerOnlineStatus() {
-        assertTrue("Le joueur doit être online initialement", player.isOnline());
+        assertTrue(player.isOnline(), "Le joueur doit être online initialement");
 
         MockCommonPlayer mockPlayer = (MockCommonPlayer) player;
         mockPlayer.setOnline(false);
 
-        assertFalse("Le joueur doit être offline", player.isOnline());
+        assertFalse(player.isOnline(), "Le joueur doit être offline");
     }
 
     /**
@@ -165,6 +165,6 @@ public class CommonInterfacesTest {
         });
 
         // Le callback peut être appelé de manière asynchrone, on vérifie que ping() n'a pas d'erreur
-        assertNotNull("ping() doit être supporté", server);
+        assertNotNull(server, "ping() doit être supporté");
     }
 }

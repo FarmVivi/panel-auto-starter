@@ -6,14 +6,14 @@ import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import net.md_5.bungee.config.Configuration;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -37,7 +37,7 @@ public class MinecraftServerTest {
     private CommonServer testServer;
     private MinecraftServer minecraftServer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
@@ -64,8 +64,8 @@ public class MinecraftServerTest {
     @Test
     public void testQueueInitiallyEmpty() {
         List<CommonPlayer> queue = minecraftServer.getQueue();
-        assertNotNull("La queue ne doit pas être null", queue);
-        assertEquals("La queue doit être vide au démarrage", 0, queue.size());
+        assertNotNull(queue, "La queue ne doit pas être null");
+        assertEquals(0, queue.size(), "La queue doit être vide au démarrage");
     }
 
     /**
@@ -83,10 +83,10 @@ public class MinecraftServerTest {
         queue.add(player2);
         queue.add(player3);
 
-        assertEquals("La queue doit contenir 3 joueurs", 3, queue.size());
-        assertTrue("Le joueur 1 doit être dans la queue", queue.contains(player1));
-        assertTrue("Le joueur 2 doit être dans la queue", queue.contains(player2));
-        assertTrue("Le joueur 3 doit être dans la queue", queue.contains(player3));
+        assertEquals(3, queue.size(), "La queue doit contenir 3 joueurs");
+        assertTrue(queue.contains(player1), "Le joueur 1 doit être dans la queue");
+        assertTrue(queue.contains(player2), "Le joueur 2 doit être dans la queue");
+        assertTrue(queue.contains(player3), "Le joueur 3 doit être dans la queue");
     }
 
     /**
@@ -101,7 +101,7 @@ public class MinecraftServerTest {
         assertEquals(2, queue.size());
 
         queue.clear();
-        assertEquals("La queue doit être vide après clear()", 0, queue.size());
+        assertEquals(0, queue.size(), "La queue doit être vide après clear()");
     }
 
     /**
@@ -119,9 +119,9 @@ public class MinecraftServerTest {
         assertEquals(2, queue.size());
 
         queue.remove(player1);
-        assertEquals("La queue doit contenir 1 joueur", 1, queue.size());
-        assertFalse("Le joueur 1 ne doit plus être dans la queue", queue.contains(player1));
-        assertTrue("Le joueur 2 doit toujours être dans la queue", queue.contains(player2));
+        assertEquals(1, queue.size(), "La queue doit contenir 1 joueur");
+        assertFalse(queue.contains(player1), "Le joueur 1 ne doit plus être dans la queue");
+        assertTrue(queue.contains(player2), "Le joueur 2 doit toujours être dans la queue");
     }
 
     // ========================= Tests de Statut =========================
@@ -131,8 +131,7 @@ public class MinecraftServerTest {
      */
     @Test
     public void testServerInitializesAsOffline() {
-        assertEquals("Le serveur doit être OFFLINE au démarrage",
-                MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(), "Le serveur doit être OFFLINE au démarrage");
     }
 
     /**
@@ -140,8 +139,7 @@ public class MinecraftServerTest {
      */
     @Test
     public void testServerPingInitiallyNull() {
-        assertNull("Le serverPing doit être null au démarrage",
-                minecraftServer.getServerPing());
+        assertNull(minecraftServer.getServerPing(), "Le serverPing doit être null au démarrage");
     }
 
     /**
@@ -149,11 +147,11 @@ public class MinecraftServerTest {
      */
     @Test
     public void testServerDataAccessible() {
-        assertNotNull("Le serveur doit être accessible", minecraftServer.getServer());
-        assertEquals("Le nom du serveur doit être correct", "test-server",
-                minecraftServer.getServer().getName());
-        assertEquals("Le display name doit être correct", "Test Server",
-                minecraftServer.getServer().getDisplayName());
+        assertNotNull(minecraftServer.getServer(), "Le serveur doit être accessible");
+        assertEquals("test-server",
+                minecraftServer.getServer().getName(), "Le nom du serveur doit être correct");
+        assertEquals("Test Server",
+                minecraftServer.getServer().getDisplayName(), "Le display name doit être correct");
     }
 
     /**
@@ -181,7 +179,7 @@ public class MinecraftServerTest {
         List<CommonPlayer> queue1 = minecraftServer.getQueue();
         List<CommonPlayer> queue2 = minecraftServer.getQueue();
 
-        assertSame("getQueue() doit retourner la même instance", queue1, queue2);
+        assertSame(queue1, queue2, "getQueue() doit retourner la même instance");
     }
 
     /**
@@ -203,8 +201,7 @@ public class MinecraftServerTest {
         queue.add(player);
 
         List<CommonPlayer> queue2 = minecraftServer.getQueue();
-        assertTrue("Le joueur doit être présent dans la deuxième référence", 
-                queue2.contains(player));
+        assertTrue(queue2.contains(player), "Le joueur doit être présent dans la deuxième référence");
     }
 
     /**
@@ -218,7 +215,7 @@ public class MinecraftServerTest {
         queue.add(player);
         queue.add(player);
 
-        assertEquals("La queue doit contenir 2 occurrences", 2, queue.size());
+        assertEquals(2, queue.size(), "La queue doit contenir 2 occurrences");
         // Compter le nombre de fois que le joueur exactement appear
         int countOccurrences = 0;
         for (CommonPlayer p : queue) {
@@ -226,7 +223,7 @@ public class MinecraftServerTest {
                 countOccurrences++;
             }
         }
-        assertEquals("Le joueur doit apparaître 2 fois", 2, countOccurrences);
+        assertEquals(2, countOccurrences, "Le joueur doit apparaître 2 fois");
     }
 
     /**
@@ -243,6 +240,6 @@ public class MinecraftServerTest {
 
         MinecraftServerStatus statusAfter = minecraftServer.getStatus();
 
-        assertEquals("Le statut ne doit pas changer", statusBefore, statusAfter);
+        assertEquals(statusBefore, statusAfter, "Le statut ne doit pas changer");
     }
 }

@@ -9,15 +9,15 @@ import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import net.md_5.bungee.config.Configuration;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -44,7 +44,7 @@ public class PlayerDisconnectEventListenerTest {
     private CommonPlayer testPlayer;
     private Map<CommonServer, MinecraftServer> serversMap;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
@@ -90,8 +90,7 @@ public class PlayerDisconnectEventListenerTest {
         mockMinecraftServer.getQueue().add(testPlayer);
         listener.onPlayerDisconnect(mockEvent);
 
-        assertFalse("Le joueur ne doit pas être dans la queue", 
-            mockMinecraftServer.getQueue().contains(testPlayer));
+        assertFalse(mockMinecraftServer.getQueue().contains(testPlayer), "Le joueur ne doit pas être dans la queue");
     }
 
     /**
@@ -107,7 +106,7 @@ public class PlayerDisconnectEventListenerTest {
 
         listener.onPlayerDisconnect(mockEvent);
 
-        assertEquals("La queue doit rester vide", 0, mockMinecraftServer.getQueue().size());
+        assertEquals(0, mockMinecraftServer.getQueue().size(), "La queue doit rester vide");
     }
 
     /**
@@ -131,10 +130,8 @@ public class PlayerDisconnectEventListenerTest {
 
         listener.onPlayerDisconnect(mockEvent);
 
-        assertFalse("Le joueur ne doit pas être dans la queue du serveur 1", 
-            minecraftServer1.getQueue().contains(testPlayer));
-        assertFalse("Le joueur ne doit pas être dans la queue du serveur 2", 
-            minecraftServer2.getQueue().contains(testPlayer));
+        assertFalse(minecraftServer1.getQueue().contains(testPlayer), "Le joueur ne doit pas être dans la queue du serveur 1");
+        assertFalse(minecraftServer2.getQueue().contains(testPlayer), "Le joueur ne doit pas être dans la queue du serveur 2");
     }
 
     /**
@@ -157,8 +154,8 @@ public class PlayerDisconnectEventListenerTest {
 
         listener.onPlayerDisconnect(mockEvent);
 
-        assertFalse("Player1 doit être retiré", minecraftServer.getQueue().contains(player1));
-        assertTrue("Player2 doit rester", minecraftServer.getQueue().contains(player2));
+        assertFalse(minecraftServer.getQueue().contains(player1), "Player1 doit être retiré");
+        assertTrue(minecraftServer.getQueue().contains(player2), "Player2 doit rester");
     }
 
     /**
@@ -166,7 +163,7 @@ public class PlayerDisconnectEventListenerTest {
      */
     @Test
     public void testListenerInitialization() {
-        assertNotNull("Le listener ne doit pas être null", listener);
+        assertNotNull(listener, "Le listener ne doit pas être null");
     }
 
     /**
@@ -181,10 +178,10 @@ public class PlayerDisconnectEventListenerTest {
         serversMap.put(server, minecraftServer);
 
         minecraftServer.getQueue().add(testPlayer);
-        assertEquals("La queue doit avoir 1 joueur", 1, minecraftServer.getQueue().size());
+        assertEquals(1, minecraftServer.getQueue().size(), "La queue doit avoir 1 joueur");
 
         listener.onPlayerDisconnect(mockEvent);
 
-        assertEquals("La queue doit être vide", 0, minecraftServer.getQueue().size());
+        assertEquals(0, minecraftServer.getQueue().size(), "La queue doit être vide");
     }
 }

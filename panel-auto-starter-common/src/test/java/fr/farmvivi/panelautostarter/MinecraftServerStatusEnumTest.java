@@ -1,8 +1,8 @@
 package fr.farmvivi.panelautostarter;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests pour MinecraftServerStatus enum.
@@ -15,7 +15,7 @@ public class MinecraftServerStatusEnumTest {
     @Test
     public void testAllStatusesExist() {
         MinecraftServerStatus[] statuses = MinecraftServerStatus.values();
-        assertEquals("Doit avoir 3 statuts", 3, statuses.length);
+        assertEquals(3, statuses.length, "Doit avoir 3 statuts");
     }
 
     /**
@@ -24,8 +24,8 @@ public class MinecraftServerStatusEnumTest {
     @Test
     public void testOfflineStatusExists() {
         MinecraftServerStatus offline = MinecraftServerStatus.OFFLINE;
-        assertNotNull("OFFLINE ne doit pas être null", offline);
-        assertEquals("Le nom doit être OFFLINE", "OFFLINE", offline.name());
+        assertNotNull(offline, "OFFLINE ne doit pas être null");
+        assertEquals("OFFLINE", offline.name(), "Le nom doit être OFFLINE");
     }
 
     /**
@@ -34,8 +34,8 @@ public class MinecraftServerStatusEnumTest {
     @Test
     public void testStartingStatusExists() {
         MinecraftServerStatus starting = MinecraftServerStatus.STARTING;
-        assertNotNull("STARTING ne doit pas être null", starting);
-        assertEquals("Le nom doit être STARTING", "STARTING", starting.name());
+        assertNotNull(starting, "STARTING ne doit pas être null");
+        assertEquals("STARTING", starting.name(), "Le nom doit être STARTING");
     }
 
     /**
@@ -44,8 +44,8 @@ public class MinecraftServerStatusEnumTest {
     @Test
     public void testOnlineStatusExists() {
         MinecraftServerStatus online = MinecraftServerStatus.ONLINE;
-        assertNotNull("ONLINE ne doit pas être null", online);
-        assertEquals("Le nom doit être ONLINE", "ONLINE", online.name());
+        assertNotNull(online, "ONLINE ne doit pas être null");
+        assertEquals("ONLINE", online.name(), "Le nom doit être ONLINE");
     }
 
     /**
@@ -57,9 +57,9 @@ public class MinecraftServerStatusEnumTest {
         MinecraftServerStatus starting = MinecraftServerStatus.STARTING;
         MinecraftServerStatus online = MinecraftServerStatus.ONLINE;
 
-        assertNotEquals("OFFLINE doit être différent de STARTING", offline, starting);
-        assertNotEquals("OFFLINE doit être différent de ONLINE", offline, online);
-        assertNotEquals("STARTING doit être différent de ONLINE", starting, online);
+        assertNotEquals(offline, starting, "OFFLINE doit être différent de STARTING");
+        assertNotEquals(offline, online, "OFFLINE doit être différent de ONLINE");
+        assertNotEquals(starting, online, "STARTING doit être différent de ONLINE");
     }
 
     /**
@@ -68,21 +68,21 @@ public class MinecraftServerStatusEnumTest {
     @Test
     public void testValueOf() {
         MinecraftServerStatus offline = MinecraftServerStatus.valueOf("OFFLINE");
-        assertEquals("valueOf doit retourner OFFLINE", MinecraftServerStatus.OFFLINE, offline);
+        assertEquals(MinecraftServerStatus.OFFLINE, offline, "valueOf doit retourner OFFLINE");
 
         MinecraftServerStatus starting = MinecraftServerStatus.valueOf("STARTING");
-        assertEquals("valueOf doit retourner STARTING", MinecraftServerStatus.STARTING, starting);
+        assertEquals(MinecraftServerStatus.STARTING, starting, "valueOf doit retourner STARTING");
 
         MinecraftServerStatus online = MinecraftServerStatus.valueOf("ONLINE");
-        assertEquals("valueOf doit retourner ONLINE", MinecraftServerStatus.ONLINE, online);
+        assertEquals(MinecraftServerStatus.ONLINE, online, "valueOf doit retourner ONLINE");
     }
 
     /**
      * Test : Vérifier que valueOf() lève exception pour statut invalide
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValueOfInvalidStatus() {
-        MinecraftServerStatus.valueOf("INVALID");
+        assertThrows(IllegalArgumentException.class, () -> MinecraftServerStatus.valueOf("INVALID"));
     }
 
     /**
@@ -94,9 +94,9 @@ public class MinecraftServerStatusEnumTest {
         MinecraftServerStatus starting = MinecraftServerStatus.STARTING;
         MinecraftServerStatus online = MinecraftServerStatus.ONLINE;
 
-        assertEquals("OFFLINE doit être ordinal 0", 0, offline.ordinal());
-        assertEquals("STARTING doit être ordinal 1", 1, starting.ordinal());
-        assertEquals("ONLINE doit être ordinal 2", 2, online.ordinal());
+        assertEquals(0, offline.ordinal(), "OFFLINE doit être ordinal 0");
+        assertEquals(1, starting.ordinal(), "STARTING doit être ordinal 1");
+        assertEquals(2, online.ordinal(), "ONLINE doit être ordinal 2");
     }
 
     /**
@@ -107,8 +107,8 @@ public class MinecraftServerStatusEnumTest {
         MinecraftServerStatus offline = MinecraftServerStatus.OFFLINE;
         MinecraftServerStatus starting = MinecraftServerStatus.STARTING;
 
-        assertTrue("OFFLINE doit être inférieur à STARTING", offline.compareTo(starting) < 0);
-        assertTrue("STARTING doit être supérieur à OFFLINE", starting.compareTo(offline) > 0);
-        assertEquals("Même statut doit avoir compareTo == 0", 0, offline.compareTo(offline));
+        assertTrue(offline.compareTo(starting) < 0, "OFFLINE doit être inférieur à STARTING");
+        assertTrue(starting.compareTo(offline) > 0, "STARTING doit être supérieur à OFFLINE");
+        assertEquals(0, offline.compareTo(offline), "Même statut doit avoir compareTo == 0");
     }
 }

@@ -6,15 +6,15 @@ import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.event.ProxyPingEvent;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServerPing;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -36,7 +36,7 @@ public class ProxyPingEventListenerTest {
 
     private ProxyPingEventListener listener;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         when(mockPlugin.getLogger()).thenReturn(mockLogger);
@@ -54,7 +54,7 @@ public class ProxyPingEventListenerTest {
      */
     @Test
     public void testListenerInitialization() {
-        assertNotNull("Le listener ne doit pas être null", listener);
+        assertNotNull(listener, "Le listener ne doit pas être null");
     }
 
     /**
@@ -68,16 +68,16 @@ public class ProxyPingEventListenerTest {
         // Le listener ne doit pas lever d'exception
         listener.onProxyPing(event);
 
-        assertNotNull("L'événement ne doit pas être null", event);
+        assertNotNull(event, "L'événement ne doit pas être null");
     }
 
     /**
      * Test : Vérifier que le listener gère un événement null
      */
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testOnProxyPingEventWithNull() {
         // Le listener doit lever une NullPointerException avec null
-        listener.onProxyPing(null);
+        assertThrows(NullPointerException.class, () -> listener.onProxyPing(null));
     }
 
     /**
@@ -94,8 +94,8 @@ public class ProxyPingEventListenerTest {
         listener.onProxyPing(event1);
         listener.onProxyPing(event2);
 
-        assertNotNull("Le premier événement ne doit pas être null", event1);
-        assertNotNull("Le second événement ne doit pas être null", event2);
+        assertNotNull(event1, "Le premier événement ne doit pas être null");
+        assertNotNull(event2, "Le second événement ne doit pas être null");
     }
 
     /**
@@ -123,7 +123,7 @@ public class ProxyPingEventListenerTest {
             CommonServerPing ping = new MockCommonServerPing();
             ProxyPingEvent event = new ProxyPingEvent(host, ping);
             listener.onProxyPing(event);
-            assertEquals("L'host doit être celui défini", host, event.getHost());
+            assertEquals(host, event.getHost(), "L'host doit être celui défini");
         }
     }
 }

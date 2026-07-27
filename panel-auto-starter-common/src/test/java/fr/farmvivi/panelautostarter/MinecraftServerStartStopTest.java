@@ -6,14 +6,14 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import net.md_5.bungee.config.Configuration;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -38,7 +38,7 @@ public class MinecraftServerStartStopTest {
 
     private MinecraftServer minecraftServer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
@@ -61,11 +61,11 @@ public class MinecraftServerStartStopTest {
      */
     @Test
     public void testStartChangesStatusToStarting() {
-        assertEquals("Le statut doit être OFFLINE", MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(), "Le statut doit être OFFLINE");
 
         minecraftServer.start();
 
-        assertEquals("Le statut doit être STARTING", MinecraftServerStatus.STARTING, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.STARTING, minecraftServer.getStatus(), "Le statut doit être STARTING");
     }
 
     /**
@@ -97,7 +97,7 @@ public class MinecraftServerStartStopTest {
         minecraftServer.stop();
 
         verify(mockClientServer, never()).stop();
-        assertEquals("Le statut doit rester OFFLINE", MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(), "Le statut doit rester OFFLINE");
     }
 
     /**
@@ -106,12 +106,12 @@ public class MinecraftServerStartStopTest {
     @Test
     public void testStopIgnoredFromStarting() {
         minecraftServer.start();
-        assertEquals("Le statut doit être STARTING", MinecraftServerStatus.STARTING, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.STARTING, minecraftServer.getStatus(), "Le statut doit être STARTING");
 
         minecraftServer.stop();
 
         verify(mockClientServer, never()).stop();
-        assertEquals("Le statut doit rester STARTING", MinecraftServerStatus.STARTING, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.STARTING, minecraftServer.getStatus(), "Le statut doit rester STARTING");
     }
 
     /**
@@ -128,9 +128,9 @@ public class MinecraftServerStartStopTest {
 
         minecraftServer.start();
 
-        assertEquals("La queue doit contenir 2 joueurs", 2, queue.size());
-        assertTrue("Le joueur 1 doit être dans la queue", queue.contains(player1));
-        assertTrue("Le joueur 2 doit être dans la queue", queue.contains(player2));
+        assertEquals(2, queue.size(), "La queue doit contenir 2 joueurs");
+        assertTrue(queue.contains(player1), "Le joueur 1 doit être dans la queue");
+        assertTrue(queue.contains(player2), "Le joueur 2 doit être dans la queue");
     }
 
     /**
@@ -138,7 +138,7 @@ public class MinecraftServerStartStopTest {
      */
     @Test
     public void testInitialStatusOffline() {
-        assertEquals("Le statut doit être OFFLINE", MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(), "Le statut doit être OFFLINE");
     }
 
     /**
@@ -146,9 +146,9 @@ public class MinecraftServerStartStopTest {
      */
     @Test
     public void testGettersAfterConstruction() {
-        assertNotNull("Le serveur ne doit pas être null", minecraftServer.getServer());
-        assertNotNull("La queue ne doit pas être null", minecraftServer.getQueue());
-        assertNull("Le ping doit être null", minecraftServer.getServerPing());
-        assertEquals("La queue doit être vide", 0, minecraftServer.getQueue().size());
+        assertNotNull(minecraftServer.getServer(), "Le serveur ne doit pas être null");
+        assertNotNull(minecraftServer.getQueue(), "La queue ne doit pas être null");
+        assertNull(minecraftServer.getServerPing(), "Le ping doit être null");
+        assertEquals(0, minecraftServer.getQueue().size(), "La queue doit être vide");
     }
 }

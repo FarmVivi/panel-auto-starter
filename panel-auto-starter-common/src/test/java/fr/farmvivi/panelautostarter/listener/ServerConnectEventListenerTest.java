@@ -13,15 +13,15 @@ import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
 import com.mattmalec.pterodactyl4j.PteroAction;
 import net.md_5.bungee.config.Configuration;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -56,7 +56,7 @@ public class ServerConnectEventListenerTest {
     private CommonPlayer testPlayer;
     private Map<CommonServer, MinecraftServer> serversMap;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
@@ -116,7 +116,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testListenerInitialization() {
-        assertNotNull("Le listener ne doit pas être null", listener);
+        assertNotNull(listener, "Le listener ne doit pas être null");
     }
 
     /**
@@ -133,11 +133,11 @@ public class ServerConnectEventListenerTest {
         when(mockEvent.getPlayer()).thenReturn(player);
         when(mockEvent.getTarget()).thenReturn(targetServer);
 
-        assertEquals("Le serveur doit être OFFLINE", MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(), "Le serveur doit être OFFLINE");
 
         listener.onServerConnect(mockEvent);
 
-        assertTrue("Le joueur doit être dans la queue", minecraftServer.getQueue().contains(player));
+        assertTrue(minecraftServer.getQueue().contains(player), "Le joueur doit être dans la queue");
     }
 
     /**
@@ -179,8 +179,7 @@ public class ServerConnectEventListenerTest {
 
         listener.onServerConnect(mockEvent);
 
-        assertNotNull("Le joueur doit avoir reçu un message", 
-            ((MockCommonPlayer) player).getLastMessage());
+        assertNotNull(((MockCommonPlayer) player).getLastMessage(), "Le joueur doit avoir reçu un message");
     }
 
     /**
@@ -205,6 +204,6 @@ public class ServerConnectEventListenerTest {
         when(mockEvent.getPlayer()).thenReturn(player2);
         listener.onServerConnect(mockEvent);
 
-        assertEquals("La queue doit avoir 2 joueurs", 2, minecraftServer.getQueue().size());
+        assertEquals(2, minecraftServer.getQueue().size(), "La queue doit avoir 2 joueurs");
     }
 }

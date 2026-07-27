@@ -4,10 +4,10 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests unitaires pour ServerConnectEvent.
@@ -18,7 +18,7 @@ public class ServerConnectEventTest {
     private CommonPlayer player;
     private CommonServer server;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         player = new MockCommonPlayer("TestPlayer");
         server = new MockCommonServer("test-server");
@@ -30,9 +30,9 @@ public class ServerConnectEventTest {
      */
     @Test
     public void testServerConnectEventConstructor() {
-        assertNotNull("L'événement ne doit pas être null", event);
-        assertNotNull("Le joueur ne doit pas être null", event.getPlayer());
-        assertNotNull("Le serveur ne doit pas être null", event.getTarget());
+        assertNotNull(event, "L'événement ne doit pas être null");
+        assertNotNull(event.getPlayer(), "Le joueur ne doit pas être null");
+        assertNotNull(event.getTarget(), "Le serveur ne doit pas être null");
     }
 
     /**
@@ -40,8 +40,7 @@ public class ServerConnectEventTest {
      */
     @Test
     public void testGetPlayer() {
-        assertEquals("Le joueur doit être celui passé au constructeur", 
-            player, event.getPlayer());
+        assertEquals(player, event.getPlayer(), "Le joueur doit être celui passé au constructeur");
     }
 
     /**
@@ -49,8 +48,7 @@ public class ServerConnectEventTest {
      */
     @Test
     public void testGetTarget() {
-        assertEquals("Le serveur doit être celui passé au constructeur", 
-            server, event.getTarget());
+        assertEquals(server, event.getTarget(), "Le serveur doit être celui passé au constructeur");
     }
 
     /**
@@ -58,8 +56,7 @@ public class ServerConnectEventTest {
      */
     @Test
     public void testServerConnectEventInheritance() {
-        assertTrue("ServerConnectEvent doit être une instance de Event", 
-            event instanceof Event);
+        assertTrue(event instanceof Event, "ServerConnectEvent doit être une instance de Event");
     }
 
     /**
@@ -68,8 +65,8 @@ public class ServerConnectEventTest {
     @Test
     public void testServerConnectEventWithNullPlayer() {
         ServerConnectEvent eventWithNull = new ServerConnectEvent(null, server);
-        assertNull("Le joueur peut être null", eventWithNull.getPlayer());
-        assertEquals("Le serveur ne doit pas être null", server, eventWithNull.getTarget());
+        assertNull(eventWithNull.getPlayer(), "Le joueur peut être null");
+        assertEquals(server, eventWithNull.getTarget(), "Le serveur ne doit pas être null");
     }
 
     /**
@@ -78,8 +75,8 @@ public class ServerConnectEventTest {
     @Test
     public void testServerConnectEventWithNullServer() {
         ServerConnectEvent eventWithNull = new ServerConnectEvent(player, null);
-        assertEquals("Le joueur ne doit pas être null", player, eventWithNull.getPlayer());
-        assertNull("Le serveur peut être null", eventWithNull.getTarget());
+        assertEquals(player, eventWithNull.getPlayer(), "Le joueur ne doit pas être null");
+        assertNull(eventWithNull.getTarget(), "Le serveur peut être null");
     }
 
     /**
@@ -95,9 +92,7 @@ public class ServerConnectEventTest {
         ServerConnectEvent event1 = new ServerConnectEvent(player1, server1);
         ServerConnectEvent event2 = new ServerConnectEvent(player2, server2);
         
-        assertNotEquals("Les joueurs doivent être différents", 
-            event1.getPlayer().getUsername(), event2.getPlayer().getUsername());
-        assertNotEquals("Les serveurs doivent être différents", 
-            event1.getTarget().getDisplayName(), event2.getTarget().getDisplayName());
+        assertNotEquals(event1.getPlayer().getUsername(), event2.getPlayer().getUsername(), "Les joueurs doivent être différents");
+        assertNotEquals(event1.getTarget().getDisplayName(), event2.getTarget().getDisplayName(), "Les serveurs doivent être différents");
     }
 }

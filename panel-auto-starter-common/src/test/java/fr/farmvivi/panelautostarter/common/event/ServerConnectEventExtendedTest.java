@@ -4,10 +4,10 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests approfondis pour ServerConnectEvent.
@@ -18,7 +18,7 @@ public class ServerConnectEventExtendedTest {
     private CommonServer server;
     private ServerConnectEvent event;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         player = new MockCommonPlayer("testPlayer");
         server = new MockCommonServer("testServer");
@@ -30,9 +30,9 @@ public class ServerConnectEventExtendedTest {
      */
     @Test
     public void testEventConstruction() {
-        assertNotNull("L'événement ne doit pas être null", event);
-        assertNotNull("Le joueur ne doit pas être null", event.getPlayer());
-        assertNotNull("Le serveur cible ne doit pas être null", event.getTarget());
+        assertNotNull(event, "L'événement ne doit pas être null");
+        assertNotNull(event.getPlayer(), "Le joueur ne doit pas être null");
+        assertNotNull(event.getTarget(), "Le serveur cible ne doit pas être null");
     }
 
     /**
@@ -41,7 +41,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testGetPlayer() {
         CommonPlayer returnedPlayer = event.getPlayer();
-        assertEquals("Le joueur retourné doit être le même", player, returnedPlayer);
+        assertEquals(player, returnedPlayer, "Le joueur retourné doit être le même");
     }
 
     /**
@@ -50,7 +50,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testGetTarget() {
         CommonServer returnedServer = event.getTarget();
-        assertEquals("Le serveur retourné doit être le même", server, returnedServer);
+        assertEquals(server, returnedServer, "Le serveur retourné doit être le même");
     }
 
     /**
@@ -62,8 +62,8 @@ public class ServerConnectEventExtendedTest {
         event.setTarget(newServer);
 
         CommonServer returnedServer = event.getTarget();
-        assertEquals("Le serveur doit être le nouveau serveur", newServer, returnedServer);
-        assertNotEquals("Ne doit plus être le serveur original", server, returnedServer);
+        assertEquals(newServer, returnedServer, "Le serveur doit être le nouveau serveur");
+        assertNotEquals(server, returnedServer, "Ne doit plus être le serveur original");
     }
 
     /**
@@ -71,7 +71,7 @@ public class ServerConnectEventExtendedTest {
      */
     @Test
     public void testNotCancelledByDefault() {
-        assertFalse("L'événement ne doit pas être annulé par défaut", event.isCancelled());
+        assertFalse(event.isCancelled(), "L'événement ne doit pas être annulé par défaut");
     }
 
     /**
@@ -80,7 +80,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testSetCancelled() {
         event.setCancelled(true);
-        assertTrue("L'événement doit être annulé", event.isCancelled());
+        assertTrue(event.isCancelled(), "L'événement doit être annulé");
     }
 
     /**
@@ -89,10 +89,10 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testSetCancelledToFalse() {
         event.setCancelled(true);
-        assertTrue("L'événement doit être annulé", event.isCancelled());
+        assertTrue(event.isCancelled(), "L'événement doit être annulé");
 
         event.setCancelled(false);
-        assertFalse("L'événement ne doit pas être annulé", event.isCancelled());
+        assertFalse(event.isCancelled(), "L'événement ne doit pas être annulé");
     }
 
     /**
@@ -100,7 +100,7 @@ public class ServerConnectEventExtendedTest {
      */
     @Test
     public void testEventInheritance() {
-        assertTrue("ServerConnectEvent doit être une instance d'Event", event instanceof Event);
+        assertTrue(event instanceof Event, "ServerConnectEvent doit être une instance d'Event");
     }
 
     /**
@@ -108,7 +108,7 @@ public class ServerConnectEventExtendedTest {
      */
     @Test
     public void testCancellableEventImplementation() {
-        assertTrue("ServerConnectEvent doit implémenter CancellableEvent", event instanceof CancellableEvent);
+        assertTrue(event instanceof CancellableEvent, "ServerConnectEvent doit implémenter CancellableEvent");
     }
 
     /**
@@ -118,7 +118,7 @@ public class ServerConnectEventExtendedTest {
     public void testPostCall() {
         // Ne doit pas lever d'exception
         event.postCall();
-        assertNotNull("L'événement ne doit pas être null après postCall()", event);
+        assertNotNull(event, "L'événement ne doit pas être null après postCall()");
     }
 
     /**
@@ -127,7 +127,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testWithNullTarget() {
         ServerConnectEvent nullTargetEvent = new ServerConnectEvent(player, null);
-        assertNull("Le serveur cible peut être null", nullTargetEvent.getTarget());
+        assertNull(nullTargetEvent.getTarget(), "Le serveur cible peut être null");
     }
 
     /**
@@ -140,13 +140,13 @@ public class ServerConnectEventExtendedTest {
         CommonServer server3 = new MockCommonServer("server3");
 
         event.setTarget(server1);
-        assertEquals("Doit être server1", server1, event.getTarget());
+        assertEquals(server1, event.getTarget(), "Doit être server1");
 
         event.setTarget(server2);
-        assertEquals("Doit être server2", server2, event.getTarget());
+        assertEquals(server2, event.getTarget(), "Doit être server2");
 
         event.setTarget(server3);
-        assertEquals("Doit être server3", server3, event.getTarget());
+        assertEquals(server3, event.getTarget(), "Doit être server3");
     }
 
     /**
@@ -154,16 +154,16 @@ public class ServerConnectEventExtendedTest {
      */
     @Test
     public void testCancelToggle() {
-        assertFalse("Pas annulé au départ", event.isCancelled());
+        assertFalse(event.isCancelled(), "Pas annulé au départ");
 
         event.setCancelled(true);
-        assertTrue("Annulé après setCancelled(true)", event.isCancelled());
+        assertTrue(event.isCancelled(), "Annulé après setCancelled(true)");
 
         event.setCancelled(false);
-        assertFalse("Pas annulé après setCancelled(false)", event.isCancelled());
+        assertFalse(event.isCancelled(), "Pas annulé après setCancelled(false)");
 
         event.setCancelled(true);
-        assertTrue("Annulé de nouveau", event.isCancelled());
+        assertTrue(event.isCancelled(), "Annulé de nouveau");
     }
 
     /**
@@ -172,7 +172,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testWithNullPlayer() {
         ServerConnectEvent nullPlayerEvent = new ServerConnectEvent(null, server);
-        assertNull("Le joueur peut être null", nullPlayerEvent.getPlayer());
+        assertNull(nullPlayerEvent.getPlayer(), "Le joueur peut être null");
     }
 
     /**
@@ -181,7 +181,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testSetTargetToNull() {
         event.setTarget(null);
-        assertNull("Le serveur cible peut être défini à null", event.getTarget());
+        assertNull(event.getTarget(), "Le serveur cible peut être défini à null");
     }
 
     /**
@@ -190,7 +190,7 @@ public class ServerConnectEventExtendedTest {
     @Test
     public void testBothNullParameters() {
         ServerConnectEvent bothNullEvent = new ServerConnectEvent(null, null);
-        assertNull("Joueur peut être null", bothNullEvent.getPlayer());
-        assertNull("Serveur peut être null", bothNullEvent.getTarget());
+        assertNull(bothNullEvent.getPlayer(), "Joueur peut être null");
+        assertNull(bothNullEvent.getTarget(), "Serveur peut être null");
     }
 }

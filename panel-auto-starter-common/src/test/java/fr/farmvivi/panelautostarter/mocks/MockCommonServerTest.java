@@ -2,10 +2,10 @@ package fr.farmvivi.panelautostarter.mocks;
 
 import fr.farmvivi.panelautostarter.common.Callback;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests unitaires pour MockCommonServer.
@@ -15,33 +15,33 @@ public class MockCommonServerTest {
 
     private MockCommonServer server;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         server = new MockCommonServer("test-server", "Test Server");
     }
 
     @Test
     public void testServerInitialization() {
-        assertEquals("Le nom doit être test-server", "test-server", server.getName());
-        assertEquals("Le display name doit être Test Server", "Test Server", server.getDisplayName());
-        assertEquals("Le nombre de joueurs doit être 0", 0, server.getPlayerCount());
+        assertEquals("test-server", server.getName(), "Le nom doit être test-server");
+        assertEquals("Test Server", server.getDisplayName(), "Le display name doit être Test Server");
+        assertEquals(0, server.getPlayerCount(), "Le nombre de joueurs doit être 0");
     }
 
     @Test
     public void testServerWithoutDisplayName() {
         MockCommonServer simpleServer = new MockCommonServer("simple");
 
-        assertEquals("Le nom doit être simple", "simple", simpleServer.getName());
-        assertEquals("Le display name doit être simple", "simple", simpleServer.getDisplayName());
+        assertEquals("simple", simpleServer.getName(), "Le nom doit être simple");
+        assertEquals("simple", simpleServer.getDisplayName(), "Le display name doit être simple");
     }
 
     @Test
     public void testSetPlayerCount() {
         server.setPlayerCount(5);
-        assertEquals("Le nombre de joueurs doit être 5", 5, server.getPlayerCount());
+        assertEquals(5, server.getPlayerCount(), "Le nombre de joueurs doit être 5");
 
         server.setPlayerCount(0);
-        assertEquals("Le nombre de joueurs doit être 0", 0, server.getPlayerCount());
+        assertEquals(0, server.getPlayerCount(), "Le nombre de joueurs doit être 0");
     }
 
     @Test
@@ -54,8 +54,8 @@ public class MockCommonServerTest {
 
         server.ping(testCallback);
 
-        assertEquals("Le callback doit être enregistré", testCallback, server.getLastPingCallback());
-        assertEquals("Le ping call count doit être 1", 1, server.getPingCallCount());
+        assertEquals(testCallback, server.getLastPingCallback(), "Le callback doit être enregistré");
+        assertEquals(1, server.getPingCallCount(), "Le ping call count doit être 1");
     }
 
     @Test
@@ -68,8 +68,8 @@ public class MockCommonServerTest {
         server.ping(callback1);
         server.ping(callback2);
 
-        assertEquals("Le dernier callback doit être callback2", callback2, server.getLastPingCallback());
-        assertEquals("Le ping call count doit être 2", 2, server.getPingCallCount());
+        assertEquals(callback2, server.getLastPingCallback(), "Le dernier callback doit être callback2");
+        assertEquals(2, server.getPingCallCount(), "Le ping call count doit être 2");
     }
 
     @Test
@@ -87,8 +87,8 @@ public class MockCommonServerTest {
         MockCommonServerPing ping = new MockCommonServerPing(5, 20);
         server.simulatePingResponse(ping);
 
-        assertTrue("Le callback doit avoir été appelé", callbackCalled[0]);
-        assertEquals("Le résultat doit être le ping fourni", ping, resultCapture[0]);
+        assertTrue(callbackCalled[0], "Le callback doit avoir été appelé");
+        assertEquals(ping, resultCapture[0], "Le résultat doit être le ping fourni");
     }
 
     @Test
@@ -104,7 +104,7 @@ public class MockCommonServerTest {
         server.ping(testCallback);
         server.simulatePingTimeout();
 
-        assertTrue("Le callback doit avoir été appelé", callbackCalled[0]);
-        assertNull("Le résultat doit être null", resultCapture[0]);
+        assertTrue(callbackCalled[0], "Le callback doit avoir été appelé");
+        assertNull(resultCapture[0], "Le résultat doit être null");
     }
 }

@@ -19,7 +19,10 @@
     </modules>
 
     <properties>
-        <java.version>17</java.version>
+        <!-- Bytecode cible : Java 21, la version exigee par Minecraft 1.21+.
+             La CI compile avec un JDK plus recent, mais <release> garantit que
+             le jar reste chargeable sur un serveur en Java 21. -->
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Configuration SonarCloud -->
@@ -37,7 +40,7 @@
         <pterodactyl4j.version>2.BETA_142</pterodactyl4j.version>
         <waterfall.version>1.21-R0.1-SNAPSHOT</waterfall.version>
         <velocity.version>3.4.0</velocity.version>
-        <junit.version>4.13.2</junit.version>
+        <junit.version>6.1.2</junit.version>
         <mockito.version>5.23.0</mockito.version>
     </properties>
 
@@ -142,10 +145,10 @@
                 <scope>provided</scope>
             </dependency>
 
-            <!-- JUnit -->
+            <!-- JUnit Jupiter -->
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -265,8 +268,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.15.0</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <release>${maven.compiler.release}</release>
                     </configuration>
                 </plugin>
                 <plugin>

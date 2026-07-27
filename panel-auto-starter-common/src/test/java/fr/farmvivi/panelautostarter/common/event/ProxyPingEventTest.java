@@ -2,10 +2,10 @@ package fr.farmvivi.panelautostarter.common.event;
 
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServerPing;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests unitaires pour ProxyPingEvent.
@@ -16,7 +16,7 @@ public class ProxyPingEventTest {
     private CommonServerPing serverPing;
     private String host;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         host = "127.0.0.1";
         serverPing = new MockCommonServerPing();
@@ -28,9 +28,9 @@ public class ProxyPingEventTest {
      */
     @Test
     public void testProxyPingEventConstructor() {
-        assertNotNull("L'événement ne doit pas être null", event);
-        assertNotNull("L'host ne doit pas être null", event.getHost());
-        assertNotNull("Le response ne doit pas être null", event.getResponse());
+        assertNotNull(event, "L'événement ne doit pas être null");
+        assertNotNull(event.getHost(), "L'host ne doit pas être null");
+        assertNotNull(event.getResponse(), "Le response ne doit pas être null");
     }
 
     /**
@@ -38,8 +38,7 @@ public class ProxyPingEventTest {
      */
     @Test
     public void testGetHost() {
-        assertEquals("L'host doit être celui passé au constructeur", 
-            host, event.getHost());
+        assertEquals(host, event.getHost(), "L'host doit être celui passé au constructeur");
     }
 
     /**
@@ -47,8 +46,7 @@ public class ProxyPingEventTest {
      */
     @Test
     public void testGetResponse() {
-        assertEquals("Le response doit être celui passé au constructeur", 
-            serverPing, event.getResponse());
+        assertEquals(serverPing, event.getResponse(), "Le response doit être celui passé au constructeur");
     }
 
     /**
@@ -58,8 +56,7 @@ public class ProxyPingEventTest {
     public void testSetResponse() {
         CommonServerPing newPing = new MockCommonServerPing();
         event.setResponse(newPing);
-        assertEquals("Le response doit être celui défini", 
-            newPing, event.getResponse());
+        assertEquals(newPing, event.getResponse(), "Le response doit être celui défini");
     }
 
     /**
@@ -67,8 +64,7 @@ public class ProxyPingEventTest {
      */
     @Test
     public void testProxyPingEventInheritance() {
-        assertTrue("ProxyPingEvent doit être une instance de Event", 
-            event instanceof Event);
+        assertTrue(event instanceof Event, "ProxyPingEvent doit être une instance de Event");
     }
 
     /**
@@ -77,7 +73,7 @@ public class ProxyPingEventTest {
     @Test
     public void testProxyPingEventWithEmptyHost() {
         ProxyPingEvent eventEmpty = new ProxyPingEvent("", serverPing);
-        assertEquals("L'host peut être vide", "", eventEmpty.getHost());
+        assertEquals("", eventEmpty.getHost(), "L'host peut être vide");
     }
 
     /**
@@ -86,6 +82,6 @@ public class ProxyPingEventTest {
     @Test
     public void testProxyPingEventWithNullResponse() {
         ProxyPingEvent eventWithNull = new ProxyPingEvent(host, null);
-        assertNull("Le response peut être null", eventWithNull.getResponse());
+        assertNull(eventWithNull.getResponse(), "Le response peut être null");
     }
 }

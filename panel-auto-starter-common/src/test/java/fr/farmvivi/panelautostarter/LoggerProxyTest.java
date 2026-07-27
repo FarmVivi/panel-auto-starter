@@ -1,14 +1,14 @@
 package fr.farmvivi.panelautostarter;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -22,7 +22,7 @@ public class LoggerProxyTest {
 
     private LoggerProxy loggerProxy;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         loggerProxy = new LoggerProxy(mockDelegateLogger);
@@ -30,19 +30,19 @@ public class LoggerProxyTest {
 
     @Test
     public void testLoggerProxyInitialization() {
-        assertNotNull("LoggerProxy ne doit pas être null", loggerProxy);
+        assertNotNull(loggerProxy, "LoggerProxy ne doit pas être null");
     }
 
     @Test
     public void testGetName() {
         when(mockDelegateLogger.getName()).thenReturn("test-logger");
-        assertEquals("Le nom doit être test-logger", "test-logger", loggerProxy.getName());
+        assertEquals("test-logger", loggerProxy.getName(), "Le nom doit être test-logger");
     }
 
     @Test
     public void testGetResourceBundleName() {
         when(mockDelegateLogger.getResourceBundleName()).thenReturn("bundle");
-        assertEquals("Le nom du bundle doit être bundle", "bundle", loggerProxy.getResourceBundleName());
+        assertEquals("bundle", loggerProxy.getResourceBundleName(), "Le nom du bundle doit être bundle");
     }
 
     @Test
