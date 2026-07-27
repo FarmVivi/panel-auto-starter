@@ -30,6 +30,11 @@ public final class PanelConfig {
      * Section du format 2.x, conservée en lecture seule pour la migration.
      */
     static final String LEGACY_SECTION = "pterodactyl";
+    /**
+     * Où renvoyer l'utilisateur : la procédure de migration est publiée dans les
+     * notes de release plutôt que dans un fichier du dépôt.
+     */
+    static final String DOCS_URL = "https://github.com/FarmVivi/PanelAutoStarter/releases";
 
     private final PanelType type;
     private final String url;
@@ -72,7 +77,7 @@ public final class PanelConfig {
 
         throw new IllegalStateException(
                 "Configuration du panel introuvable : le fichier config.yml doit contenir une section '"
-                        + SECTION + "' avec 'url' et 'token'. Voir MIGRATION.md.");
+                        + SECTION + "' avec 'url' et 'token'. Voir " + DOCS_URL + ".");
     }
 
     private static String require(String value, String path) {
@@ -90,7 +95,7 @@ public final class PanelConfig {
     public static String legacyFormatWarning() {
         return "La section '" + LEGACY_SECTION + ":' de config.yml est depreciee et sera retiree dans une "
                 + "version future. Renommez-la en '" + SECTION + ":' et ajoutez 'type: pterodactyl' "
-                + "(ou 'type: pelican'). Voir MIGRATION.md.";
+                + "(ou 'type: pelican'). Voir " + DOCS_URL + ".";
     }
 
     public PanelType getType() {

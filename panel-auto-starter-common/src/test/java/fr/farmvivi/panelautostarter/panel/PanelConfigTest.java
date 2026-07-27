@@ -125,7 +125,7 @@ public class PanelConfigTest {
 
         assertTrue(warning.contains("pterodactyl"), "Le message doit nommer la section depreciee");
         assertTrue(warning.contains("panel"), "Le message doit nommer la section de remplacement");
-        assertTrue(warning.contains("MIGRATION.md"), "Le message doit pointer vers le guide de migration");
+        assertTrue(warning.contains("github.com/FarmVivi/PanelAutoStarter"), "Le message doit pointer vers la doc en ligne");
     }
 
     // ===================== Absence de configuration =====================
@@ -139,7 +139,7 @@ public class PanelConfigTest {
                         """)));
 
         assertTrue(ex.getMessage().contains("panel"), "Le message doit nommer la section attendue");
-        assertTrue(ex.getMessage().contains("MIGRATION.md"), "Le message doit pointer vers le guide de migration");
+        assertTrue(ex.getMessage().contains("github.com/FarmVivi/PanelAutoStarter"), "Le message doit pointer vers la doc en ligne");
     }
 
     @Test
