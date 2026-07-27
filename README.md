@@ -31,6 +31,8 @@ Compatible **Pterodactyl** et **Pelican**.
 3. Démarrez le proxy une première fois pour générer la configuration
 4. Éditez le `config.yml` généré, puis redémarrez le proxy
 
+La configuration est générée dans `plugins/PanelAutoStarter/` sur BungeeCord et dans `plugins/panelautostarter/` sur Velocity.
+
 ## Configuration
 
 ```yaml
@@ -49,7 +51,28 @@ servers:
     id: id_du_serveur_dans_le_panel
 ```
 
-Le `token` doit être un token d'API **client**, créé depuis votre compte utilisateur sur le panel — pas un token d'API application.
+### Le token d'API
+
+Il doit s'agir d'un token d'API **client**, créé depuis votre compte utilisateur — pas un token d'API application.
+
+| Panel | Préfixe attendu | Longueur totale |
+|---|---|---|
+| Pterodactyl | `ptlc_` | 48 |
+| Pelican | `pacc_` | 48 |
+
+Le token complet n'est affiché **qu'une seule fois**, juste après la création de la clé. La liste des clés API n'en montre ensuite que l'identifiant, soit les 16 premiers caractères.
+
+> **Piège connu sur Pelican :** les versions antérieures à `1.0.0-beta15` n'affichent jamais le token complet, même à la création ([issue #768](https://github.com/pelican-dev/panel/issues/768)). Un token de 16 caractères produit un `401 Unauthenticated`. Si votre panel est concerné, mettez-le à jour, ou récupérez le secret en base :
+>
+> ```bash
+> php artisan tinker
+> ```
+> ```php
+> $k = \App\Models\ApiKey::latest()->first();
+> echo $k->identifier . $k->token . PHP_EOL;
+> ```
+
+L'`id` de chaque serveur est son identifiant **court** tel qu'affiché par le panel (8 caractères hexadécimaux), pas son UUID complet.
 
 **Important :** le nom du serveur (ex. `lobby`) doit correspondre exactement au nom déclaré dans la configuration de votre proxy (BungeeCord ou Velocity). C'est ce qui permet au plugin de faire la liaison entre la configuration du proxy et les serveurs du panel.
 
@@ -79,7 +102,15 @@ server-start:
   wait-before-teleport: 5
   # Délai entre deux téléportations, pour éviter de surcharger le serveur
   teleport-delay: 1
+  # Fréquence de vérification d'un serveur éteint que personne ne ping
+  check-interval-idle: 60
+  # Durée sans aucun ping client avant de passer à check-interval-idle
+  idle-threshold: 300
+  # Durée de validité du ping mis en cache et servi dans le MOTD
+  ping-cache-ttl: 5
 ```
+
+Le plugin ne se contente pas d'interroger les serveurs à intervalle fixe : un ping client sur un cache périmé déclenche un rafraîchissement en arrière-plan, sans jamais retarder la réponse au joueur. À l'inverse, un serveur éteint que personne ne regarde est interrogé plus rarement. Les valeurs par défaut conviennent dans la plupart des cas.
 
 ## Architecture
 
