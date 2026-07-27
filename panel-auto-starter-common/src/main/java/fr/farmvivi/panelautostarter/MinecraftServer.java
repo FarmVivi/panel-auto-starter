@@ -1,10 +1,10 @@
 package fr.farmvivi.panelautostarter;
 
-import com.mattmalec.pterodactyl4j.UtilizationState;
-import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
+import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.panel.PanelServerState;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -17,7 +17,7 @@ public class MinecraftServer {
     private final PanelAutoStarter plugin;
 
     private final CommonServer server;
-    private final ClientServer pterodactylServer;
+    private final PanelServer panelServer;
     private final List<CommonPlayer> queue = new LinkedList<>();
     private MinecraftServerStatus status = MinecraftServerStatus.OFFLINE;
     private CommonServerPing serverPing;
@@ -25,10 +25,10 @@ public class MinecraftServer {
     private long serverStartedTime = 0;
     private long lastTeleportTime = 0;
 
-    public MinecraftServer(PanelAutoStarter plugin, CommonServer server, ClientServer pterodactylServer) {
+    public MinecraftServer(PanelAutoStarter plugin, CommonServer server, PanelServer panelServer) {
         this.plugin = plugin;
         this.server = server;
-        this.pterodactylServer = pterodactylServer;
+        this.panelServer = panelServer;
 
         scheduleServerStatusCheck();
     }
@@ -64,7 +64,7 @@ public class MinecraftServer {
 
     private void updateServerStatus(CommonServerPing result, long curMillis) {
         if (serverPing == null && result != null) {
-            if (pterodactylServer.retrieveUtilization().execute().getState() == UtilizationState.STARTING) {
+            if (panelServer.retrieveState() == PanelServerState.STARTING) {
                 return;
             }
             status = MinecraftServerStatus.ONLINE;
@@ -179,7 +179,7 @@ public class MinecraftServer {
             return;
         }
         this.plugin.getLogger().info("Démarrage de " + server.getName() + "...");
-        this.pterodactylServer.start().executeAsync();
+        this.panelServer.start();
         this.lastBusyTime = System.currentTimeMillis() + 15 * 60 * 1000;
         this.status = MinecraftServerStatus.STARTING;
         this.lastTeleportTime = 0;  // Réinitialiser le timer de téléportation
@@ -190,7 +190,7 @@ public class MinecraftServer {
             return;
         }
         this.plugin.getLogger().info("Arrêt de " + server.getName() + "...");
-        this.pterodactylServer.stop().executeAsync();
+        this.panelServer.stop();
         this.lastBusyTime = System.currentTimeMillis();
     }
 

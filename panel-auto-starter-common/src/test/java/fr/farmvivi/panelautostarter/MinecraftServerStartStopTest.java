@@ -1,7 +1,6 @@
 package fr.farmvivi.panelautostarter;
 
-import com.mattmalec.pterodactyl4j.PteroAction;
-import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
+import fr.farmvivi.panelautostarter.panel.PanelServer;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
@@ -25,16 +24,13 @@ public class MinecraftServerStartStopTest {
     private PanelAutoStarter mockPanelAutoStarter;
 
     @Mock
-    private ClientServer mockClientServer;
+    private PanelServer mockPanelServer;
 
     @Mock
     private Configuration mockConfiguration;
 
     @Mock
     private LoggerProxy mockLogger;
-
-    @Mock
-    private PteroAction<Void> mockPteroAction;
 
     private MinecraftServer minecraftServer;
 
@@ -46,14 +42,10 @@ public class MinecraftServerStartStopTest {
         when(mockConfiguration.getLong("server-start.check-interval-normal", 15)).thenReturn(15L);
         when(mockConfiguration.getLong("server-start.check-interval-startup", 3)).thenReturn(3L);
         when(mockPanelAutoStarter.getLogger()).thenReturn(mockLogger);
-        
-        // Mock ClientServer.start() pour retourner un PteroAction
-        when(mockClientServer.start()).thenReturn(mockPteroAction);
-        when(mockClientServer.stop()).thenReturn(mockPteroAction);
 
         minecraftServer = new MinecraftServer(mockPanelAutoStarter, 
             new MockCommonServer("test-server", "Test Server"), 
-            mockClientServer);
+            mockPanelServer);
     }
 
     /**
@@ -74,7 +66,7 @@ public class MinecraftServerStartStopTest {
     @Test
     public void testStartCallsClientServer() {
         minecraftServer.start();
-        verify(mockClientServer, times(1)).start();
+        verify(mockPanelServer, times(1)).start();
     }
 
     /**
@@ -86,7 +78,7 @@ public class MinecraftServerStartStopTest {
         minecraftServer.start();
         minecraftServer.start();
 
-        verify(mockClientServer, times(1)).start();
+        verify(mockPanelServer, times(1)).start();
     }
 
     /**
@@ -96,7 +88,7 @@ public class MinecraftServerStartStopTest {
     public void testStopIgnoredFromOffline() {
         minecraftServer.stop();
 
-        verify(mockClientServer, never()).stop();
+        verify(mockPanelServer, never()).stop();
         assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(), "Le statut doit rester OFFLINE");
     }
 
@@ -110,7 +102,7 @@ public class MinecraftServerStartStopTest {
 
         minecraftServer.stop();
 
-        verify(mockClientServer, never()).stop();
+        verify(mockPanelServer, never()).stop();
         assertEquals(MinecraftServerStatus.STARTING, minecraftServer.getStatus(), "Le statut doit rester STARTING");
     }
 

@@ -10,8 +10,7 @@ import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
-import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
-import com.mattmalec.pterodactyl4j.PteroAction;
+import fr.farmvivi.panelautostarter.panel.PanelServer;
 import net.md_5.bungee.config.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,10 +44,7 @@ public class ServerConnectEventListenerTest {
     private ServerConnectEvent mockEvent;
 
     @Mock
-    private ClientServer mockClientServer;
-
-    @Mock
-    private PteroAction<Void> mockPteroAction;
+    private PanelServer mockPanelServer;
 
     private ServerConnectEventListener listener;
     private CommonServer limboServer;
@@ -73,8 +69,6 @@ public class ServerConnectEventListenerTest {
         when(mockPlugin.getLogger()).thenReturn(mockLogger);
         
         // Mock ClientServer
-        when(mockClientServer.start()).thenReturn(mockPteroAction);
-        when(mockClientServer.stop()).thenReturn(mockPteroAction);
         
         // Mock getServers() pour retourner une map mutable
         doReturn(serversMap).when(mockPlugin).getServers();
@@ -124,7 +118,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testPlayerAddedToQueueOfflineServer() {
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockClientServer);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer);
         serversMap.put(targetServer, minecraftServer);
 
         CommonPlayer player = new MockCommonPlayer("QueuedPlayer");
@@ -168,7 +162,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testPlayerReceivesMessage() {
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockClientServer);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer);
         serversMap.put(targetServer, minecraftServer);
 
         CommonPlayer player = new MockCommonPlayer("MessagePlayer");
@@ -187,7 +181,7 @@ public class ServerConnectEventListenerTest {
      */
     @Test
     public void testMultiplePlayersInQueue() {
-        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockClientServer);
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer);
         serversMap.put(targetServer, minecraftServer);
 
         CommonPlayer player1 = new MockCommonPlayer("Player1");

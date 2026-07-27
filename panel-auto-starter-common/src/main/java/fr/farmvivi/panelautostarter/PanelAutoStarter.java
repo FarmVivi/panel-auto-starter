@@ -1,11 +1,12 @@
 package fr.farmvivi.panelautostarter;
 
-import com.mattmalec.pterodactyl4j.PteroBuilder;
-import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
-import com.mattmalec.pterodactyl4j.client.entities.PteroClient;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
+import fr.farmvivi.panelautostarter.panel.PanelClient;
+import fr.farmvivi.panelautostarter.panel.PanelClientFactory;
+import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.panel.PanelType;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
@@ -51,7 +52,7 @@ public final class PanelAutoStarter {
     private final HashMap<CommonServer, MinecraftServer> servers = new HashMap<>();
     private CommonProxy proxy;
     private Configuration config;
-    private PteroClient api;
+    private PanelClient panel;
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -81,7 +82,10 @@ public final class PanelAutoStarter {
             // Load config
             this.loadConfig();
 
-            this.api = PteroBuilder.createClient(config.getString("pterodactyl.url"), config.getString("pterodactyl.token"));
+            this.panel = PanelClientFactory.create(
+                    PanelType.PTERODACTYL,
+                    config.getString("pterodactyl.url"),
+                    config.getString("pterodactyl.token"));
 
             // Initialize servers
             this.initServers();
@@ -144,20 +148,20 @@ public final class PanelAutoStarter {
 
         for (CommonServer server : proxy.getServers()) {
             if (config.contains("servers." + server.getName())) {
-                // Retrieve server pterodactyl identifier from config file
-                String pterodactylServerId = config.getString("servers." + server.getName() + ".id");
+                // Retrieve server panel identifier from config file
+                String panelServerId = config.getString("servers." + server.getName() + ".id");
 
                 // Registering the server
-                this.getLogger().info("Registering " + server.getName() + " server with pterodactyl identifier " + pterodactylServerId);
+                this.getLogger().info("Registering " + server.getName() + " server with panel identifier " + panelServerId);
 
-                // Retrieve pterodactyl server
-                ClientServer pterodactylServer = this.api.retrieveServerByIdentifier(pterodactylServerId).execute();
+                // Retrieve panel server
+                PanelServer panelServer = this.panel.retrieveServer(panelServerId);
 
                 // Add server to the servers list
-                servers.put(server, new MinecraftServer(this, server, pterodactylServer));
+                servers.put(server, new MinecraftServer(this, server, panelServer));
 
                 // Server registered
-                this.getLogger().info("Registered " + server.getName() + " server with pterodactyl identifier " + pterodactylServerId);
+                this.getLogger().info("Registered " + server.getName() + " server with panel identifier " + panelServerId);
             }
         }
 
@@ -188,7 +192,7 @@ public final class PanelAutoStarter {
         return config;
     }
 
-    public PteroClient getApi() {
-        return api;
+    public PanelClient getPanel() {
+        return panel;
     }
 }
