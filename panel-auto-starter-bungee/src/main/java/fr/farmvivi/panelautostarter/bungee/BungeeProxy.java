@@ -54,8 +54,12 @@ public class BungeeProxy implements CommonProxy, EventListener {
 
     @Override
     public CommonServer[] getServers() {
-        // Retrieve all the servers data from BungeeCord
-        Map<String, ServerInfo> servers = proxyServer.getServersCopy();
+        // Retrieve all the servers data from BungeeCord.
+        // getServers() renvoie la map vivante du proxy : on en prend un instantane
+        // avant d'iterer, sinon un rechargement de configuration concurrent peut
+        // lever une ConcurrentModificationException. C'est la garantie qu'offrait
+        // getServersCopy(), specifique a Waterfall et donc abandonne avec lui.
+        Map<String, ServerInfo> servers = new HashMap<>(proxyServer.getServers());
         // For each server
         for (ServerInfo server : servers.values()) {
             // Retrieve the server name

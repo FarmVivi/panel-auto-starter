@@ -35,10 +35,10 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- Waterfall API -->
+        <!-- BungeeCord API -->
         <dependency>
-            <groupId>io.github.waterfallmc</groupId>
-            <artifactId>waterfall-api</artifactId>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-api</artifactId>
             <scope>provided</scope>
         </dependency>
 

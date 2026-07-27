@@ -12,7 +12,7 @@ Compatible **Pterodactyl** et **Pelican**.
 - Arrêt automatique des serveurs inactifs
 - Système de file d'attente pour gérer les connexions pendant le démarrage
 - Ping personnalisé (favicon et MOTD) reflétant l'état du serveur : hors-ligne, en démarrage
-- Compatible BungeeCord/Waterfall et Velocity
+- Compatible BungeeCord et Velocity
 
 ## Compatibilité
 
@@ -20,12 +20,12 @@ Compatible **Pterodactyl** et **Pelican**.
 |---|---|
 | Java | 21 ou supérieur |
 | Panel | Pterodactyl, Pelican |
-| Proxy | BungeeCord / Waterfall, Velocity 3.4+ |
+| Proxy | BungeeCord 1.21+, Velocity 4.0+ |
 
 ## Installation
 
 1. Téléchargez le plugin correspondant à votre proxy :
-   - `panel-auto-starter-bungee-<version>.jar` pour BungeeCord ou Waterfall
+   - `panel-auto-starter-bungee-<version>.jar` pour BungeeCord
    - `panel-auto-starter-velocity-<version>.jar` pour Velocity
 2. Placez le fichier `.jar` dans le dossier `plugins`
 3. Démarrez le proxy une première fois pour générer la configuration
@@ -74,7 +74,7 @@ Projet Maven multi-module :
 | Module | Rôle |
 |---|---|
 | `panel-auto-starter-common` | Logique métier, abstraction du panel, chargement de la configuration |
-| `panel-auto-starter-bungee` | Implémentation BungeeCord / Waterfall |
+| `panel-auto-starter-bungee` | Implémentation BungeeCord |
 | `panel-auto-starter-velocity` | Implémentation Velocity |
 
 ### Support des deux panels

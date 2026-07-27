@@ -33,13 +33,17 @@
         <sonar.skip>true</sonar.skip>
 
         <!-- Dependency versions -->
-        <adventure.version>4.26.1</adventure.version>
+        <adventure.version>5.2.0</adventure.version>
         <kyori.ansi.version>1.1.1</kyori.ansi.version>
+        <!-- bungeecord-api et bungeecord-config partagent la meme ligne de version -->
         <bungeecord.version>1.21-R0.4</bungeecord.version>
+        <!-- adventure-platform s'arrete a la ligne 4.x : PaperMC ne le maintient
+             plus et il n'existera pas de version pour Adventure 5. Il tourne sur
+             Adventure 5 grace aux ponts de compatibilite binaire retablis en
+             5.2.0 (BuildableComponent), qui disparaitront en Adventure 6. -->
         <adventure.platform.version>4.4.1</adventure.platform.version>
         <pterodactyl4j.version>2.BETA_142</pterodactyl4j.version>
-        <waterfall.version>1.21-R0.1-SNAPSHOT</waterfall.version>
-        <velocity.version>3.4.0</velocity.version>
+        <velocity.version>4.0.0</velocity.version>
         <junit.version>6.1.2</junit.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <mockito.version>5.23.0</mockito.version>
@@ -130,11 +134,15 @@
                 <scope>compile</scope>
             </dependency>
 
-            <!-- Waterfall API -->
+            <!-- BungeeCord API : remplace waterfall-api, dont le projet est EOL
+                 depuis mars 2024. Le module n'utilisait aucune API specifique a
+                 Waterfall, uniquement du net.md_5.bungee.* standard. Au passage
+                 on quitte un SNAPSHOT pour une release, ce qui rend le build
+                 reproductible. -->
             <dependency>
-                <groupId>io.github.waterfallmc</groupId>
-                <artifactId>waterfall-api</artifactId>
-                <version>${waterfall.version}</version>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>${bungeecord.version}</version>
                 <scope>provided</scope>
             </dependency>
 
