@@ -34,14 +34,8 @@
 
         <!-- Dependency versions -->
         <adventure.version>5.2.0</adventure.version>
-        <kyori.ansi.version>1.1.1</kyori.ansi.version>
         <!-- bungeecord-api et bungeecord-config partagent la meme ligne de version -->
         <bungeecord.version>1.21-R0.4</bungeecord.version>
-        <!-- adventure-platform s'arrete a la ligne 4.x : PaperMC ne le maintient
-             plus et il n'existera pas de version pour Adventure 5. Il tourne sur
-             Adventure 5 grace aux ponts de compatibilite binaire retablis en
-             5.2.0 (BuildableComponent), qui disparaitront en Adventure 6. -->
-        <adventure.platform.version>4.4.1</adventure.platform.version>
         <pterodactyl4j.version>2.BETA_142</pterodactyl4j.version>
         <velocity.version>4.0.0</velocity.version>
         <junit.version>6.1.2</junit.version>
@@ -99,22 +93,6 @@
                 <groupId>net.kyori</groupId>
                 <artifactId>adventure-text-serializer-legacy</artifactId>
                 <version>${adventure.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <!-- Adventure Platform BungeeCord -->
-            <dependency>
-                <groupId>net.kyori</groupId>
-                <artifactId>adventure-platform-bungeecord</artifactId>
-                <version>${adventure.platform.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <!-- ANSI -->
-            <dependency>
-                <groupId>net.kyori</groupId>
-                <artifactId>ansi</artifactId>
-                <version>${kyori.ansi.version}</version>
                 <scope>compile</scope>
             </dependency>
 

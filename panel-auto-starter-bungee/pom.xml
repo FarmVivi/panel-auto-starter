@@ -28,13 +28,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- Adventure Platform BungeeCord -->
-        <dependency>
-            <groupId>net.kyori</groupId>
-            <artifactId>adventure-platform-bungeecord</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- BungeeCord API -->
         <dependency>
             <groupId>net.md-5</groupId>
@@ -42,12 +35,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
