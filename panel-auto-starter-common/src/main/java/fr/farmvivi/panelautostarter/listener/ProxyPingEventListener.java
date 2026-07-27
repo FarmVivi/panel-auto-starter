@@ -9,6 +9,8 @@ import fr.farmvivi.panelautostarter.common.event.ProxyPingEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 import fr.farmvivi.panelautostarter.common.ping.CommonFavicon;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
+import fr.farmvivi.panelautostarter.motd.BundledFavicons;
+import fr.farmvivi.panelautostarter.motd.MotdSettings;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -21,17 +23,27 @@ import java.util.TreeMap;
 /**
  * Adapte la réponse au ping des serveurs gérés.
  * <p>
- * Le plugin n'embarque plus aucun favicon : chaque serveur réutilise le sien,
- * conservé lors de son dernier passage en ligne et décoré d'une pastille d'état.
- * Une icône générique écraserait l'identité visuelle du serveur, et un serveur
- * jamais vu en ligne est simplement laissé tel que le proxy le présente.
+ * Chaque champ de la réponse — description, icône, compteurs, survol, étiquette
+ * de version — se règle indépendamment dans {@code config.yml}, et séparément
+ * pour l'état hors-ligne et l'état démarrage. Cette classe applique ces
+ * réglages ; elle ne décide de rien par elle-même.
  */
 public class ProxyPingEventListener extends EventAdapter {
     private final PanelAutoStarter plugin;
     private final Map<String, CommonServer> forcedHosts;
+    private final MotdSettings settings;
+    private final BundledFavicons bundledFavicons;
 
     public ProxyPingEventListener(PanelAutoStarter plugin) {
+        this(plugin, plugin.getMotdSettings(),
+                new BundledFavicons(plugin::getResourceAsStream, plugin.getProxy(),
+                        message -> plugin.getLogger().warning(message)));
+    }
+
+    ProxyPingEventListener(PanelAutoStarter plugin, MotdSettings settings, BundledFavicons bundledFavicons) {
         this.plugin = plugin;
+        this.settings = settings;
+        this.bundledFavicons = bundledFavicons;
         this.forcedHosts = new TreeMap<>();
         for (Map.Entry<String, String> entry : plugin.getProxy().getForcedHosts().entrySet()) {
             forcedHosts.put(entry.getKey(), plugin.getProxy().getServer(entry.getValue()));
@@ -44,12 +56,12 @@ public class ProxyPingEventListener extends EventAdapter {
         if (!isValidHost(host)) {
             return;
         }
-        
+
         CommonServer commonServer = forcedHosts.get(host);
         if (!plugin.getServers().containsKey(commonServer)) {
             return;
         }
-        
+
         CommonServerPing response = event.getResponse();
         MinecraftServer server = plugin.getServers().get(commonServer);
 
@@ -57,10 +69,11 @@ public class ProxyPingEventListener extends EventAdapter {
         // rapprochee meme s'il est eteint.
         server.notifyWatched();
 
-        switch (server.getStatus()) {
-            case ONLINE -> handleOnlineServer(response, server);
-            case OFFLINE -> handleOfflineServer(response, server);
-            case STARTING -> handleStartingServer(response, server);
+        MinecraftServerStatus status = server.getStatus();
+        if (status == MinecraftServerStatus.ONLINE) {
+            handleOnlineServer(response, server);
+        } else {
+            handleUnavailableServer(response, server, status);
         }
 
         event.setResponse(response);
@@ -76,9 +89,7 @@ public class ProxyPingEventListener extends EventAdapter {
      * Cela rend inutile le {@code ping-passthrough} de Velocity, qui ne peut pas
      * distinguer l'adresse du proxy d'un forced host : regle sur {@code "all"} il
      * fait remonter le MOTD du premier serveur de la liste {@code try} y compris
-     * quand on ping le proxy lui-meme. En servant le backend ici, le proxy peut
-     * repasser en {@code ping-passthrough = "disabled"} et garder son propre MOTD
-     * sur son adresse principale.
+     * quand on ping le proxy lui-meme.
      * <p>
      * La donnee vient du cache du plugin, deja alimente par la surveillance : ce
      * chemin ne declenche donc aucun appel reseau bloquant.
@@ -108,54 +119,112 @@ public class ProxyPingEventListener extends EventAdapter {
     }
 
     /**
-     * Serveur hors-ligne : on ressort son MOTD conservé, en désaturant son
-     * favicon et en y ajoutant une pastille d'arrêt.
-     * <p>
-     * La version de protocole n'est plus forcée à -1 comme le faisait la 2.x.
-     * Ce détournement affichait un texte rouge <em>à la place</em> du compteur
-     * de joueurs : les deux occupent le même emplacement, et on veut désormais
-     * afficher « 0 joueur ». L'explication passe donc par le survol.
+     * Serveur hors-ligne ou en démarrage : chaque champ suit son réglage.
      */
-    private void handleOfflineServer(CommonServerPing response, MinecraftServer server) {
+    private void handleUnavailableServer(CommonServerPing response, MinecraftServer server,
+                                         MinecraftServerStatus status) {
+        MotdSettings.State state = settings.forStatus(status);
         ServerMotd motd = server.getMotd();
-        if (motd.isEmpty()) {
-            // Serveur jamais vu en ligne : rien de pertinent a afficher, on
-            // laisse le proxy se presenter comme il l'entend.
-            return;
-        }
 
-        applyCachedMotd(response, motd, MinecraftServerStatus.OFFLINE);
-        response.setOnlinePlayers(0);
-        response.setMaxPlayers(0);
-        response.setSamplePlayers(buildOfflineHover(server.getServer()));
+        applyDescription(response, state, motd, server.getServer(), status);
+        applyFavicon(response, state, motd, status);
+        applyPlayerCounts(response, state, motd, server);
+        applyHover(response, state, server, status);
+        applyVersionLabel(response, state, status);
     }
 
-    /**
-     * Serveur en démarrage : même MOTD conservé, pastille ambre, et la file
-     * d'attente listée au survol.
-     */
-    private void handleStartingServer(CommonServerPing response, MinecraftServer server) {
-        ServerMotd motd = server.getMotd();
-        if (motd.isEmpty()) {
-            return;
+    private void applyDescription(CommonServerPing response, MotdSettings.State state, ServerMotd motd,
+                                  CommonServer commonServer, MinecraftServerStatus status) {
+        switch (state.description()) {
+            case CACHED -> {
+                Component cached = motd.getDescription();
+                if (cached != null) {
+                    response.setDescriptionComponent(cached);
+                }
+            }
+            case PLUGIN -> response.setDescriptionComponent(buildDescription(commonServer, status));
+            case PROXY -> {
+                // Rien : la reponse du proxy est conservee.
+            }
         }
-
-        applyCachedMotd(response, motd, MinecraftServerStatus.STARTING);
-        response.setOnlinePlayers(0);
-        response.setMaxPlayers(0);
-        response.setSamplePlayers(buildStartingHover(server));
     }
 
-    private void applyCachedMotd(CommonServerPing response, ServerMotd motd, MinecraftServerStatus status) {
-        Component description = motd.getDescription();
-        if (description != null) {
-            response.setDescriptionComponent(description);
-        }
-
-        CommonFavicon favicon = motd.getFavicon(status);
+    private void applyFavicon(CommonServerPing response, MotdSettings.State state, ServerMotd motd,
+                              MinecraftServerStatus status) {
+        CommonFavicon favicon = switch (state.favicon()) {
+            case CACHED -> motd.getFavicon(status);
+            case BUNDLED -> bundledFavicons.get(status);
+            case PROXY -> null;
+        };
         if (favicon != null) {
             response.setFavicon(favicon);
         }
+    }
+
+    private void applyPlayerCounts(CommonServerPing response, MotdSettings.State state, ServerMotd motd,
+                                   MinecraftServer server) {
+        switch (state.players()) {
+            case ZERO -> response.setOnlinePlayers(0);
+            case QUEUE -> response.setOnlinePlayers(server.getQueue().size());
+            case PROXY -> {
+                // Rien.
+            }
+        }
+        switch (state.maxPlayers()) {
+            case ZERO -> response.setMaxPlayers(0);
+            case CACHED -> response.setMaxPlayers(motd.getMaxPlayers());
+            case PROXY -> {
+                // Rien.
+            }
+        }
+    }
+
+    private void applyHover(CommonServerPing response, MotdSettings.State state, MinecraftServer server,
+                            MinecraftServerStatus status) {
+        switch (state.hover()) {
+            case PLUGIN -> response.setSamplePlayers(buildHover(server, status));
+            case NONE -> response.setSamplePlayers(new LinkedList<>());
+            case PROXY -> {
+                // Rien.
+            }
+        }
+    }
+
+    /**
+     * L'étiquette de version remplace le compteur de joueurs côté client : une
+     * version de protocole volontairement invalide fait afficher son libellé en
+     * rouge, à l'emplacement du compteur.
+     */
+    private void applyVersionLabel(CommonServerPing response, MotdSettings.State state,
+                                   MinecraftServerStatus status) {
+        if (state.versionLabel() != MotdSettings.VersionLabel.TEXT) {
+            return;
+        }
+        response.setProtocolVersion(-1);
+        response.setProtocolName(status == MinecraftServerStatus.OFFLINE
+                ? Component.text("Hors-ligne").color(NamedTextColor.RED)
+                : Component.text("Démarrage...").color(NamedTextColor.GOLD));
+    }
+
+    private Component buildDescription(CommonServer commonServer, MinecraftServerStatus status) {
+        if (status == MinecraftServerStatus.OFFLINE) {
+            return Component.text("Serveur ")
+                    .append(Component.text(commonServer.getDisplayName()).color(NamedTextColor.YELLOW))
+                    .append(Component.text(" hors-ligne").color(NamedTextColor.RED))
+                    .appendNewline()
+                    .append(Component.text("Connectez-vous pour le démarrer !").color(NamedTextColor.GRAY));
+        }
+        return Component.text("Serveur ")
+                .append(Component.text(commonServer.getDisplayName()).color(NamedTextColor.YELLOW))
+                .append(Component.text(" en démarrage...").color(NamedTextColor.GOLD))
+                .appendNewline()
+                .append(Component.text("Connectez-vous pour rejoindre la file d'attente !").color(NamedTextColor.GRAY));
+    }
+
+    private List<Component> buildHover(MinecraftServer server, MinecraftServerStatus status) {
+        return status == MinecraftServerStatus.OFFLINE
+                ? buildOfflineHover(server.getServer())
+                : buildStartingHover(server);
     }
 
     private List<Component> buildOfflineHover(CommonServer commonServer) {

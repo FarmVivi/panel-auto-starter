@@ -46,7 +46,7 @@ public class MotdStoreTest {
                 .appendNewline()
                 .append(Component.text("Entre potes", TextColor.color(0xFFD166)));
 
-        store().save("lobby", new CachedMotd(description, null));
+        store().save("lobby", new CachedMotd(description, null, 0));
         CachedMotd loaded = store().load("lobby");
 
         assertEquals(description, loaded.description(),
@@ -57,15 +57,15 @@ public class MotdStoreTest {
     public void testFaviconRoundTrips() throws IOException {
         byte[] png = {(byte) 0x89, 'P', 'N', 'G', 1, 2, 3};
 
-        store().save("lobby", new CachedMotd(null, png));
+        store().save("lobby", new CachedMotd(null, png, 0));
 
         assertArrayEquals(png, store().load("lobby").faviconPng());
     }
 
     @Test
     public void testWritesOneFilePairPerServer() throws IOException {
-        store().save("lobby", new CachedMotd(Component.text("A"), new byte[]{1}));
-        store().save("survie", new CachedMotd(Component.text("B"), new byte[]{2}));
+        store().save("lobby", new CachedMotd(Component.text("A"), new byte[]{1}, 0));
+        store().save("survie", new CachedMotd(Component.text("B"), new byte[]{2}, 0));
 
         assertTrue(Files.exists(cacheFile("lobby.json")));
         assertTrue(Files.exists(cacheFile("lobby.png")));
@@ -101,7 +101,7 @@ public class MotdStoreTest {
 
     @Test
     public void testSavingOnlyDescriptionKeepsFaviconAbsent() throws IOException {
-        store().save("lobby", new CachedMotd(Component.text("Coucou"), null));
+        store().save("lobby", new CachedMotd(Component.text("Coucou"), null, 0));
 
         assertFalse(Files.exists(cacheFile("lobby.png")));
         assertNull(store().load("lobby").faviconPng());
@@ -111,7 +111,7 @@ public class MotdStoreTest {
     public void testCacheDirectoryIsCreatedOnDemand() throws IOException {
         assertFalse(Files.exists(dataFolder.resolve("cache")));
 
-        store().save("lobby", new CachedMotd(Component.text("Coucou"), null));
+        store().save("lobby", new CachedMotd(Component.text("Coucou"), null, 0));
 
         assertTrue(Files.isDirectory(dataFolder.resolve("cache")));
     }
@@ -125,7 +125,7 @@ public class MotdStoreTest {
      */
     @Test
     public void testServerNameCannotEscapeCacheDirectory() throws IOException {
-        store().save("../../evil", new CachedMotd(Component.text("x"), null));
+        store().save("../../evil", new CachedMotd(Component.text("x"), null, 0));
 
         try (var files = Files.walk(dataFolder)) {
             assertTrue(files.filter(Files::isRegularFile)
@@ -147,8 +147,8 @@ public class MotdStoreTest {
     public void testDistinctNamesDoNotCollideAfterSanitizing() throws IOException {
         // Deux noms differents restent distincts tant qu'ils ne different pas
         // uniquement par des caracteres remplaces.
-        store().save("lobby-1", new CachedMotd(Component.text("un"), null));
-        store().save("lobby.2", new CachedMotd(Component.text("deux"), null));
+        store().save("lobby-1", new CachedMotd(Component.text("un"), null, 0));
+        store().save("lobby.2", new CachedMotd(Component.text("deux"), null, 0));
 
         assertEquals(Component.text("un"), store().load("lobby-1").description());
         assertEquals(Component.text("deux"), store().load("lobby.2").description());
@@ -156,7 +156,7 @@ public class MotdStoreTest {
 
     @Test
     public void testStoreUsesCacheSubfolderOfDataFolder() throws IOException {
-        store().save("lobby", new CachedMotd(Component.text("x"), null));
+        store().save("lobby", new CachedMotd(Component.text("x"), null, 0));
 
         assertTrue(Files.exists(new File(dataFolder.toFile(), "cache/lobby.json").toPath()),
                 "Le cache doit vivre dans <dossier du plugin>/cache/");

@@ -145,5 +145,48 @@ public class FaviconRendererTest {
     public void testNullSourceYieldsNull() {
         assertNull(FaviconRenderer.offline(null));
         assertNull(FaviconRenderer.starting(null));
+        assertNull(FaviconRenderer.render(null, true, FaviconRenderer.Badge.STOP));
+    }
+
+    // ===================== Décorations indépendantes =====================
+
+    /**
+     * Les deux décorations se règlent séparément dans la configuration : il doit
+     * être possible de désaturer sans poser de pastille.
+     */
+    @Test
+    public void testGrayscaleWithoutBadge() {
+        BufferedImage rendered = FaviconRenderer.render(solid(new Color(0xE0, 0x20, 0x20)), true, null);
+
+        int artwork = rendered.getRGB(ARTWORK_X, ARTWORK_X);
+        assertEquals(red(artwork), blue(artwork), "L'image doit etre desaturee");
+
+        int badgeArea = rendered.getRGB(BADGE_EDGE_X, BADGE_CENTER);
+        assertEquals(red(badgeArea), blue(badgeArea), "Aucune pastille ne doit etre dessinee");
+    }
+
+    @Test
+    public void testBadgeWithoutGrayscale() {
+        BufferedImage rendered = FaviconRenderer.render(solid(new Color(0x20, 0x40, 0xE0)), false,
+                FaviconRenderer.Badge.STOP);
+
+        int artwork = rendered.getRGB(ARTWORK_X, ARTWORK_X);
+        assertTrue(blue(artwork) > red(artwork), "Les couleurs doivent etre conservees");
+
+        int badge = rendered.getRGB(BADGE_EDGE_X, BADGE_CENTER);
+        assertTrue(red(badge) > 150 && blue(badge) < 110, "La pastille doit etre dessinee");
+    }
+
+    @Test
+    public void testNoDecorationLeavesArtworkAsIs() {
+        Color source = new Color(0x20, 0x40, 0xE0);
+        BufferedImage rendered = FaviconRenderer.render(solid(source), false, null);
+
+        int artwork = rendered.getRGB(ARTWORK_X, ARTWORK_X);
+        int badgeArea = rendered.getRGB(BADGE_EDGE_X, BADGE_CENTER);
+
+        assertEquals(source.getRed(), red(artwork));
+        assertEquals(source.getBlue(), blue(artwork));
+        assertEquals(artwork, badgeArea, "Sans decoration, toute l'image est uniforme");
     }
 }

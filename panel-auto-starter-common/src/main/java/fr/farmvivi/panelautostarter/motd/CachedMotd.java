@@ -3,18 +3,20 @@ package fr.farmvivi.panelautostarter.motd;
 import net.kyori.adventure.text.Component;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * MOTD d'un serveur tel qu'il était la dernière fois qu'il a été vu en ligne.
  *
- * @param description  la description affichée, ou null si jamais observée
- * @param faviconPng   les octets PNG du favicon, ou null si jamais observé
+ * @param description la description affichée, ou null si jamais observée
+ * @param faviconPng  les octets PNG du favicon, ou null si jamais observé
+ * @param maxPlayers  le nombre maximum de joueurs annoncé, ou 0 si inconnu
  */
-public record CachedMotd(Component description, byte[] faviconPng) {
+public record CachedMotd(Component description, byte[] faviconPng, int maxPlayers) {
     /**
      * Un MOTD vide, pour un serveur jamais vu en ligne.
      */
-    public static final CachedMotd EMPTY = new CachedMotd(null, null);
+    public static final CachedMotd EMPTY = new CachedMotd(null, null, 0);
 
     /**
      * Indique si rien n'a encore été observé pour ce serveur.
@@ -33,18 +35,20 @@ public record CachedMotd(Component description, byte[] faviconPng) {
         if (!(o instanceof CachedMotd other)) {
             return false;
         }
-        return java.util.Objects.equals(description, other.description)
+        return maxPlayers == other.maxPlayers
+                && Objects.equals(description, other.description)
                 && Arrays.equals(faviconPng, other.faviconPng);
     }
 
     @Override
     public int hashCode() {
-        return 31 * java.util.Objects.hashCode(description) + Arrays.hashCode(faviconPng);
+        return 31 * (31 * Objects.hashCode(description) + Arrays.hashCode(faviconPng)) + maxPlayers;
     }
 
     @Override
     public String toString() {
         return "CachedMotd[description=" + description
-                + ", faviconPng=" + (faviconPng == null ? "null" : faviconPng.length + " octets") + "]";
+                + ", faviconPng=" + (faviconPng == null ? "null" : faviconPng.length + " octets")
+                + ", maxPlayers=" + maxPlayers + "]";
     }
 }

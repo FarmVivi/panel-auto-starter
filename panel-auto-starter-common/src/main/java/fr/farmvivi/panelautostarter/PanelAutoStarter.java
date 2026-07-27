@@ -7,6 +7,7 @@ import fr.farmvivi.panelautostarter.panel.PanelClient;
 import fr.farmvivi.panelautostarter.panel.PanelClientFactory;
 import fr.farmvivi.panelautostarter.panel.PanelConfig;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.motd.MotdSettings;
 import fr.farmvivi.panelautostarter.motd.MotdStore;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
@@ -56,6 +57,7 @@ public final class PanelAutoStarter {
     private Configuration config;
     private PanelClient panel;
     private MotdStore motdStore;
+    private MotdSettings motdSettings;
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -87,6 +89,14 @@ public final class PanelAutoStarter {
 
             // MOTD cache, kept on disk so it survives a proxy restart
             this.motdStore = new MotdStore(this.plugin.getDataFolder());
+
+            // MOTD display settings. An unknown value falls back to its default
+            // rather than preventing the plugin from starting: a cosmetic typo
+            // must not cost players their servers.
+            this.motdSettings = MotdSettings.from(config);
+            for (String warning : this.motdSettings.getWarnings()) {
+                this.getLogger().warning(warning);
+            }
 
             // Connect to the panel
             PanelConfig panelConfig = PanelConfig.from(config);
@@ -170,7 +180,7 @@ public final class PanelAutoStarter {
                 PanelServer panelServer = this.panel.retrieveServer(panelServerId);
 
                 // Add server to the servers list
-                ServerMotd motd = new ServerMotd(motdStore, server.getName(), proxy,
+                ServerMotd motd = new ServerMotd(motdStore, server.getName(), proxy, motdSettings,
                         message -> this.getLogger().warning(message));
                 servers.put(server, new MinecraftServer(this, server, panelServer, motd));
 
@@ -208,5 +218,14 @@ public final class PanelAutoStarter {
 
     public PanelClient getPanel() {
         return panel;
+    }
+
+    /**
+     * Retourne les réglages d'affichage du MOTD.
+     *
+     * @return les réglages, jamais null une fois le plugin activé
+     */
+    public MotdSettings getMotdSettings() {
+        return motdSettings;
     }
 }

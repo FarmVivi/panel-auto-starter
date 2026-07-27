@@ -41,15 +41,17 @@ public class ServerMotdTest {
     private CommonFavicon renderedFavicon;
 
     private List<String> warnings;
+    private MotdSettings settings;
     private ServerMotd motd;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         warnings = new ArrayList<>();
+        settings = MotdSettings.defaults();
         when(store.load(SERVER)).thenReturn(CachedMotd.EMPTY);
         when(proxy.createFavicon(any())).thenReturn(renderedFavicon);
-        motd = new ServerMotd(store, SERVER, proxy, warnings::add);
+        motd = new ServerMotd(store, SERVER, proxy, settings, warnings::add);
     }
 
     /** Construit un ping en ligne portant une description et un favicon valides. */
@@ -208,9 +210,9 @@ public class ServerMotdTest {
 
     @Test
     public void testStoredMotdIsLoadedOnStartup() {
-        when(store.load("autre")).thenReturn(new CachedMotd(Component.text("Depuis le disque"), null));
+        when(store.load("autre")).thenReturn(new CachedMotd(Component.text("Depuis le disque"), null, 0));
 
-        ServerMotd reloaded = new ServerMotd(store, "autre", proxy, warnings::add);
+        ServerMotd reloaded = new ServerMotd(store, "autre", proxy, settings, warnings::add);
 
         assertEquals(Component.text("Depuis le disque"), reloaded.getDescription(),
                 "Le MOTD doit etre disponible des le demarrage, sans attendre une mise en ligne");

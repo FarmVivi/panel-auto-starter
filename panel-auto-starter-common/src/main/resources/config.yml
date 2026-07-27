@@ -38,6 +38,66 @@ server-start:
   # Délai entre chaque téléportation de joueur (en secondes) pour éviter les overloads
   teleport-delay: 1
 
+# Affichage dans la liste des serveurs quand un serveur géré n'est pas en ligne.
+#
+# Chaque champ se règle séparément, et séparément pour l'état hors-ligne et
+# l'état démarrage. Une valeur inconnue n'empêche pas le plugin de démarrer :
+# le défaut s'applique et un avertissement est écrit dans la console.
+#
+# Valeurs possibles
+#   description   cached  le MOTD du serveur, mémorisé quand il était en ligne
+#                 plugin  un texte généré par le plugin annonçant l'état
+#                 proxy   ne rien changer à la réponse du proxy
+#   favicon       cached  l'icône du serveur, mémorisée puis décorée ci-dessous
+#                 bundled l'icône générique livrée avec le plugin
+#                 proxy   ne rien changer
+#   players       zero    0 joueur connecté
+#                 queue   le nombre de joueurs en file d'attente
+#                 proxy   ne rien changer
+#   max-players   zero    0, ce qui affiche « 0/0 »
+#                 cached  le maximum mémorisé, ce qui affiche « 0/20 »
+#                 proxy   ne rien changer
+#   hover         plugin  une explication, et la file d'attente s'il y en a une
+#                 none    rien
+#                 proxy   ne rien changer
+#   version-label none    aucune étiquette, le compteur de joueurs reste visible
+#                 text    « Hors-ligne » en rouge À LA PLACE du compteur
+#
+# À savoir : version-label et le compteur de joueurs occupent le même
+# emplacement côté client. Mettre version-label à « text » rend donc les
+# réglages players et max-players invisibles. C'était le comportement de la 2.x.
+#
+# favicon-grayscale et favicon-badge ne s'appliquent qu'à « favicon: cached ».
+# Les icônes livrées portent déjà leur propre indicateur.
+#
+# Quelques combinaisons utiles
+#   Défaut ci-dessous       l'identité du serveur est conservée, l'état se lit
+#                           sur l'icône et au survol
+#   Comme en 2.x            description: plugin, favicon: bundled,
+#                           version-label: text
+#   Discret                 favicon-badge: false, favicon-grayscale: true
+#   Ne rien changer         tout sur « proxy », version-label: none
+motd:
+  offline:
+    description: cached
+    favicon: cached
+    favicon-grayscale: true
+    favicon-badge: true
+    players: zero
+    max-players: zero
+    hover: plugin
+    version-label: none
+
+  starting:
+    description: cached
+    favicon: cached
+    favicon-grayscale: false
+    favicon-badge: true
+    players: zero
+    max-players: zero
+    hover: plugin
+    version-label: none
+
 queue:
   server: lobby
 

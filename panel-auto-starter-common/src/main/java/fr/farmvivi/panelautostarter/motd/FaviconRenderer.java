@@ -37,53 +37,75 @@ public final class FaviconRenderer {
     private static final int BADGE_DIAMETER = 26;
     private static final int BADGE_MARGIN = 3;
 
+    /**
+     * Pastille superposée au favicon.
+     */
+    public enum Badge {
+        /** Rond rouge portant un carré blanc : serveur arrêté. */
+        STOP,
+        /** Rond ambre portant un chevron blanc : serveur en démarrage. */
+        START
+    }
+
     private FaviconRenderer() {
     }
 
     /**
-     * Rendu d'un serveur hors-ligne : favicon désaturé, surmonté d'une pastille
-     * rouge portant un carré blanc (symbole d'arrêt).
+     * Décore un favicon selon les options demandées.
+     * <p>
+     * Les deux décorations sont indépendantes : on peut désaturer sans pastille,
+     * poser une pastille sans désaturer, les deux, ou aucune — auquel cas seule
+     * la normalisation en 64x64 est appliquée.
+     *
+     * @param source    le favicon du serveur
+     * @param grayscale désature l'image
+     * @param badge     la pastille à superposer, ou null pour aucune
+     * @return une nouvelle image, ou null si la source est absente
+     */
+    public static BufferedImage render(BufferedImage source, boolean grayscale, Badge badge) {
+        if (source == null) {
+            return null;
+        }
+        BufferedImage canvas = normalize(source);
+        if (grayscale) {
+            canvas = desaturate(canvas);
+        }
+        if (badge != null) {
+            Graphics2D g = canvas.createGraphics();
+            try {
+                applyQuality(g);
+                drawBadgeCircle(g, badge == Badge.STOP ? OFFLINE_BADGE : STARTING_BADGE);
+                if (badge == Badge.STOP) {
+                    drawStopSymbol(g);
+                } else {
+                    drawChevronSymbol(g);
+                }
+            } finally {
+                g.dispose();
+            }
+        }
+        return canvas;
+    }
+
+    /**
+     * Rendu par défaut d'un serveur hors-ligne : désaturé, pastille d'arrêt.
      *
      * @param source le favicon du serveur
      * @return une nouvelle image, ou null si la source est absente
      */
     public static BufferedImage offline(BufferedImage source) {
-        if (source == null) {
-            return null;
-        }
-        BufferedImage canvas = desaturate(normalize(source));
-        Graphics2D g = canvas.createGraphics();
-        try {
-            applyQuality(g);
-            drawBadgeCircle(g, OFFLINE_BADGE);
-            drawStopSymbol(g);
-        } finally {
-            g.dispose();
-        }
-        return canvas;
+        return render(source, true, Badge.STOP);
     }
 
     /**
-     * Rendu d'un serveur en cours de démarrage : favicon inchangé, surmonté
-     * d'une pastille ambre portant un chevron blanc.
+     * Rendu par défaut d'un serveur en démarrage : couleurs conservées,
+     * pastille de démarrage.
      *
      * @param source le favicon du serveur
      * @return une nouvelle image, ou null si la source est absente
      */
     public static BufferedImage starting(BufferedImage source) {
-        if (source == null) {
-            return null;
-        }
-        BufferedImage canvas = normalize(source);
-        Graphics2D g = canvas.createGraphics();
-        try {
-            applyQuality(g);
-            drawBadgeCircle(g, STARTING_BADGE);
-            drawChevronSymbol(g);
-        } finally {
-            g.dispose();
-        }
-        return canvas;
+        return render(source, false, Badge.START);
     }
 
     /**

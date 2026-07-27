@@ -15,24 +15,28 @@ import java.util.function.Consumer;
  * MOTD d'un serveur : ce qu'il affichait en ligne, réutilisé quand il ne l'est
  * plus.
  * <p>
- * Le rendu décoré du favicon (désaturation, pastille d'état) est mémoïsé. Le
- * recalculer en Java2D à chaque ping client serait du gaspillage pur : il ne
- * change que lorsque le serveur revient en ligne avec un favicon différent.
+ * Le favicon décoré est mémoïsé par état. Le recalculer en Java2D à chaque ping
+ * client serait du gaspillage : il ne change que lorsque le serveur revient en
+ * ligne avec un favicon différent. Les réglages étant figés au démarrage, l'état
+ * suffit comme clé de mémoïsation.
  */
 public class ServerMotd {
     private final MotdStore store;
     private final String serverName;
     private final CommonProxy proxy;
+    private final MotdSettings settings;
     private final Consumer<String> warningLogger;
 
     private volatile CachedMotd cached;
     private volatile CommonFavicon offlineFavicon;
     private volatile CommonFavicon startingFavicon;
 
-    public ServerMotd(MotdStore store, String serverName, CommonProxy proxy, Consumer<String> warningLogger) {
+    public ServerMotd(MotdStore store, String serverName, CommonProxy proxy,
+                      MotdSettings settings, Consumer<String> warningLogger) {
         this.store = store;
         this.serverName = serverName;
         this.proxy = proxy;
+        this.settings = settings;
         this.warningLogger = warningLogger;
         this.cached = store.load(serverName);
     }
@@ -54,20 +58,25 @@ public class ServerMotd {
         Component description = onlinePing.getDescriptionComponent();
         CommonFavicon favicon = onlinePing.getFavicon();
         byte[] faviconPng = favicon == null ? null : Favicons.decodeToPng(favicon.getEncoded());
+        int maxPlayers = onlinePing.getMaxPlayers();
 
-        // On conserve ce qu'on avait si le serveur ne fournit pas l'un des deux.
+        // On conserve ce qu'on avait quand le serveur ne fournit pas l'information.
         CachedMotd candidate = new CachedMotd(
                 description != null ? description : cached.description(),
-                faviconPng != null ? faviconPng : cached.faviconPng());
+                faviconPng != null ? faviconPng : cached.faviconPng(),
+                maxPlayers > 0 ? maxPlayers : cached.maxPlayers());
 
         if (candidate.equals(cached)) {
             return;
         }
 
+        boolean faviconChanged = !java.util.Arrays.equals(candidate.faviconPng(), cached.faviconPng());
         this.cached = candidate;
-        // Le favicon a potentiellement change : les rendus memoises sont perimes.
-        this.offlineFavicon = null;
-        this.startingFavicon = null;
+        if (faviconChanged) {
+            // Les rendus memoises portaient sur l'ancienne image.
+            this.offlineFavicon = null;
+            this.startingFavicon = null;
+        }
 
         try {
             store.save(serverName, candidate);
@@ -89,6 +98,15 @@ public class ServerMotd {
     }
 
     /**
+     * Retourne le nombre maximum de joueurs conservé.
+     *
+     * @return le maximum, ou 0 si inconnu
+     */
+    public int getMaxPlayers() {
+        return cached.maxPlayers();
+    }
+
+    /**
      * Indique si un MOTD a déjà été observé pour ce serveur.
      *
      * @return true si rien n'est disponible
@@ -98,43 +116,48 @@ public class ServerMotd {
     }
 
     /**
-     * Retourne le favicon décoré correspondant à l'état du serveur.
+     * Retourne le favicon conservé, décoré selon les réglages de l'état.
      *
      * @param status l'état du serveur
-     * @return le favicon, ou null si aucun n'a été observé ou si le rendu échoue
+     * @return le favicon, ou null si aucun n'est disponible ou si les réglages
+     *         n'appellent pas le favicon conservé
      */
     public CommonFavicon getFavicon(MinecraftServerStatus status) {
-        return switch (status) {
-            case OFFLINE -> offlineFavicon();
-            case STARTING -> startingFavicon();
-            case ONLINE -> null;
-        };
-    }
-
-    private CommonFavicon offlineFavicon() {
-        CommonFavicon memoized = offlineFavicon;
-        if (memoized == null) {
-            memoized = render(FaviconRenderer::offline);
-            offlineFavicon = memoized;
+        MotdSettings.State state = settings.forStatus(status);
+        if (state == null || state.favicon() != MotdSettings.Favicon.CACHED) {
+            return null;
         }
-        return memoized;
-    }
 
-    private CommonFavicon startingFavicon() {
+        if (status == MinecraftServerStatus.OFFLINE) {
+            CommonFavicon memoized = offlineFavicon;
+            if (memoized == null) {
+                memoized = render(state, FaviconRenderer.Badge.STOP);
+                offlineFavicon = memoized;
+            }
+            return memoized;
+        }
+
         CommonFavicon memoized = startingFavicon;
         if (memoized == null) {
-            memoized = render(FaviconRenderer::starting);
+            memoized = render(state, FaviconRenderer.Badge.START);
             startingFavicon = memoized;
         }
         return memoized;
     }
 
-    private CommonFavicon render(java.util.function.UnaryOperator<BufferedImage> decorator) {
+    /**
+     * @param state le réglage de l'état concerné
+     * @param badge la pastille propre à cet état, appliquée seulement si les
+     *              réglages la demandent
+     */
+    private CommonFavicon render(MotdSettings.State state, FaviconRenderer.Badge badge) {
         BufferedImage source = Favicons.read(cached.faviconPng());
         if (source == null) {
             return null;
         }
-        BufferedImage decorated = decorator.apply(source);
+
+        BufferedImage decorated = FaviconRenderer.render(source, state.faviconGrayscale(),
+                state.faviconBadge() ? badge : null);
         if (decorated == null) {
             return null;
         }

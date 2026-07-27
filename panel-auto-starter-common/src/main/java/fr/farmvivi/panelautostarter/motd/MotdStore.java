@@ -1,5 +1,8 @@
 package fr.farmvivi.panelautostarter.motd;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
@@ -29,6 +32,8 @@ public class MotdStore {
     private static final String CACHE_DIRECTORY = "cache";
     private static final String DESCRIPTION_SUFFIX = ".json";
     private static final String FAVICON_SUFFIX = ".png";
+    private static final String DESCRIPTION_KEY = "description";
+    private static final String MAX_PLAYERS_KEY = "max-players";
 
     private final File cacheDirectory;
 
@@ -43,7 +48,8 @@ public class MotdStore {
      * @return le MOTD, jamais null, mais éventuellement vide
      */
     public CachedMotd load(String serverName) {
-        return new CachedMotd(readDescription(serverName), readFavicon(serverName));
+        JsonObject root = readJson(serverName);
+        return new CachedMotd(readDescription(root), readFavicon(serverName), readMaxPlayers(root));
     }
 
     /**
@@ -56,28 +62,56 @@ public class MotdStore {
     public void save(String serverName, CachedMotd motd) throws IOException {
         Files.createDirectories(cacheDirectory.toPath());
 
-        if (motd.description() != null) {
-            Files.writeString(descriptionPath(serverName),
-                    GsonComponentSerializer.gson().serialize(motd.description()),
-                    StandardCharsets.UTF_8);
+        if (motd.description() != null || motd.maxPlayers() > 0) {
+            JsonObject root = new JsonObject();
+            if (motd.description() != null) {
+                root.add(DESCRIPTION_KEY, GsonComponentSerializer.gson().serializeToTree(motd.description()));
+            }
+            root.addProperty(MAX_PLAYERS_KEY, motd.maxPlayers());
+            Files.writeString(descriptionPath(serverName), root.toString(), StandardCharsets.UTF_8);
         }
         if (motd.faviconPng() != null) {
             Files.write(faviconPath(serverName), motd.faviconPng());
         }
     }
 
-    private Component readDescription(String serverName) {
+    private JsonObject readJson(String serverName) {
         Path path = descriptionPath(serverName);
         if (!Files.isReadable(path)) {
             return null;
         }
         try {
-            String json = Files.readString(path, StandardCharsets.UTF_8);
-            return GsonComponentSerializer.gson().deserialize(json);
+            JsonElement parsed = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
+            return parsed.isJsonObject() ? parsed.getAsJsonObject() : null;
         } catch (IOException | RuntimeException ex) {
-            // Un cache illisible ne doit jamais empecher le plugin de demarrer :
+            // Un cache abime ne doit jamais empecher le plugin de demarrer :
             // on repart simplement sans MOTD conserve pour ce serveur.
             return null;
+        }
+    }
+
+    private Component readDescription(JsonObject root) {
+        if (root == null) {
+            return null;
+        }
+        try {
+            // Les premieres versions du cache ecrivaient le composant seul, sans
+            // conteneur. On le reconnait a l'absence de la cle "description".
+            JsonElement description = root.has(DESCRIPTION_KEY) ? root.get(DESCRIPTION_KEY) : root;
+            return GsonComponentSerializer.gson().deserializeFromTree(description);
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private int readMaxPlayers(JsonObject root) {
+        if (root == null || !root.has(MAX_PLAYERS_KEY)) {
+            return 0;
+        }
+        try {
+            return Math.max(0, root.get(MAX_PLAYERS_KEY).getAsInt());
+        } catch (RuntimeException ex) {
+            return 0;
         }
     }
 
