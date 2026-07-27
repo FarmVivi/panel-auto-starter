@@ -59,13 +59,17 @@ public class ProxyPingEventListener extends EventAdapter {
         
         CommonServerPing response = event.getResponse();
         MinecraftServer server = plugin.getServers().get(commonServer);
-        
+
+        // Signale que ce serveur est regarde, pour que la surveillance reste
+        // rapprochee meme s'il est eteint.
+        server.notifyWatched();
+
         switch (server.getStatus()) {
-            case ONLINE -> handleOnlineServer();
+            case ONLINE -> handleOnlineServer(response, server);
             case OFFLINE -> handleOfflineServer(response, commonServer);
             case STARTING -> handleStartingServer(response, server, commonServer);
         }
-        
+
         event.setResponse(response);
     }
 
@@ -73,9 +77,41 @@ public class ProxyPingEventListener extends EventAdapter {
         return host != null && !host.isEmpty() && forcedHosts.containsKey(host);
     }
 
-    private void handleOnlineServer() {
-        // Do not override the response if the server is online
-        // Could be extended in the future to use custom server ping data
+    /**
+     * Serveur en ligne : on recopie le ping du backend dans la reponse du proxy.
+     * <p>
+     * Cela rend inutile le {@code ping-passthrough} de Velocity, qui ne peut pas
+     * distinguer l'adresse du proxy d'un forced host : regle sur {@code "all"} il
+     * fait remonter le MOTD du premier serveur de la liste {@code try} y compris
+     * quand on ping le proxy lui-meme. En servant le backend ici, le proxy peut
+     * repasser en {@code ping-passthrough = "disabled"} et garder son propre MOTD
+     * sur son adresse principale.
+     * <p>
+     * La donnee vient du cache du plugin, deja alimente par la surveillance : ce
+     * chemin ne declenche donc aucun appel reseau bloquant.
+     * <p>
+     * La version de protocole n'est volontairement pas recopiee : elle indique au
+     * client s'il peut se connecter, et c'est le proxy qui le sait, pas le
+     * backend. Recopier celle du backend afficherait "version incompatible" a des
+     * clients que le proxy sait pourtant servir.
+     */
+    private void handleOnlineServer(CommonServerPing response, MinecraftServer server) {
+        CommonServerPing backendPing = server.peekServerPing();
+
+        if (backendPing == null) {
+            // Aucun ping abouti pour l'instant : on laisse la reponse du proxy.
+            return;
+        }
+
+        response.setDescriptionComponent(backendPing.getDescriptionComponent());
+        response.setOnlinePlayers(backendPing.getOnlinePlayers());
+        response.setMaxPlayers(backendPing.getMaxPlayers());
+        response.setSamplePlayers(backendPing.getSamplePlayers());
+
+        CommonFavicon backendFavicon = backendPing.getFavicon();
+        if (backendFavicon != null) {
+            response.setFavicon(backendFavicon);
+        }
     }
 
     private void handleOfflineServer(CommonServerPing response, CommonServer commonServer) {

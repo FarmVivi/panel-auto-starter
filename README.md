@@ -53,6 +53,20 @@ Le `token` doit être un token d'API **client**, créé depuis votre compte util
 
 **Important :** le nom du serveur (ex. `lobby`) doit correspondre exactement au nom déclaré dans la configuration de votre proxy (BungeeCord ou Velocity). C'est ce qui permet au plugin de faire la liaison entre la configuration du proxy et les serveurs du panel.
 
+### Configuration du proxy Velocity
+
+Réglez `ping-passthrough` sur `disabled` dans `velocity.toml` :
+
+```toml
+ping-passthrough = "disabled"
+```
+
+C'est le plugin qui se charge de faire remonter le MOTD des serveurs backend, hôte par hôte. Velocity, lui, ne sait pas distinguer son adresse principale d'un forced host : réglé sur `"all"`, il affiche le MOTD du premier serveur de la liste `try` — souvent le limbo — y compris quand un joueur ping l'adresse du proxy.
+
+Avec `disabled`, chacun retrouve son MOTD : le proxy sur son adresse, chaque backend sur son forced host, et les états « hors-ligne » / « démarrage » du plugin quand le serveur n'est pas disponible.
+
+Bénéfice annexe : Velocity n'interroge plus un backend à chaque ping client, le plugin servant depuis son cache.
+
 ### Réglages du démarrage
 
 ```yaml
