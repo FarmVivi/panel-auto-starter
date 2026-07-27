@@ -1,25 +1,33 @@
-pterodactyl:
-  url: https://pterodactyl.exemple.com
+# Connexion au panel de gestion de serveurs
+panel:
+  # Panel utilisé : pterodactyl ou pelican
+  type: pterodactyl
+
+  url: https://panel.exemple.com
+
+  # Token d'API *client* (compte utilisateur), pas un token d'API application
   token: abc
 
 # Configuration du système de file d'attente et démarrage des serveurs
 server-start:
   # Fréquence de vérification de l'état du serveur en secondes (temps normal)
   check-interval-normal: 15
-  
+
   # Fréquence de vérification de l'état du serveur en secondes (pendant le démarrage)
   check-interval-startup: 3
-  
+
   # Temps d'attente en secondes avant de commencer à TP les joueurs après que le serveur soit ONLINE
   # Cela laisse le temps au serveur de bien se lancer avant de recevoir des joueurs
   wait-before-teleport: 5
-  
+
   # Délai entre chaque téléportation de joueur (en secondes) pour éviter les overloads
   teleport-delay: 1
 
 queue:
   server: lobby
 
+# Le nom de chaque serveur doit correspondre exactement à celui déclaré dans
+# la configuration de votre proxy (BungeeCord ou Velocity).
 servers:
   lobby:
     id: abc

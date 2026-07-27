@@ -41,6 +41,7 @@
         <waterfall.version>1.21-R0.1-SNAPSHOT</waterfall.version>
         <velocity.version>3.4.0</velocity.version>
         <junit.version>6.1.2</junit.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
         <mockito.version>5.23.0</mockito.version>
     </properties>
 
@@ -150,6 +151,17 @@
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- SnakeYAML : bungeecord-config le declare "optional", il n'est donc
+                 pas transitif. A l'execution il est fourni par le proxy (BungeeCord
+                 et Velocity l'embarquent tous les deux) ; en test il faut le fournir
+                 nous-memes, sinon ConfigurationProvider.getProvider() renvoie null. -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
                 <scope>test</scope>
             </dependency>
 

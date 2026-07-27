@@ -5,8 +5,8 @@ import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.panel.PanelClient;
 import fr.farmvivi.panelautostarter.panel.PanelClientFactory;
+import fr.farmvivi.panelautostarter.panel.PanelConfig;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
-import fr.farmvivi.panelautostarter.panel.PanelType;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
@@ -82,10 +82,16 @@ public final class PanelAutoStarter {
             // Load config
             this.loadConfig();
 
-            this.panel = PanelClientFactory.create(
-                    PanelType.PTERODACTYL,
-                    config.getString("pterodactyl.url"),
-                    config.getString("pterodactyl.token"));
+            // Connect to the panel
+            PanelConfig panelConfig = PanelConfig.from(config);
+            if (panelConfig.isLegacyFormat()) {
+                this.getLogger().warning(PanelConfig.legacyFormatWarning());
+            }
+            this.panel = PanelClientFactory.create(panelConfig.getType(), panelConfig.getUrl(), panelConfig.getToken());
+            this.getLogger().info(Component.text("Panel ")
+                    .append(Component.text(panelConfig.getType().name(), NamedTextColor.DARK_AQUA))
+                    .append(Component.text(" : "))
+                    .append(Component.text(panelConfig.getUrl(), NamedTextColor.YELLOW)));
 
             // Initialize servers
             this.initServers();
