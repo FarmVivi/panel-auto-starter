@@ -1,68 +1,68 @@
 # PanelAutoStarter
 
-Plugin BungeeCord et Velocity qui démarre et arrête automatiquement vos serveurs Minecraft en fonction du nombre de joueurs, via l'API de votre panel.
+A BungeeCord and Velocity plugin that automatically starts and stops your Minecraft servers based on player count, through your panel's API.
 
-Compatible **Pterodactyl** et **Pelican**.
+Works with both **Pterodactyl** and **Pelican**.
 
-> Vous venez de PterodactylAutoStarter 2.x ? La procédure de migration est détaillée dans les [notes de la release 3.0.0](https://github.com/FarmVivi/panel-auto-starter/releases) — attention, le dossier de données change de nom.
+> Coming from PterodactylAutoStarter 2.x? The migration steps are in the [3.0.0 release notes](https://github.com/FarmVivi/panel-auto-starter/releases) — note that the data folder is renamed.
 
-## Fonctionnalités
+## Features
 
-- Démarrage automatique des serveurs quand un joueur se connecte
-- Arrêt automatique des serveurs inactifs
-- Système de file d'attente pour gérer les connexions pendant le démarrage
-- Ping personnalisé (favicon et MOTD) reflétant l'état du serveur : hors-ligne, en démarrage
-- Compatible BungeeCord et Velocity
+- Automatically starts a server when a player tries to join it
+- Automatically stops idle servers
+- Queue system that holds players while the server boots
+- Custom server list ping (MOTD and favicon) reflecting the server state: offline, starting
+- Works on BungeeCord and Velocity
 
-## Compatibilité
+## Compatibility
 
-| | Versions supportées |
+| Platform | Minimum version |
 |---|---|
 | Panel | Pterodactyl, Pelican |
-| BungeeCord | 1.21+, Java 21 ou supérieur |
-| Velocity | 4.0+, Java 25 ou supérieur (exigé par Velocity 4 lui-même) |
+| BungeeCord | 1.21+, Java 21 or later |
+| Velocity | 4.0+, Java 25 or later (required by Velocity 4 itself) |
 
 ## Installation
 
-1. Téléchargez le plugin correspondant à votre proxy :
-   - `panel-auto-starter-bungee-<version>.jar` pour BungeeCord
-   - `panel-auto-starter-velocity-<version>.jar` pour Velocity
-2. Placez le fichier `.jar` dans le dossier `plugins`
-3. Démarrez le proxy une première fois pour générer la configuration
-4. Éditez le `config.yml` généré, puis redémarrez le proxy
+1. Download the jar matching your proxy:
+   - `panel-auto-starter-bungee-<version>.jar` for BungeeCord
+   - `panel-auto-starter-velocity-<version>.jar` for Velocity
+2. Drop the `.jar` into your `plugins` folder
+3. Start the proxy once to generate the configuration
+4. Edit the generated `config.yml`, then restart the proxy
 
-La configuration est générée dans `plugins/PanelAutoStarter/` sur BungeeCord et dans `plugins/panelautostarter/` sur Velocity.
+The configuration is generated in `plugins/PanelAutoStarter/` on BungeeCord and in `plugins/panelautostarter/` on Velocity.
 
 ## Configuration
 
 ```yaml
 panel:
-  # pterodactyl ou pelican
+  # pterodactyl or pelican
   type: pterodactyl
-  url: https://panel.exemple.com
+  url: https://panel.example.com
   token: ptlc_xxxxxxxx
 
 queue:
-  # Serveur d'attente où les joueurs patientent pendant le démarrage
+  # Fallback server where players wait while the target server boots
   server: lobby
 
 servers:
   lobby:
-    id: id_du_serveur_dans_le_panel
+    id: server_id_from_your_panel
 ```
 
-### Le token d'API
+### API token
 
-Il doit s'agir d'un token d'API **client**, créé depuis votre compte utilisateur — pas un token d'API application.
+It must be a **client** API token, created from your own user account — not an application API token.
 
-| Panel | Préfixe attendu | Longueur totale |
+| Panel | Expected prefix | Total length |
 |---|---|---|
 | Pterodactyl | `ptlc_` | 48 |
 | Pelican | `pacc_` | 48 |
 
-Le token complet n'est affiché **qu'une seule fois**, juste après la création de la clé. La liste des clés API n'en montre ensuite que l'identifiant, soit les 16 premiers caractères.
+The full token is shown **only once**, right after you create the key. The API keys list only ever shows its identifier, which is the first 16 characters.
 
-> **Piège connu sur Pelican :** les versions antérieures à `1.0.0-beta15` n'affichent jamais le token complet, même à la création ([issue #768](https://github.com/pelican-dev/panel/issues/768)). Un token de 16 caractères produit un `401 Unauthenticated`. Si votre panel est concerné, mettez-le à jour, ou récupérez le secret en base :
+> **Known Pelican pitfall:** panels older than `1.0.0-beta15` never display the full token, not even on creation ([issue #768](https://github.com/pelican-dev/panel/issues/768)). A 16-character token results in a `401 Unauthenticated`. Either update your panel, or recover the secret from the database:
 >
 > ```bash
 > php artisan tinker
@@ -72,74 +72,74 @@ Le token complet n'est affiché **qu'une seule fois**, juste après la création
 > echo $k->identifier . $k->token . PHP_EOL;
 > ```
 
-L'`id` de chaque serveur est son identifiant **court** tel qu'affiché par le panel (8 caractères hexadécimaux), pas son UUID complet.
+Each server's `id` is its **short** identifier as displayed by the panel (8 hexadecimal characters), not its full UUID.
 
-**Important :** le nom du serveur (ex. `lobby`) doit correspondre exactement au nom déclaré dans la configuration de votre proxy (BungeeCord ou Velocity). C'est ce qui permet au plugin de faire la liaison entre la configuration du proxy et les serveurs du panel.
+**Important:** the server name (e.g. `lobby`) must exactly match the name declared in your proxy's own configuration (BungeeCord or Velocity). That is what links the proxy configuration to the panel servers.
 
-### Configuration du proxy Velocity
+### Velocity proxy configuration
 
-Réglez `ping-passthrough` sur `disabled` dans `velocity.toml` :
+Set `ping-passthrough` to `disabled` in `velocity.toml`:
 
 ```toml
 ping-passthrough = "disabled"
 ```
 
-C'est le plugin qui se charge de faire remonter le MOTD des serveurs backend, hôte par hôte. Velocity, lui, ne sait pas distinguer son adresse principale d'un forced host : réglé sur `"all"`, il affiche le MOTD du premier serveur de la liste `try` — souvent le limbo — y compris quand un joueur ping l'adresse du proxy.
+The plugin takes care of forwarding each backend's MOTD on a per-host basis. Velocity itself cannot tell its own address apart from a forced host: set to `"all"`, it serves the MOTD of the first server in the `try` list — usually the limbo — even when a player pings the proxy address.
 
-Avec `disabled`, chacun retrouve son MOTD : le proxy sur son adresse, chaque backend sur son forced host, et les états « hors-ligne » / « démarrage » du plugin quand le serveur n'est pas disponible.
+With `disabled`, everyone gets their own MOTD back: the proxy on its address, each backend on its forced host, and the plugin's "offline" / "starting" screens when the server is unavailable.
 
-Bénéfice annexe : Velocity n'interroge plus un backend à chaque ping client, le plugin servant depuis son cache.
+Side benefit: Velocity no longer contacts a backend on every client ping, since the plugin serves from its cache.
 
-### Réglages du démarrage
+### Startup tuning
 
 ```yaml
 server-start:
-  # Fréquence de vérification de l'état du serveur, en secondes
+  # How often the server state is checked, in seconds
   check-interval-normal: 15
-  # Même chose, mais pendant un démarrage (vérification plus rapprochée)
+  # Same, but while a server is booting (tighter polling)
   check-interval-startup: 3
-  # Délai avant de commencer à téléporter les joueurs une fois le serveur en ligne
+  # Grace period before teleporting players once the server is online
   wait-before-teleport: 5
-  # Délai entre deux téléportations, pour éviter de surcharger le serveur
+  # Delay between two teleports, to avoid overloading the server
   teleport-delay: 1
-  # Fréquence de vérification d'un serveur éteint que personne ne ping
+  # How often an offline server that nobody pings is checked
   check-interval-idle: 60
-  # Durée sans aucun ping client avant de passer à check-interval-idle
+  # Time without any client ping before falling back to check-interval-idle
   idle-threshold: 300
-  # Durée de validité du ping mis en cache et servi dans le MOTD
+  # How long a cached ping stays valid before the MOTD refreshes it
   ping-cache-ttl: 5
 ```
 
-Le plugin ne se contente pas d'interroger les serveurs à intervalle fixe : un ping client sur un cache périmé déclenche un rafraîchissement en arrière-plan, sans jamais retarder la réponse au joueur. À l'inverse, un serveur éteint que personne ne regarde est interrogé plus rarement. Les valeurs par défaut conviennent dans la plupart des cas.
+The plugin does not merely poll servers at a fixed rate: a client ping on a stale cache triggers a background refresh, without ever delaying the response sent to the player. Conversely, an offline server that nobody is watching is polled less often. The defaults are fine for most setups.
 
 ## Architecture
 
-Projet Maven multi-module :
+Multi-module Maven project:
 
-| Module | Rôle |
+| Module | Role |
 |---|---|
-| `panel-auto-starter-common` | Logique métier, abstraction du panel, chargement de la configuration |
-| `panel-auto-starter-bungee` | Implémentation BungeeCord |
-| `panel-auto-starter-velocity` | Implémentation Velocity |
+| `panel-auto-starter-common` | Business logic, panel abstraction, configuration loading |
+| `panel-auto-starter-bungee` | BungeeCord implementation |
+| `panel-auto-starter-velocity` | Velocity implementation |
 
-### Support des deux panels
+### Supporting both panels
 
-L'accès au panel passe par les interfaces `PanelClient` et `PanelServer` (package `fr.farmvivi.panelautostarter.panel`), qui n'exposent **aucun type** de la bibliothèque sous-jacente.
+Panel access goes through the `PanelClient` and `PanelServer` interfaces (package `fr.farmvivi.panelautostarter.panel`), which expose **no type** from the underlying library.
 
-L'API client de Pelican étant volontairement maintenue compatible avec celle de Pterodactyl, une seule implémentation — adossée à [Pterodactyl4J](https://github.com/mattmalec/Pterodactyl4J) — sert les deux panels aujourd'hui. `PelicanPanelClient` étend l'implémentation Pterodactyl sans rien surcharger ; il existe comme point d'extension pour le jour où Pelican fera diverger un endpoint.
+Because Pelican's client API is deliberately kept compatible with Pterodactyl's, a single implementation — backed by [Pterodactyl4J](https://github.com/mattmalec/Pterodactyl4J) — serves both panels today. `PelicanPanelClient` extends the Pterodactyl implementation without overriding anything; it exists as the extension point for the day Pelican diverges on an endpoint.
 
-## Build
+## Building
 
 ```bash
 mvn clean package
 ```
 
-**Le JDK 25 est requis pour compiler.** `velocity-api` 4.0.0 est distribué en bytecode Java 25 (class file 69) : un JDK antérieur ne peut pas lire ses classes. Ce n'est pas un choix du projet, c'est une contrainte de Velocity 4.
+**JDK 25 is required to build.** `velocity-api` 4.0.0 ships as Java 25 bytecode (class file 69), which an older JDK cannot read at all. This is not a project decision, it is a Velocity 4 constraint.
 
-Le bytecode produit cible Java 21, ce qui garde le jar BungeeCord chargeable sur un serveur en Java 21. Les serveurs Velocity 4 tournent de toute façon en Java 25.
+The produced bytecode targets Java 21, which keeps the BungeeCord jar loadable on a Java 21 server. Velocity 4 servers run on Java 25 anyway.
 
-Les jars sont produits dans `panel-auto-starter-bungee/target/` et `panel-auto-starter-velocity/target/`.
+Jars are produced in `panel-auto-starter-bungee/target/` and `panel-auto-starter-velocity/target/`.
 
-## Licence
+## License
 
-Projet maintenu par FarmVivi
+Maintained by FarmVivi
