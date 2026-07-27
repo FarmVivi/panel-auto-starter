@@ -18,9 +18,9 @@ Compatible **Pterodactyl** et **Pelican**.
 
 | | Versions supportées |
 |---|---|
-| Java | 21 ou supérieur |
 | Panel | Pterodactyl, Pelican |
-| Proxy | BungeeCord 1.21+, Velocity 4.0+ |
+| BungeeCord | 1.21+, Java 21 ou supérieur |
+| Velocity | 4.0+, Java 25 ou supérieur (exigé par Velocity 4 lui-même) |
 
 ## Installation
 
@@ -89,9 +89,11 @@ L'API client de Pelican étant volontairement maintenue compatible avec celle de
 mvn clean package
 ```
 
-Les jars sont produits dans `panel-auto-starter-bungee/target/` et `panel-auto-starter-velocity/target/`.
+**Le JDK 25 est requis pour compiler.** `velocity-api` 4.0.0 est distribué en bytecode Java 25 (class file 69) : un JDK antérieur ne peut pas lire ses classes. Ce n'est pas un choix du projet, c'est une contrainte de Velocity 4.
 
-Le bytecode cible Java 21, quel que soit le JDK utilisé pour compiler.
+Le bytecode produit cible Java 21, ce qui garde le jar BungeeCord chargeable sur un serveur en Java 21. Les serveurs Velocity 4 tournent de toute façon en Java 25.
+
+Les jars sont produits dans `panel-auto-starter-bungee/target/` et `panel-auto-starter-velocity/target/`.
 
 ## Licence
 
