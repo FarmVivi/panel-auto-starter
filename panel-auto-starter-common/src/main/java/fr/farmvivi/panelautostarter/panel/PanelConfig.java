@@ -34,7 +34,7 @@ public final class PanelConfig {
      * Où renvoyer l'utilisateur : la procédure de migration est publiée dans les
      * notes de release plutôt que dans un fichier du dépôt.
      */
-    static final String DOCS_URL = "https://github.com/FarmVivi/PanelAutoStarter/releases";
+    static final String DOCS_URL = "https://github.com/FarmVivi/panel-auto-starter/releases";
 
     private final PanelType type;
     private final String url;

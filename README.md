@@ -4,7 +4,7 @@ Plugin BungeeCord et Velocity qui démarre et arrête automatiquement vos serveu
 
 Compatible **Pterodactyl** et **Pelican**.
 
-> Vous venez de PterodactylAutoStarter 2.x ? La procédure de migration est détaillée dans les [notes de la release 3.0.0](https://github.com/FarmVivi/PanelAutoStarter/releases) — attention, le dossier de données change de nom.
+> Vous venez de PterodactylAutoStarter 2.x ? La procédure de migration est détaillée dans les [notes de la release 3.0.0](https://github.com/FarmVivi/panel-auto-starter/releases) — attention, le dossier de données change de nom.
 
 ## Fonctionnalités
 
