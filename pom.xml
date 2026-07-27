@@ -4,40 +4,42 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>fr.farmvivi.pterodactyl-auto-starter</groupId>
-    <artifactId>pterodactyl-auto-starter-parent</artifactId>
-    <version>2.2.0-SNAPSHOT</version>
+    <groupId>fr.farmvivi.panel-auto-starter</groupId>
+    <artifactId>panel-auto-starter-parent</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>PterodactylAutoStarter</name>
-    <description>Parent POM for PterodactylAutoStarter multi-module project</description>
+    <name>PanelAutoStarter</name>
+    <description>Parent POM for PanelAutoStarter multi-module project (Pterodactyl and Pelican panel support)</description>
 
     <modules>
-        <module>pterodactyl-auto-starter-common</module>
-        <module>pterodactyl-auto-starter-bungee</module>
-        <module>pterodactyl-auto-starter-velocity</module>
+        <module>panel-auto-starter-common</module>
+        <module>panel-auto-starter-bungee</module>
+        <module>panel-auto-starter-velocity</module>
     </modules>
 
     <properties>
-        <java.version>17</java.version>
+        <!-- Bytecode cible : Java 21, la version exigee par Minecraft 1.21+.
+             La CI compile avec un JDK plus recent, mais <release> garantit que
+             le jar reste chargeable sur un serveur en Java 21. -->
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Configuration SonarCloud -->
-        <sonar.projectKey>FarmVivi_pterodactyl-auto-starter</sonar.projectKey>
+        <sonar.projectKey>FarmVivi_panel-auto-starter</sonar.projectKey>
         <sonar.organization>farmvivi</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- Skip sonar analysis by default - enable with -Psonar profile -->
         <sonar.skip>true</sonar.skip>
 
         <!-- Dependency versions -->
-        <adventure.version>4.26.1</adventure.version>
-        <kyori.ansi.version>1.1.1</kyori.ansi.version>
+        <adventure.version>5.2.0</adventure.version>
+        <!-- bungeecord-api et bungeecord-config partagent la meme ligne de version -->
         <bungeecord.version>1.21-R0.4</bungeecord.version>
-        <adventure.platform.version>4.4.1</adventure.platform.version>
         <pterodactyl4j.version>2.BETA_142</pterodactyl4j.version>
-        <waterfall.version>1.21-R0.1-SNAPSHOT</waterfall.version>
-        <velocity.version>3.4.0</velocity.version>
-        <junit.version>4.13.2</junit.version>
+        <velocity.version>4.0.0</velocity.version>
+        <junit.version>6.1.2</junit.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
         <mockito.version>5.23.0</mockito.version>
     </properties>
 
@@ -65,8 +67,8 @@
         <dependencies>
             <!-- Internal modules -->
             <dependency>
-                <groupId>fr.farmvivi.pterodactyl-auto-starter</groupId>
-                <artifactId>pterodactyl-auto-starter-common</artifactId>
+                <groupId>fr.farmvivi.panel-auto-starter</groupId>
+                <artifactId>panel-auto-starter-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -94,22 +96,6 @@
                 <scope>compile</scope>
             </dependency>
 
-            <!-- Adventure Platform BungeeCord -->
-            <dependency>
-                <groupId>net.kyori</groupId>
-                <artifactId>adventure-platform-bungeecord</artifactId>
-                <version>${adventure.platform.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <!-- ANSI -->
-            <dependency>
-                <groupId>net.kyori</groupId>
-                <artifactId>ansi</artifactId>
-                <version>${kyori.ansi.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
             <!-- BungeeCord Config -->
             <dependency>
                 <groupId>net.md-5</groupId>
@@ -126,11 +112,15 @@
                 <scope>compile</scope>
             </dependency>
 
-            <!-- Waterfall API -->
+            <!-- BungeeCord API : remplace waterfall-api, dont le projet est EOL
+                 depuis mars 2024. Le module n'utilisait aucune API specifique a
+                 Waterfall, uniquement du net.md_5.bungee.* standard. Au passage
+                 on quitte un SNAPSHOT pour une release, ce qui rend le build
+                 reproductible. -->
             <dependency>
-                <groupId>io.github.waterfallmc</groupId>
-                <artifactId>waterfall-api</artifactId>
-                <version>${waterfall.version}</version>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>${bungeecord.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -142,11 +132,22 @@
                 <scope>provided</scope>
             </dependency>
 
-            <!-- JUnit -->
+            <!-- JUnit Jupiter -->
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- SnakeYAML : bungeecord-config le declare "optional", il n'est donc
+                 pas transitif. A l'execution il est fourni par le proxy (BungeeCord
+                 et Velocity l'embarquent tous les deux) ; en test il faut le fournir
+                 nous-memes, sinon ConfigurationProvider.getProvider() renvoie null. -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -265,8 +266,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.15.0</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <release>${maven.compiler.release}</release>
                     </configuration>
                 </plugin>
                 <plugin>

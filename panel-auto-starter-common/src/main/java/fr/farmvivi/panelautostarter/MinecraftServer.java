@@ -1,0 +1,326 @@
+package fr.farmvivi.panelautostarter;
+
+import fr.farmvivi.panelautostarter.common.CommonPlayer;
+import fr.farmvivi.panelautostarter.common.CommonServer;
+import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
+import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.panel.PanelServerState;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class MinecraftServer {
+    private final PanelAutoStarter plugin;
+
+    private final CommonServer server;
+    private final PanelServer panelServer;
+    private final List<CommonPlayer> queue = new LinkedList<>();
+    private MinecraftServerStatus status = MinecraftServerStatus.OFFLINE;
+
+    /**
+     * Dernier ping vu par la machine à états. Écrit uniquement par le scheduler,
+     * qui en est l'unique proprietaire : c'est la memoire du "ping precedent" qui
+     * permet de detecter les transitions en ligne / hors-ligne. Il ne doit jamais
+     * etre touche par le rafraichissement a la demande, sinon une transition peut
+     * etre manquee.
+     */
+    private CommonServerPing lastPolledPing;
+
+    /**
+     * Cache de presentation, servi aux requetes de ping des clients. Alimente par
+     * le scheduler et par le rafraichissement a la demande, lu depuis les threads
+     * d'evenements : d'ou le volatile.
+     */
+    private volatile CommonServerPing cachedPing;
+    private volatile long cachedPingAt = 0;
+
+    /**
+     * Date du dernier ping client portant sur ce serveur, utilisee pour espacer
+     * la surveillance des serveurs que personne ne regarde.
+     */
+    private volatile long lastWatchedAt = 0;
+
+    /**
+     * Empeche N pings clients simultanes de declencher N requetes vers le backend.
+     */
+    private final AtomicBoolean refreshInFlight = new AtomicBoolean(false);
+
+    private long lastBusyTime = System.currentTimeMillis();
+    private long serverStartedTime = 0;
+    private long lastTeleportTime = 0;
+
+    public MinecraftServer(PanelAutoStarter plugin, CommonServer server, PanelServer panelServer) {
+        this.plugin = plugin;
+        this.server = server;
+        this.panelServer = panelServer;
+
+        scheduleServerStatusCheck();
+    }
+
+    /**
+     * Scheduler adaptatif : utilise un refresh rate plus rapide pendant le démarrage
+     */
+    private void scheduleServerStatusCheck() {
+        checkServerStatusAndReschedule();
+    }
+
+    private void checkServerStatusAndReschedule() {
+        // Faire le check
+        server.ping(result -> {
+            long curMillis = System.currentTimeMillis();
+            storePing(result, curMillis);
+            updateServerStatus(result, curMillis);
+            handleQueueAndShutdown(result, curMillis);
+
+            // Re-scheduler : l'intervalle est calcule apres la mise a jour du
+            // statut, pour qu'il reflete l'etat courant et non le precedent.
+            this.plugin.getProxy().schedule(plugin.getPlugin(),
+                this::checkServerStatusAndReschedule,
+                resolveCheckInterval(curMillis),
+                TimeUnit.SECONDS);
+        });
+    }
+
+    /**
+     * Choisit la frequence de surveillance selon l'etat du serveur et selon que
+     * quelqu'un le regarde ou non.
+     * <p>
+     * La surveillance ne peut pas etre supprimee au profit du seul
+     * rafraichissement a la demande : c'est elle qui pilote l'arret automatique
+     * apres inactivite et le vidage de la file d'attente. En revanche, un serveur
+     * eteint que personne ne ping n'a pas besoin d'etre interroge toutes les 15
+     * secondes.
+     *
+     * @param curMillis l'instant courant
+     * @return l'intervalle en secondes avant la prochaine verification
+     */
+    private long resolveCheckInterval(long curMillis) {
+        if (status.equals(MinecraftServerStatus.STARTING)) {
+            return plugin.getConfig().getLong("server-start.check-interval-startup", 3);
+        }
+        if (status.equals(MinecraftServerStatus.OFFLINE) && !isWatched(curMillis)) {
+            return plugin.getConfig().getLong("server-start.check-interval-idle", 60);
+        }
+        return plugin.getConfig().getLong("server-start.check-interval-normal", 15);
+    }
+
+    private boolean isWatched(long curMillis) {
+        long idleThreshold = plugin.getConfig().getLong("server-start.idle-threshold", 300) * 1000;
+        return lastWatchedAt > 0 && curMillis - lastWatchedAt < idleThreshold;
+    }
+
+    /**
+     * Met a jour le cache de presentation. Volontairement distinct de la machine
+     * a etats.
+     */
+    private void storePing(CommonServerPing result, long at) {
+        this.cachedPing = result;
+        this.cachedPingAt = at;
+    }
+
+    /**
+     * Signale qu'un client vient de pinger ce serveur. Sert uniquement a decider
+     * de la frequence de surveillance.
+     */
+    public void notifyWatched() {
+        this.lastWatchedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * Retourne le dernier ping connu du serveur, en declenchant un
+     * rafraichissement en arriere-plan si la donnee est perimee.
+     * <p>
+     * <strong>Ne bloque jamais</strong> : la valeur en cache est rendue
+     * immediatement et le rafraichissement profite au ping suivant. Attendre la
+     * reponse du backend ajouterait sa latence a chaque ping client et
+     * offrirait un levier d'abus trivial.
+     * <p>
+     * Le rafraichissement ne met a jour que le cache : il ne touche pas au
+     * statut, a la file d'attente ni aux compteurs d'inactivite, qui restent
+     * pilotes par le scheduler seul.
+     *
+     * @return le dernier ping connu, ou null si aucun n'a encore abouti
+     */
+    public CommonServerPing peekServerPing() {
+        long curMillis = System.currentTimeMillis();
+        long cacheTtl = plugin.getConfig().getLong("server-start.ping-cache-ttl", 5) * 1000;
+
+        if (curMillis - cachedPingAt >= cacheTtl && refreshInFlight.compareAndSet(false, true)) {
+            try {
+                server.ping(result -> {
+                    try {
+                        storePing(result, System.currentTimeMillis());
+                    } finally {
+                        refreshInFlight.set(false);
+                    }
+                });
+            } catch (RuntimeException ex) {
+                // Sans ce rattrapage, un echec synchrone laisserait le drapeau leve
+                // et bloquerait definitivement tout rafraichissement ulterieur.
+                refreshInFlight.set(false);
+                throw ex;
+            }
+        }
+
+        return cachedPing;
+    }
+
+    private void updateServerStatus(CommonServerPing result, long curMillis) {
+        if (lastPolledPing == null && result != null) {
+            if (panelServer.retrieveState() == PanelServerState.STARTING) {
+                return;
+            }
+            status = MinecraftServerStatus.ONLINE;
+            serverStartedTime = curMillis;  // Enregistrer l'heure de démarrage
+            logServerStatus("en ligne", NamedTextColor.GREEN);
+        } else if (shouldSetOffline(result, curMillis)) {
+            status = MinecraftServerStatus.OFFLINE;
+            logServerStatus("hors-ligne", NamedTextColor.RED);
+            clearQueue();
+            serverStartedTime = 0;
+        }
+        lastPolledPing = result;
+    }
+
+    private boolean shouldSetOffline(CommonServerPing result, long curMillis) {
+        return (lastPolledPing != null && result == null && !status.equals(MinecraftServerStatus.STARTING)) ||
+                (status.equals(MinecraftServerStatus.STARTING) && lastBusyTime < curMillis);
+    }
+
+    private void logServerStatus(String statusMessage, NamedTextColor color) {
+        plugin.getLogger().info(Component.text(server.getName()).color(NamedTextColor.YELLOW)
+                .append(Component.text(" " + statusMessage).color(color)));
+    }
+
+    private void clearQueue() {
+        if (!queue.isEmpty()) {
+            Iterator<CommonPlayer> iterator = queue.iterator();
+            while (iterator.hasNext()) {
+                CommonPlayer player = iterator.next();
+                plugin.getLogger().warning("Impossible de téléporter " + player.getUsername() + " sur " + server.getName());
+                player.sendMessage(Component.text("Téléportation sur le serveur ").color(NamedTextColor.RED)
+                        .append(Component.text(server.getDisplayName()).color(NamedTextColor.YELLOW))
+                        .append(Component.text(" impossible !").color(NamedTextColor.RED)));
+                iterator.remove();
+            }
+        }
+    }
+
+    private void handleQueueAndShutdown(CommonServerPing result, long curMillis) {
+        if (status.equals(MinecraftServerStatus.ONLINE)) {
+            handleQueue(curMillis);
+            updateLastBusyTime(result, curMillis);
+            if (curMillis - lastBusyTime > 5 * 60 * 1000) {
+                stop();
+            }
+        }
+    }
+
+    /**
+     * Gère la file d'attente avec un délai configurable entre chaque téléportation
+     * et un délai d'attente avant de commencer les téléportations après le démarrage du serveur
+     */
+    private void handleQueue(long curMillis) {
+        if (queue.isEmpty()) {
+            return;
+        }
+
+        // Obtenir les paramètres de configuration
+        long waitBeforeTeleport = plugin.getConfig().getLong("server-start.wait-before-teleport", 5) * 1000;
+        long teleportDelay = plugin.getConfig().getLong("server-start.teleport-delay", 1) * 1000;
+
+        // Attendre un certain temps après le démarrage avant de TP les joueurs
+        if (curMillis - serverStartedTime < waitBeforeTeleport) {
+            return;
+        }
+
+        // Vérifier si on peut TP le prochain joueur (délai minimum entre les TP)
+        if (curMillis - lastTeleportTime < teleportDelay) {
+            return;
+        }
+
+        // Trouver le premier joueur à téléporter (pas déjà sur le serveur)
+        CommonPlayer playerToTeleport = null;
+        int playerIndex = -1;
+        
+        for (int i = 0; i < queue.size(); i++) {
+            CommonPlayer player = queue.get(i);
+            if (!player.getServer().equals(server)) {
+                playerToTeleport = player;
+                playerIndex = i;
+                break;
+            }
+        }
+
+        // Si on a trouvé un joueur à téléporter
+        if (playerToTeleport != null) {
+            teleportPlayer(playerToTeleport);
+            queue.remove(playerIndex);
+            lastTeleportTime = curMillis;
+        } else {
+            // Nettoyer les joueurs déjà sur le serveur
+            queue.removeIf(player -> player.getServer().equals(server));
+        }
+    }
+
+    private void teleportPlayer(CommonPlayer player) {
+        plugin.getLogger().info("Téléportation de " + player.getUsername() + " sur " + server.getName());
+        player.sendMessage(Component.text("Téléportation sur le serveur ").color(NamedTextColor.GREEN)
+                .append(Component.text(server.getDisplayName()).color(NamedTextColor.YELLOW))
+                .append(Component.text("...").color(NamedTextColor.GREEN)));
+        player.connectToServer(server);
+    }
+
+    private void updateLastBusyTime(CommonServerPing result, long curMillis) {
+        if (result != null && result.getOnlinePlayers() > 0 && curMillis > lastBusyTime) {
+            lastBusyTime = curMillis;
+        }
+    }
+
+    public synchronized void start() {
+        if (!status.equals(MinecraftServerStatus.OFFLINE)) {
+            return;
+        }
+        this.plugin.getLogger().info("Démarrage de " + server.getName() + "...");
+        this.panelServer.start();
+        this.lastBusyTime = System.currentTimeMillis() + 15 * 60 * 1000;
+        this.status = MinecraftServerStatus.STARTING;
+        this.lastTeleportTime = 0;  // Réinitialiser le timer de téléportation
+    }
+
+    public synchronized void stop() {
+        if (!status.equals(MinecraftServerStatus.ONLINE)) {
+            return;
+        }
+        this.plugin.getLogger().info("Arrêt de " + server.getName() + "...");
+        this.panelServer.stop();
+        this.lastBusyTime = System.currentTimeMillis();
+    }
+
+    public CommonServer getServer() {
+        return server;
+    }
+
+    public List<CommonPlayer> getQueue() {
+        return queue;
+    }
+
+    public MinecraftServerStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * Retourne le dernier ping connu sans declencher de rafraichissement.
+     *
+     * @return le ping en cache, ou null si aucun n'a encore abouti
+     * @see #peekServerPing() pour la variante qui rafraichit un cache perime
+     */
+    public CommonServerPing getServerPing() {
+        return cachedPing;
+    }
+}

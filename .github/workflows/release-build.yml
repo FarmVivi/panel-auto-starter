@@ -17,7 +17,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5.6.0
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: "temurin"
           cache: maven
 
@@ -42,5 +42,5 @@ jobs:
         uses: softprops/action-gh-release@v3.0.2
         with:
           files: |
-            pterodactyl-auto-starter-bungee/target/pterodactyl-auto-starter-bungee-*.jar
-            pterodactyl-auto-starter-velocity/target/pterodactyl-auto-starter-velocity-*.jar
+            panel-auto-starter-bungee/target/panel-auto-starter-bungee-*.jar
+            panel-auto-starter-velocity/target/panel-auto-starter-velocity-*.jar

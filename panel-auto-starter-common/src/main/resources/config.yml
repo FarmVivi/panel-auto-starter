@@ -1,0 +1,48 @@
+# Connexion au panel de gestion de serveurs
+panel:
+  # Panel utilisé : pterodactyl ou pelican
+  type: pterodactyl
+
+  url: https://panel.exemple.com
+
+  # Token d'API *client* (compte utilisateur), pas un token d'API application
+  token: abc
+
+# Configuration du système de file d'attente et démarrage des serveurs
+server-start:
+  # Fréquence de vérification de l'état du serveur en secondes (temps normal)
+  check-interval-normal: 15
+
+  # Fréquence de vérification de l'état du serveur en secondes (pendant le démarrage)
+  check-interval-startup: 3
+
+  # Fréquence de vérification d'un serveur éteint que personne ne ping.
+  # Inutile d'interroger toutes les 15 s un serveur que personne ne regarde.
+  check-interval-idle: 60
+
+  # Durée en secondes sans aucun ping client avant de considérer qu'un serveur
+  # n'est plus regardé et de passer à check-interval-idle.
+  idle-threshold: 300
+
+  # Durée de validité en secondes du ping mis en cache et servi dans le MOTD.
+  # Au-delà, le prochain ping client déclenche un rafraîchissement en arrière-plan
+  # (la réponse courante est servie immédiatement, sans attendre).
+  # Baisser cette valeur rend le compteur de joueurs plus réactif, au prix de
+  # requêtes plus fréquentes vers le serveur.
+  ping-cache-ttl: 5
+
+  # Temps d'attente en secondes avant de commencer à TP les joueurs après que le serveur soit ONLINE
+  # Cela laisse le temps au serveur de bien se lancer avant de recevoir des joueurs
+  wait-before-teleport: 5
+
+  # Délai entre chaque téléportation de joueur (en secondes) pour éviter les overloads
+  teleport-delay: 1
+
+queue:
+  server: lobby
+
+# Le nom de chaque serveur doit correspondre exactement à celui déclaré dans
+# la configuration de votre proxy (BungeeCord ou Velocity).
+servers:
+  lobby:
+    id: abc
