@@ -12,6 +12,7 @@ import fr.farmvivi.panelautostarter.common.listener.EventListener;
 import fr.farmvivi.panelautostarter.velocity.listener.VelocityPlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.velocity.listener.VelocityProxyPingEventListener;
 import fr.farmvivi.panelautostarter.velocity.listener.VelocityServerConnectEventListener;
+import fr.farmvivi.panelautostarter.velocity.listener.VelocityServerConnectedEventListener;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -70,6 +71,7 @@ public class VelocityPlugin implements CommonPlugin {
         this.server.getEventManager().register(this, new VelocityServerConnectEventListener(proxy, eventListeners));
         this.server.getEventManager().register(this, new VelocityProxyPingEventListener(eventListeners));
         this.server.getEventManager().register(this, new VelocityPlayerDisconnectEventListener(proxy, eventListeners));
+        this.server.getEventManager().register(this, new VelocityServerConnectedEventListener(proxy, eventListeners));
         this.logger.info("Velocity Event listeners registered.");
     }
 

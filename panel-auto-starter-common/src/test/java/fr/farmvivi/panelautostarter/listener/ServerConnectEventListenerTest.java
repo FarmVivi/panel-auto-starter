@@ -4,11 +4,13 @@ import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
+import fr.farmvivi.panelautostarter.PendingMessages;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
+import fr.farmvivi.panelautostarter.common.event.ServerConnectedEvent;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
@@ -31,6 +33,8 @@ public class ServerConnectEventListenerTest {
 
     @Mock
     private PanelAutoStarter mockPlugin;
+
+    protected PendingMessages pendingMessages;
 
     @Mock
     private CommonProxy mockProxy;
@@ -56,6 +60,8 @@ public class ServerConnectEventListenerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        pendingMessages = new PendingMessages();
+        when(mockPlugin.getPendingMessages()).thenReturn(pendingMessages);
 
         limboServer = new MockCommonServer("limbo");
         targetServer = new MockCommonServer("target-server");
@@ -159,22 +165,56 @@ public class ServerConnectEventListenerTest {
     }
 
     /**
-     * Test : Vérifier que le joueur reçoit un message
+     * Un joueur déjà en jeu qui tente de rejoindre un serveur éteint peut
+     * recevoir le message immédiatement : sa connexion est établie.
      */
     @Test
-    public void testPlayerReceivesMessage() {
+    public void testAlreadyConnectedPlayerIsToldImmediately() {
         MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
         serversMap.put(targetServer, minecraftServer);
 
-        CommonPlayer player = new MockCommonPlayer("MessagePlayer");
-        ((MockCommonPlayer) player).setCurrentServer(null);
+        MockCommonPlayer player = new MockCommonPlayer("MessagePlayer");
+        player.setCurrentServer(limboServer);
 
         when(mockEvent.getPlayer()).thenReturn(player);
         when(mockEvent.getTarget()).thenReturn(targetServer);
 
         listener.onServerConnect(mockEvent);
 
-        assertNotNull(((MockCommonPlayer) player).getLastMessage(), "Le joueur doit avoir reçu un message");
+        assertNotNull(player.getLastMessage(), "Le joueur doit avoir recu le message tout de suite");
+        assertEquals(0, pendingMessages.size(), "Rien ne doit etre mis en attente");
+    }
+
+    /**
+     * Le bug corrigé : un joueur qui rejoint le proxy directement sur un
+     * serveur éteint n'a pas encore atteint l'état de jeu. Lui écrire à cet
+     * instant ne produit rien — le message doit être différé jusqu'à son
+     * arrivée effective sur le limbo.
+     */
+    @Test
+    public void testJoiningPlayerHasHisMessageDeferredUntilHeLands() {
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
+        serversMap.put(targetServer, minecraftServer);
+
+        MockCommonPlayer player = new MockCommonPlayer("JoiningPlayer");
+        player.setCurrentServer(null);
+
+        when(mockEvent.getPlayer()).thenReturn(player);
+        when(mockEvent.getTarget()).thenReturn(targetServer);
+
+        listener.onServerConnect(mockEvent);
+
+        assertNull(player.getLastMessage(),
+                "Rien ne doit etre envoye tant que le joueur n'est pas en jeu");
+        assertEquals(1, pendingMessages.size(), "Le message doit etre mis de cote");
+
+        // Le joueur atterrit sur le limbo.
+        new ServerConnectedEventListener(pendingMessages)
+                .onServerConnected(new ServerConnectedEvent(player, limboServer));
+
+        assertNotNull(player.getLastMessage(),
+                "Le message doit etre delivre une fois le joueur arrive");
+        assertEquals(0, pendingMessages.size());
     }
 
     /**

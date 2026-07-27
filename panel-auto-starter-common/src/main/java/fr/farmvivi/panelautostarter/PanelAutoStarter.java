@@ -11,6 +11,7 @@ import fr.farmvivi.panelautostarter.motd.MotdSettings;
 import fr.farmvivi.panelautostarter.motd.MotdStore;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
+import fr.farmvivi.panelautostarter.listener.ServerConnectedEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
 import net.kyori.adventure.text.Component;
@@ -58,6 +59,7 @@ public final class PanelAutoStarter {
     private PanelClient panel;
     private MotdStore motdStore;
     private MotdSettings motdSettings;
+    private final PendingMessages pendingMessages = new PendingMessages();
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -117,6 +119,7 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new ServerConnectEventListener(this));
             this.getPlugin().addEventListener(new ProxyPingEventListener(this));
             this.getPlugin().addEventListener(new PlayerDisconnectEventListener(this));
+            this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingMessages));
             this.getLogger().info("Event listeners registered.");
 
             this.getLogger().info("Plugin enabled.");
@@ -225,6 +228,16 @@ public final class PanelAutoStarter {
      *
      * @return les réglages, jamais null une fois le plugin activé
      */
+    /**
+     * Retourne les messages en attente de joueurs pas encore en mesure de les
+     * recevoir.
+     *
+     * @return le registre des messages différés
+     */
+    public PendingMessages getPendingMessages() {
+        return pendingMessages;
+    }
+
     public MotdSettings getMotdSettings() {
         return motdSettings;
     }

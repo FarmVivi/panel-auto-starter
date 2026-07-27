@@ -3,6 +3,7 @@ package fr.farmvivi.panelautostarter.listener;
 import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
+import fr.farmvivi.panelautostarter.PendingMessages;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -29,6 +30,8 @@ public class PlayerDisconnectEventListenerTest {
     @Mock
     private PanelAutoStarter mockPlugin;
 
+    protected PendingMessages pendingMessages;
+
     @Mock
     private Configuration mockConfiguration;
 
@@ -48,6 +51,8 @@ public class PlayerDisconnectEventListenerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        pendingMessages = new PendingMessages();
+        when(mockPlugin.getPendingMessages()).thenReturn(pendingMessages);
 
         testPlayer = new MockCommonPlayer("TestPlayer");
         serversMap = new HashMap<>();

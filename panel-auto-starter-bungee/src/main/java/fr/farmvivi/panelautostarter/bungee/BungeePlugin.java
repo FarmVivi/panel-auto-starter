@@ -4,6 +4,7 @@ import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.bungee.listener.BungeePlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.bungee.listener.BungeeProxyPingEventListener;
 import fr.farmvivi.panelautostarter.bungee.listener.BungeeServerConnectEventListener;
+import fr.farmvivi.panelautostarter.bungee.listener.BungeeServerConnectedEventListener;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.listener.EventListener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -33,6 +34,7 @@ public class BungeePlugin extends Plugin implements CommonPlugin {
         this.getProxy().getPluginManager().registerListener(this, new BungeeServerConnectEventListener(proxy, eventListeners));
         this.getProxy().getPluginManager().registerListener(this, new BungeeProxyPingEventListener(eventListeners));
         this.getProxy().getPluginManager().registerListener(this, new BungeePlayerDisconnectEventListener(proxy, eventListeners));
+        this.getProxy().getPluginManager().registerListener(this, new BungeeServerConnectedEventListener(proxy, eventListeners));
         this.getLogger().info("BungeeCord Event listeners registered.");
     }
 

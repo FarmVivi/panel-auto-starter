@@ -8,6 +8,7 @@ import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
 import fr.farmvivi.panelautostarter.common.event.ProxyPingEvent;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
+import fr.farmvivi.panelautostarter.common.event.ServerConnectedEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventListener;
 import fr.farmvivi.panelautostarter.common.ping.CommonFavicon;
 import net.md_5.bungee.api.Favicon;
@@ -186,5 +187,10 @@ public class BungeeProxy implements CommonProxy, EventListener {
     @Override
     public void onServerConnect(ServerConnectEvent event) {
         // Do nothing
+    }
+
+    @Override
+    public void onServerConnected(ServerConnectedEvent event) {
+        // Do nothing : le proxy ne se sert de cet evenement pour aucun cache.
     }
 }
