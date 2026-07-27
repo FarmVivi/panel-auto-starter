@@ -27,9 +27,15 @@ public class VelocityPlugin implements CommonPlugin {
     private final Collection<EventListener> eventListeners = new LinkedList<>();
 
     @Inject
-    public VelocityPlugin(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
+    public VelocityPlugin(ProxyServer server, @DataDirectory Path dataDirectory) {
         this.server = server;
-        this.logger = logger;
+        // Le logger n'est volontairement pas injecte. Velocity ne fournit pas de
+        // binding pour java.util.logging.Logger : l'injection retombait sur celui
+        // integre a Guice, qui nomme le logger d'apres la classe cible, d'ou le
+        // "fr.farmvivi.panelautostarter.velocity.VelocityPlugin" a rallonge en
+        // console. On le nomme donc explicitement, ce qui aligne aussi les logs
+        // sur ceux du module BungeeCord, deja nommes d'apres le plugin.
+        this.logger = Logger.getLogger(PanelAutoStarter.NAME);
         this.dataDirectory = dataDirectory;
     }
 
