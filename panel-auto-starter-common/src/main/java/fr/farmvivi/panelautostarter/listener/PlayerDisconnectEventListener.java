@@ -27,6 +27,6 @@ public class PlayerDisconnectEventListener extends EventAdapter {
 
         // Un joueur parti avant d'arriver sur le limbo laisserait sinon ses
         // messages differes en memoire indefiniment.
-        plugin.getPendingMessages().discard(player);
+        plugin.getPendingNotifications().discard(player);
     }
 }

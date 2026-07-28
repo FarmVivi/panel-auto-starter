@@ -4,7 +4,7 @@ import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
-import fr.farmvivi.panelautostarter.PendingMessages;
+import fr.farmvivi.panelautostarter.PendingNotifications;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
@@ -35,7 +35,7 @@ public class ServerConnectEventListenerTest {
     @Mock
     private PanelAutoStarter mockPlugin;
 
-    protected PendingMessages pendingMessages;
+    protected PendingNotifications pendingNotifications;
 
     @Mock
     private CommonProxy mockProxy;
@@ -62,8 +62,8 @@ public class ServerConnectEventListenerTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         when(mockPlugin.getMessageSettings()).thenReturn(MessageSettings.defaults());
-        pendingMessages = new PendingMessages();
-        when(mockPlugin.getPendingMessages()).thenReturn(pendingMessages);
+        pendingNotifications = new PendingNotifications();
+        when(mockPlugin.getPendingNotifications()).thenReturn(pendingNotifications);
 
         limboServer = new MockCommonServer("limbo");
         targetServer = new MockCommonServer("target-server");
@@ -184,7 +184,7 @@ public class ServerConnectEventListenerTest {
         listener.onServerConnect(mockEvent);
 
         assertNotNull(player.getLastMessage(), "Le joueur doit avoir recu le message tout de suite");
-        assertEquals(0, pendingMessages.size(), "Rien ne doit etre mis en attente");
+        assertEquals(0, pendingNotifications.size(), "Rien ne doit etre mis en attente");
     }
 
     /**
@@ -208,15 +208,15 @@ public class ServerConnectEventListenerTest {
 
         assertNull(player.getLastMessage(),
                 "Rien ne doit etre envoye tant que le joueur n'est pas en jeu");
-        assertEquals(1, pendingMessages.size(), "Le message doit etre mis de cote");
+        assertEquals(1, pendingNotifications.size(), "Le message doit etre mis de cote");
 
         // Le joueur atterrit sur le limbo.
-        new ServerConnectedEventListener(pendingMessages)
+        new ServerConnectedEventListener(pendingNotifications)
                 .onServerConnected(new ServerConnectedEvent(player, limboServer));
 
         assertNotNull(player.getLastMessage(),
                 "Le message doit etre delivre une fois le joueur arrive");
-        assertEquals(0, pendingMessages.size());
+        assertEquals(0, pendingNotifications.size());
     }
 
     /**
@@ -242,5 +242,51 @@ public class ServerConnectEventListenerTest {
         listener.onServerConnect(mockEvent);
 
         assertEquals(2, minecraftServer.getQueue().size(), "La queue doit avoir 2 joueurs");
+    }
+
+    /**
+     * Le titre souffrait du meme mal que le message de chat : envoye avant que
+     * la connexion n'atteigne l'etat de jeu, il n'etait jamais affiche. Il doit
+     * donc etre differe lui aussi.
+     */
+    @Test
+    public void testJoiningPlayerHasHisTitleDeferredUntilHeLands() {
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
+        serversMap.put(targetServer, minecraftServer);
+
+        MockCommonPlayer player = new MockCommonPlayer("JoiningPlayer");
+        player.setCurrentServer(null);
+
+        when(mockEvent.getPlayer()).thenReturn(player);
+        when(mockEvent.getTarget()).thenReturn(targetServer);
+
+        listener.onServerConnect(mockEvent);
+
+        assertNull(player.getLastTitle(),
+                "Le titre ne doit pas partir tant que le joueur n'est pas en jeu");
+
+        new ServerConnectedEventListener(pendingNotifications)
+                .onServerConnected(new ServerConnectedEvent(player, limboServer));
+
+        assertNotNull(player.getLastTitle(),
+                "Le titre doit etre affiche une fois le joueur arrive");
+        assertNotNull(player.getLastMessage(), "Le message aussi");
+    }
+
+    @Test
+    public void testAlreadyConnectedPlayerSeesHisTitleImmediately() {
+        MinecraftServer minecraftServer = new MinecraftServer(mockPlugin, targetServer, mockPanelServer, mock(ServerMotd.class));
+        serversMap.put(targetServer, minecraftServer);
+
+        MockCommonPlayer player = new MockCommonPlayer("ConnectedPlayer");
+        player.setCurrentServer(limboServer);
+
+        when(mockEvent.getPlayer()).thenReturn(player);
+        when(mockEvent.getTarget()).thenReturn(targetServer);
+
+        listener.onServerConnect(mockEvent);
+
+        assertNotNull(player.getLastTitle(), "Sa connexion est etablie : le titre part tout de suite");
+        assertEquals(0, pendingNotifications.size());
     }
 }

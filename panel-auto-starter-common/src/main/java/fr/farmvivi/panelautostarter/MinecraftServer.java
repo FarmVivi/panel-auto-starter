@@ -4,6 +4,7 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
+import fr.farmvivi.panelautostarter.message.SoundSpec;
 import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
@@ -309,7 +310,7 @@ public class MinecraftServer {
         }
 
         MessageSettings.TitleSettings title = plugin.getMessageSettings().getTitle();
-        String tickSound = plugin.getMessageSettings().getCountdown().tickSound();
+        SoundSpec tickSound = plugin.getMessageSettings().getCountdown().tickSound();
         for (CommonPlayer player : List.copyOf(queue)) {
             // Le titre reste affiche jusqu'au tic suivant, sans clignoter.
             player.showTitle(Messages.countdownTitle(remaining),
@@ -324,7 +325,7 @@ public class MinecraftServer {
 
     private void announceDeparture() {
         MessageSettings.TitleSettings title = plugin.getMessageSettings().getTitle();
-        String goSound = plugin.getMessageSettings().getCountdown().goSound();
+        SoundSpec goSound = plugin.getMessageSettings().getCountdown().goSound();
         for (CommonPlayer player : List.copyOf(queue)) {
             player.showTitle(Messages.readyTitle(), Component.empty(),
                     Duration.ZERO, Duration.ofMillis(800), title.fadeOut());
@@ -332,9 +333,9 @@ public class MinecraftServer {
         }
     }
 
-    private void playSound(CommonPlayer player, String soundKey) {
-        if (soundKey != null && !soundKey.isBlank()) {
-            player.playSound(soundKey, 1f, 1f);
+    private void playSound(CommonPlayer player, SoundSpec sound) {
+        if (sound != null && !sound.isSilent()) {
+            player.playSound(sound.name(), sound.volume(), sound.pitch());
         }
     }
 

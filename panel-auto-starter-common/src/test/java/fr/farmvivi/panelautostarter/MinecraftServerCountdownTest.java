@@ -5,6 +5,7 @@ import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
+import fr.farmvivi.panelautostarter.message.SoundSpec;
 import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
@@ -100,8 +101,11 @@ public class MinecraftServerCountdownTest {
 
     private void givenCountdown(boolean enabled, int seconds) {
         when(mockPlugin.getMessageSettings()).thenReturn(MessageSettings.of(
-                new MessageSettings.TitleSettings(true, Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO),
-                new MessageSettings.CountdownSettings(enabled, seconds, "tick.sound", "go.sound")));
+                new MessageSettings.TitleSettings(true, Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO,
+                        new SoundSpec("title.sound", 1f, 1f)),
+                new MessageSettings.CountdownSettings(enabled, seconds,
+                        new SoundSpec("tick.sound", 0.5f, 1f),
+                        new SoundSpec("go.sound", 0.7f, 1.2f))));
     }
 
     /** Amène le serveur en ligne, ce qui déclenche la séquence si la file n'est pas vide. */

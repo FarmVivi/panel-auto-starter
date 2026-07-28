@@ -105,12 +105,27 @@ queue:
     stay: 2500
     fade-out: 500
 
+    sound:                                # accompanies the title
+      name: block.amethyst_block.chime
+      volume: 0.6
+      pitch: 1.2
+
   countdown:
     enabled: true
     seconds: 3
-    tick-sound: block.note_block.hat
-    go-sound: block.note_block.pling
+    tick-sound:                           # once per second
+      name: block.note_block.hat
+      volume: 0.5
+      pitch: 1.0
+    go-sound:                             # when players are moved
+      name: entity.experience_orb.pickup
+      volume: 0.7
+      pitch: 1.2
 ```
+
+Leave a `name` empty to drop that sound. The short form `sound: block.note_block.bell` also works, keeping the default volume and pitch.
+
+Volumes default below `1.0` on purpose: a sound repeated every second of a countdown gets grating at full blast.
 
 The countdown adds to `server-start.wait-before-teleport`: the plugin first
 waits that grace period silently, letting the server settle, then counts down on
@@ -119,10 +134,10 @@ server is ready.
 
 > **Sounds have two limits.** They are **Velocity-only**: BungeeCord exposes no
 > sound API at all — the proxy forwards packets rather than producing them — so
-> `tick-sound` and `go-sound` have no effect there, and the plugin says so on
-> startup rather than letting you wonder. They also require a **1.19.3+
-> client**: below that Velocity cannot emit the sound and drops it silently.
-> The countdown itself always shows on screen.
+> the sound settings have no effect there, and the plugin says so on startup
+> rather than letting you wonder. They also require a **1.19.3+ client**: below
+> that Velocity cannot emit the sound and drops it silently. Titles and the
+> countdown always show on screen regardless.
 
 Players are then moved one at a time, `server-start.teleport-delay` seconds
 apart, so a full queue does not land on a freshly booted server all at once.

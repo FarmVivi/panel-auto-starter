@@ -1,6 +1,6 @@
 package fr.farmvivi.panelautostarter.listener;
 
-import fr.farmvivi.panelautostarter.PendingMessages;
+import fr.farmvivi.panelautostarter.PendingNotifications;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectedEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 
@@ -9,14 +9,14 @@ import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
  * serveur et donc en mesure de les afficher.
  */
 public class ServerConnectedEventListener extends EventAdapter {
-    private final PendingMessages pendingMessages;
+    private final PendingNotifications pendingNotifications;
 
-    public ServerConnectedEventListener(PendingMessages pendingMessages) {
-        this.pendingMessages = pendingMessages;
+    public ServerConnectedEventListener(PendingNotifications pendingNotifications) {
+        this.pendingNotifications = pendingNotifications;
     }
 
     @Override
     public void onServerConnected(ServerConnectedEvent event) {
-        pendingMessages.flush(event.getPlayer());
+        pendingNotifications.flush(event.getPlayer());
     }
 }

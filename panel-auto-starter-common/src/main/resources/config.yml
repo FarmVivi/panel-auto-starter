@@ -110,6 +110,14 @@ queue:
     stay: 2500
     fade-out: 500
 
+    # Son accompagnant le titre. Laisser « name » vide pour aucun son.
+    # La forme courte « sound: block.amethyst_block.chime » est acceptée : le
+    # volume et la hauteur gardent alors leurs valeurs par défaut.
+    sound:
+      name: block.amethyst_block.chime
+      volume: 0.6
+      pitch: 1.2
+
   # Compte à rebours affiché juste avant la téléportation, une fois le serveur
   # prêt. Il s'ajoute à server-start.wait-before-teleport : le plugin attend
   # d'abord ce délai en silence, puis décompte à l'écran.
@@ -117,7 +125,11 @@ queue:
     enabled: true
     seconds: 3
 
-    # Sons joués pendant le décompte, puis au départ. Laisser vide pour aucun.
+    # Sons joués à chaque seconde, puis au moment du départ.
+    # Laisser « name » vide pour n'en jouer aucun.
+    #
+    # Le volume compte autant que le choix du son : un son répété à chaque
+    # seconde devient vite agressif à plein volume.
     #
     # ATTENTION, deux limites :
     #  - Velocity uniquement. BungeeCord n'expose aucune API de son — le proxy
@@ -125,8 +137,15 @@ queue:
     #    effet, et le plugin le signale au démarrage.
     #  - Client 1.19.3 minimum. En deçà, Velocity ne peut pas émettre le son et
     #    l'ignore silencieusement. Le décompte reste affiché à l'écran.
-    tick-sound: block.note_block.hat
-    go-sound: block.note_block.pling
+    tick-sound:
+      name: block.note_block.hat
+      volume: 0.5
+      pitch: 1.0
+
+    go-sound:
+      name: entity.experience_orb.pickup
+      volume: 0.7
+      pitch: 1.2
 
 # Le nom de chaque serveur doit correspondre exactement à celui déclaré dans
 # la configuration de votre proxy (BungeeCord ou Velocity).

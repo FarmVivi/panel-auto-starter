@@ -61,7 +61,7 @@ public final class PanelAutoStarter {
     private MotdStore motdStore;
     private MotdSettings motdSettings;
     private MessageSettings messageSettings;
-    private final PendingMessages pendingMessages = new PendingMessages();
+    private final PendingNotifications pendingNotifications = new PendingNotifications();
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -125,7 +125,7 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new ServerConnectEventListener(this));
             this.getPlugin().addEventListener(new ProxyPingEventListener(this));
             this.getPlugin().addEventListener(new PlayerDisconnectEventListener(this));
-            this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingMessages));
+            this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingNotifications));
             this.getLogger().info("Event listeners registered.");
 
             this.getLogger().info("Plugin enabled.");
@@ -257,8 +257,8 @@ public final class PanelAutoStarter {
      *
      * @return le registre des messages différés
      */
-    public PendingMessages getPendingMessages() {
-        return pendingMessages;
+    public PendingNotifications getPendingNotifications() {
+        return pendingNotifications;
     }
 
     /**

@@ -46,8 +46,12 @@ public class MessageSettingsTest {
                   countdown:
                     enabled: false
                     seconds: 5
-                    tick-sound: entity.experience_orb.pickup
-                    go-sound: entity.player.levelup
+                    tick-sound:
+                      name: entity.experience_orb.pickup
+                      volume: 0.25
+                      pitch: 0.8
+                    go-sound:
+                      name: entity.player.levelup
                 """);
 
         assertFalse(settings.getTitle().enabled());
@@ -57,8 +61,10 @@ public class MessageSettingsTest {
 
         assertFalse(settings.getCountdown().enabled());
         assertEquals(5, settings.getCountdown().seconds());
-        assertEquals("entity.experience_orb.pickup", settings.getCountdown().tickSound());
-        assertEquals("entity.player.levelup", settings.getCountdown().goSound());
+        assertEquals("entity.experience_orb.pickup", settings.getCountdown().tickSound().name());
+        assertEquals(0.25f, settings.getCountdown().tickSound().volume());
+        assertEquals(0.8f, settings.getCountdown().tickSound().pitch());
+        assertEquals("entity.player.levelup", settings.getCountdown().goSound().name());
     }
 
     /**
@@ -92,8 +98,10 @@ public class MessageSettingsTest {
         MessageSettings settings = parse("""
                 queue:
                   countdown:
-                    tick-sound: ""
-                    go-sound: "  "
+                    tick-sound:
+                      name: ""
+                    go-sound:
+                      name: "  "
                 """);
 
         assertFalse(settings.getCountdown().usesSound(),
@@ -105,8 +113,10 @@ public class MessageSettingsTest {
         MessageSettings settings = parse("""
                 queue:
                   countdown:
-                    tick-sound: ""
-                    go-sound: block.note_block.pling
+                    tick-sound:
+                      name: ""
+                    go-sound:
+                      name: block.note_block.pling
                 """);
 
         assertTrue(settings.getCountdown().usesSound());
@@ -141,5 +151,52 @@ public class MessageSettingsTest {
                 "La section queue.title livree doit refleter les defauts du code");
         assertEquals(coded.getCountdown(), fromFile.getCountdown(),
                 "La section queue.countdown livree doit refleter les defauts du code");
+    }
+
+    /**
+     * La forme courte doit être acceptée : écrire directement le nom du son est
+     * naturel, et une ClassCastException au démarrage serait un accueil brutal.
+     */
+    @Test
+    public void testShorthandSoundIsAccepted() {
+        MessageSettings settings = parse("""
+                queue:
+                  countdown:
+                    go-sound: block.note_block.bell
+                """);
+
+        assertEquals("block.note_block.bell", settings.getCountdown().goSound().name());
+        assertEquals(MessageSettings.defaults().getCountdown().goSound().volume(),
+                settings.getCountdown().goSound().volume(),
+                "Le volume garde sa valeur par defaut");
+    }
+
+    @Test
+    public void testNegativeVolumeIsClampedToZero() {
+        MessageSettings settings = parse("""
+                queue:
+                  countdown:
+                    go-sound:
+                      name: block.note_block.bell
+                      volume: -2
+                """);
+
+        assertEquals(0f, settings.getCountdown().goSound().volume());
+    }
+
+    /**
+     * Les défauts sont volontairement discrets : un son de décompte joué à
+     * plein volume chaque seconde devient vite pénible.
+     */
+    @Test
+    public void testDefaultSoundsAreQuiet() {
+        MessageSettings.CountdownSettings countdown = MessageSettings.defaults().getCountdown();
+
+        assertTrue(countdown.tickSound().volume() < 1f,
+                "Le tic doit etre plus discret que le volume plein");
+        assertTrue(countdown.goSound().volume() < 1f,
+                "Le son de depart doit rester doux");
+        assertFalse(MessageSettings.defaults().getTitle().sound().isSilent(),
+                "Le titre d'attente doit etre accompagne d'un son par defaut");
     }
 }

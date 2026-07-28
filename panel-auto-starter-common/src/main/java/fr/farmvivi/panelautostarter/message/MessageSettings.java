@@ -16,8 +16,10 @@ public final class MessageSettings {
      * @param fadeIn  durée d'apparition
      * @param stay    durée d'affichage plein
      * @param fadeOut durée de disparition
+     * @param sound   son accompagnant le titre
      */
-    public record TitleSettings(boolean enabled, Duration fadeIn, Duration stay, Duration fadeOut) {
+    public record TitleSettings(boolean enabled, Duration fadeIn, Duration stay, Duration fadeOut,
+                                SoundSpec sound) {
     }
 
     /**
@@ -25,25 +27,28 @@ public final class MessageSettings {
      *
      * @param enabled   active le décompte
      * @param seconds   nombre de secondes décomptées
-     * @param tickSound son joué à chaque seconde, vide pour aucun
-     * @param goSound   son joué au moment de la téléportation, vide pour aucun
+     * @param tickSound son joué à chaque seconde
+     * @param goSound   son joué au moment de la téléportation
      */
-    public record CountdownSettings(boolean enabled, int seconds, String tickSound, String goSound) {
+    public record CountdownSettings(boolean enabled, int seconds, SoundSpec tickSound, SoundSpec goSound) {
         /**
          * Indique si un son doit être joué à un moment quelconque du décompte.
          *
          * @return true si au moins un son est configuré
          */
         public boolean usesSound() {
-            return !tickSound.isBlank() || !goSound.isBlank();
+            return !tickSound.isSilent() || !goSound.isSilent();
         }
     }
 
     private static final TitleSettings DEFAULT_TITLE = new TitleSettings(
-            true, Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500));
+            true, Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500),
+            new SoundSpec("block.amethyst_block.chime", 0.6f, 1.2f));
 
     private static final CountdownSettings DEFAULT_COUNTDOWN = new CountdownSettings(
-            true, 3, "block.note_block.hat", "block.note_block.pling");
+            true, 3,
+            new SoundSpec("block.note_block.hat", 0.5f, 1.0f),
+            new SoundSpec("entity.experience_orb.pickup", 0.7f, 1.2f));
 
     private final TitleSettings title;
     private final CountdownSettings countdown;
@@ -88,13 +93,14 @@ public final class MessageSettings {
                         config.getBoolean("queue.title.enabled", DEFAULT_TITLE.enabled()),
                         millis(config, "queue.title.fade-in", DEFAULT_TITLE.fadeIn()),
                         millis(config, "queue.title.stay", DEFAULT_TITLE.stay()),
-                        millis(config, "queue.title.fade-out", DEFAULT_TITLE.fadeOut())),
+                        millis(config, "queue.title.fade-out", DEFAULT_TITLE.fadeOut()),
+                        SoundSpec.from(config, "queue.title.sound", DEFAULT_TITLE.sound())),
                 new CountdownSettings(
                         config.getBoolean("queue.countdown.enabled", DEFAULT_COUNTDOWN.enabled()),
                         // Un decompte negatif n'a pas de sens ; 0 revient a le desactiver.
                         Math.max(0, config.getInt("queue.countdown.seconds", DEFAULT_COUNTDOWN.seconds())),
-                        config.getString("queue.countdown.tick-sound", DEFAULT_COUNTDOWN.tickSound()).trim(),
-                        config.getString("queue.countdown.go-sound", DEFAULT_COUNTDOWN.goSound()).trim()));
+                        SoundSpec.from(config, "queue.countdown.tick-sound", DEFAULT_COUNTDOWN.tickSound()),
+                        SoundSpec.from(config, "queue.countdown.go-sound", DEFAULT_COUNTDOWN.goSound())));
     }
 
     private static Duration millis(Configuration config, String path, Duration fallback) {
