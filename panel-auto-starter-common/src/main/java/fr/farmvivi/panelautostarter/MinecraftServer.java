@@ -3,12 +3,15 @@ package fr.farmvivi.panelautostarter;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
+import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import fr.farmvivi.panelautostarter.panel.PanelServerState;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,6 +54,14 @@ public class MinecraftServer {
      * Empeche N pings clients simultanes de declencher N requetes vers le backend.
      */
     private final AtomicBoolean refreshInFlight = new AtomicBoolean(false);
+
+    /**
+     * Empeche deux sequences de teleportation de se chevaucher : la boucle de
+     * surveillance passe regulierement et relancerait sinon un decompte a
+     * chaque sondage.
+     */
+    private final AtomicBoolean teleportSequenceRunning = new AtomicBoolean(false);
+    private volatile int countdownRemaining = 0;
 
     private long lastBusyTime = System.currentTimeMillis();
     private long serverStartedTime = 0;
@@ -219,14 +230,17 @@ public class MinecraftServer {
     }
 
     private void clearQueue() {
+        // Le serveur n'est plus la : toute sequence de teleportation en cours
+        // n'a plus d'objet.
+        countdownRemaining = 0;
+        teleportSequenceRunning.set(false);
+
         if (!queue.isEmpty()) {
             Iterator<CommonPlayer> iterator = queue.iterator();
             while (iterator.hasNext()) {
                 CommonPlayer player = iterator.next();
                 plugin.getLogger().warning("Impossible de téléporter " + player.getUsername() + " sur " + server.getName());
-                player.sendMessage(Component.text("Téléportation sur le serveur ").color(NamedTextColor.RED)
-                        .append(Component.text(server.getDisplayName()).color(NamedTextColor.YELLOW))
-                        .append(Component.text(" impossible !").color(NamedTextColor.RED)));
+                player.sendMessage(Messages.teleportFailed(server.getDisplayName()));
                 iterator.remove();
             }
         }
@@ -234,7 +248,7 @@ public class MinecraftServer {
 
     private void handleQueueAndShutdown(CommonServerPing result, long curMillis) {
         if (status.equals(MinecraftServerStatus.ONLINE)) {
-            handleQueue(curMillis);
+            maybeStartTeleportSequence(curMillis);
             updateLastBusyTime(result, curMillis);
             if (curMillis - lastBusyTime > 5 * 60 * 1000) {
                 stop();
@@ -243,57 +257,123 @@ public class MinecraftServer {
     }
 
     /**
-     * Gère la file d'attente avec un délai configurable entre chaque téléportation
-     * et un délai d'attente avant de commencer les téléportations après le démarrage du serveur
+     * Démarre la séquence de téléportation si elle n'est pas déjà en cours.
+     * <p>
+     * Le décompte puis les téléportations sont menés par des tâches planifiées
+     * à la seconde, et non par la boucle de surveillance : celle-ci ne passe que
+     * toutes les 15 secondes, ce qui rendait jusqu'ici {@code teleport-delay}
+     * illusoire — la file se vidait d'un joueur par sondage.
+     *
+     * @param curMillis l'instant courant
      */
-    private void handleQueue(long curMillis) {
+    private void maybeStartTeleportSequence(long curMillis) {
         if (queue.isEmpty()) {
             return;
         }
 
-        // Obtenir les paramètres de configuration
+        // Laisser au serveur le temps d'etre reellement pret avant d'annoncer
+        // quoi que ce soit au joueur.
         long waitBeforeTeleport = plugin.getConfig().getLong("server-start.wait-before-teleport", 5) * 1000;
-        long teleportDelay = plugin.getConfig().getLong("server-start.teleport-delay", 1) * 1000;
-
-        // Attendre un certain temps après le démarrage avant de TP les joueurs
         if (curMillis - serverStartedTime < waitBeforeTeleport) {
             return;
         }
 
-        // Vérifier si on peut TP le prochain joueur (délai minimum entre les TP)
-        if (curMillis - lastTeleportTime < teleportDelay) {
+        if (!teleportSequenceRunning.compareAndSet(false, true)) {
             return;
         }
 
-        // Trouver le premier joueur à téléporter (pas déjà sur le serveur)
-        CommonPlayer playerToTeleport = null;
-        int playerIndex = -1;
-        
-        for (int i = 0; i < queue.size(); i++) {
-            CommonPlayer player = queue.get(i);
-            if (!player.getServer().equals(server)) {
-                playerToTeleport = player;
-                playerIndex = i;
-                break;
-            }
+        MessageSettings.CountdownSettings countdown = plugin.getMessageSettings().getCountdown();
+        if (countdown.enabled() && countdown.seconds() > 0) {
+            countdownRemaining = countdown.seconds();
+            tickCountdown();
+        } else {
+            drainQueue();
+        }
+    }
+
+    /**
+     * Affiche une seconde du décompte à toute la file, puis planifie la
+     * suivante.
+     */
+    private void tickCountdown() {
+        if (!status.equals(MinecraftServerStatus.ONLINE)) {
+            teleportSequenceRunning.set(false);
+            return;
         }
 
-        // Si on a trouvé un joueur à téléporter
-        if (playerToTeleport != null) {
-            teleportPlayer(playerToTeleport);
-            queue.remove(playerIndex);
-            lastTeleportTime = curMillis;
-        } else {
-            // Nettoyer les joueurs déjà sur le serveur
-            queue.removeIf(player -> player.getServer().equals(server));
+        int remaining = countdownRemaining;
+        if (remaining <= 0) {
+            announceDeparture();
+            drainQueue();
+            return;
         }
+
+        MessageSettings.TitleSettings title = plugin.getMessageSettings().getTitle();
+        String tickSound = plugin.getMessageSettings().getCountdown().tickSound();
+        for (CommonPlayer player : List.copyOf(queue)) {
+            // Le titre reste affiche jusqu'au tic suivant, sans clignoter.
+            player.showTitle(Messages.countdownTitle(remaining),
+                    Messages.countdownSubtitle(server.getDisplayName()),
+                    Duration.ZERO, Duration.ofSeconds(1), title.fadeOut());
+            playSound(player, tickSound);
+        }
+
+        countdownRemaining = remaining - 1;
+        plugin.getProxy().schedule(plugin.getPlugin(), this::tickCountdown, 1, TimeUnit.SECONDS);
+    }
+
+    private void announceDeparture() {
+        MessageSettings.TitleSettings title = plugin.getMessageSettings().getTitle();
+        String goSound = plugin.getMessageSettings().getCountdown().goSound();
+        for (CommonPlayer player : List.copyOf(queue)) {
+            player.showTitle(Messages.readyTitle(), Component.empty(),
+                    Duration.ZERO, Duration.ofMillis(800), title.fadeOut());
+            playSound(player, goSound);
+        }
+    }
+
+    private void playSound(CommonPlayer player, String soundKey) {
+        if (soundKey != null && !soundKey.isBlank()) {
+            player.playSound(soundKey, 1f, 1f);
+        }
+    }
+
+    /**
+     * Téléporte un joueur, puis se replanifie tant que la file n'est pas vide.
+     * <p>
+     * L'espacement évite d'envoyer toute une file d'un bloc sur un serveur qui
+     * vient à peine de démarrer.
+     */
+    private void drainQueue() {
+        if (!status.equals(MinecraftServerStatus.ONLINE)) {
+            teleportSequenceRunning.set(false);
+            return;
+        }
+
+        // Un joueur deja arrive sur place n'a plus rien a faire dans la file.
+        queue.removeIf(player -> server.equals(player.getServer()));
+
+        if (queue.isEmpty()) {
+            teleportSequenceRunning.set(false);
+            return;
+        }
+
+        CommonPlayer next = queue.remove(0);
+        teleportPlayer(next);
+        lastTeleportTime = System.currentTimeMillis();
+
+        if (queue.isEmpty()) {
+            teleportSequenceRunning.set(false);
+            return;
+        }
+
+        long teleportDelay = plugin.getConfig().getLong("server-start.teleport-delay", 1);
+        plugin.getProxy().schedule(plugin.getPlugin(), this::drainQueue, teleportDelay, TimeUnit.SECONDS);
     }
 
     private void teleportPlayer(CommonPlayer player) {
         plugin.getLogger().info("Téléportation de " + player.getUsername() + " sur " + server.getName());
-        player.sendMessage(Component.text("Téléportation sur le serveur ").color(NamedTextColor.GREEN)
-                .append(Component.text(server.getDisplayName()).color(NamedTextColor.YELLOW))
-                .append(Component.text("...").color(NamedTextColor.GREEN)));
+        player.sendMessage(Messages.teleporting(server.getDisplayName()));
         player.connectToServer(server);
     }
 

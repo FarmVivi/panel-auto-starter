@@ -2,6 +2,7 @@ package fr.farmvivi.panelautostarter;
 
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
@@ -41,6 +42,7 @@ public class MinecraftServerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(mockPanelAutoStarter.getMessageSettings()).thenReturn(MessageSettings.defaults());
 
         // Mock la configuration
         when(mockPanelAutoStarter.getConfig()).thenReturn(mockConfiguration);

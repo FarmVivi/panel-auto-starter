@@ -1,6 +1,7 @@
 package fr.farmvivi.panelautostarter;
 
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.Callback;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
@@ -59,6 +60,7 @@ public class MinecraftServerPingCacheTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(mockPlugin.getMessageSettings()).thenReturn(MessageSettings.defaults());
 
         when(mockPlugin.getConfig()).thenReturn(mockConfiguration);
         when(mockPlugin.getLogger()).thenReturn(mockLogger);

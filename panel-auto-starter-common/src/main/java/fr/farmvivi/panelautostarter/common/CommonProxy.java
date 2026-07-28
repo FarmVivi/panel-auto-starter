@@ -112,4 +112,15 @@ public interface CommonProxy {
      * @return the forced hosts
      */
     Map<String, String> getForcedHosts();
+
+    /**
+     * Indique si la plateforme sait jouer un son à un joueur.
+     * <p>
+     * BungeeCord n'expose aucune API de son : le proxy achemine les paquets
+     * sans en fabriquer. Permet d'avertir l'administrateur qu'un son configuré
+     * restera sans effet, plutôt que de le laisser conclure a un bug.
+     *
+     * @return true si les sons sont supportés
+     */
+    boolean supportsSound();
 }

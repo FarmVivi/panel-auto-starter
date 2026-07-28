@@ -2,6 +2,7 @@ package fr.farmvivi.panelautostarter.common;
 
 import net.kyori.adventure.text.Component;
 
+import java.time.Duration;
 import java.util.UUID;
 
 /**
@@ -49,6 +50,29 @@ public interface CommonPlayer {
      * @param message the message to send
      */
     void sendMessage(Component message);
+
+    /**
+     * Displays a title and subtitle on the player's screen.
+     *
+     * @param title    the title, may be empty
+     * @param subtitle the subtitle, may be empty
+     * @param fadeIn   fade-in duration
+     * @param stay     duration the title remains fully visible
+     * @param fadeOut  fade-out duration
+     */
+    void showTitle(Component title, Component subtitle, Duration fadeIn, Duration stay, Duration fadeOut);
+
+    /**
+     * Joue un son au joueur, si la plateforme le permet.
+     * <p>
+     * Sans effet sur BungeeCord, qui n'expose aucune API de son ; voir
+     * {@link CommonProxy#supportsSound()}.
+     *
+     * @param soundKey l'identifiant du son, par exemple {@code block.note_block.pling}
+     * @param volume   le volume
+     * @param pitch    la hauteur
+     */
+    void playSound(String soundKey, float volume, float pitch);
 
     /**
      * Connects the player to the server.

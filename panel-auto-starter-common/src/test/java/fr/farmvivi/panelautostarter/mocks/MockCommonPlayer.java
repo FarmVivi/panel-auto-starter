@@ -104,4 +104,34 @@ public class MockCommonPlayer implements CommonPlayer {
     public void setCurrentServer(CommonServer server) {
         this.currentServer = server;
     }
+
+    // ===================== Titres et sons =====================
+
+    private Component lastTitle;
+    private Component lastSubtitle;
+    private final java.util.List<String> playedSounds = new java.util.ArrayList<>();
+
+    @Override
+    public void showTitle(Component title, Component subtitle, java.time.Duration fadeIn,
+                          java.time.Duration stay, java.time.Duration fadeOut) {
+        this.lastTitle = title;
+        this.lastSubtitle = subtitle;
+    }
+
+    @Override
+    public void playSound(String soundKey, float volume, float pitch) {
+        playedSounds.add(soundKey);
+    }
+
+    public Component getLastTitle() {
+        return lastTitle;
+    }
+
+    public Component getLastSubtitle() {
+        return lastSubtitle;
+    }
+
+    public java.util.List<String> getPlayedSounds() {
+        return playedSounds;
+    }
 }

@@ -193,4 +193,10 @@ public class BungeeProxy implements CommonProxy, EventListener {
     public void onServerConnected(ServerConnectedEvent event) {
         // Do nothing : le proxy ne se sert de cet evenement pour aucun cache.
     }
+
+    @Override
+    public boolean supportsSound() {
+        // BungeeCord n'a aucune API de son.
+        return false;
+    }
 }

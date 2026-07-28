@@ -6,6 +6,7 @@ import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.PendingMessages;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -60,6 +61,7 @@ public class ServerConnectEventListenerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(mockPlugin.getMessageSettings()).thenReturn(MessageSettings.defaults());
         pendingMessages = new PendingMessages();
         when(mockPlugin.getPendingMessages()).thenReturn(pendingMessages);
 

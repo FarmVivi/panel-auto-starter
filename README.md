@@ -10,7 +10,7 @@ Works with both **Pterodactyl** and **Pelican**.
 
 - Automatically starts a server when a player tries to join it
 - Automatically stops idle servers
-- Queue system that holds players while the server boots
+- Queue system that holds players while the server boots, with an on-screen countdown before they are moved
 - Server list ping that reuses each server's own MOTD and favicon, decorated with a status badge when it is offline or starting
 - Works on BungeeCord and Velocity
 
@@ -89,6 +89,41 @@ The plugin takes care of forwarding each backend's MOTD on a per-host basis. Vel
 With `disabled`, everyone gets their own MOTD back: the proxy on its address, each backend on its forced host, and the plugin's "offline" / "starting" screens when the server is unavailable.
 
 Side benefit: Velocity no longer contacts a backend on every client ping, since the plugin serves from its cache.
+
+### Joining a stopped server
+
+When a player is put in the queue they get a title on screen, and once the
+server is ready a countdown runs before anyone is moved.
+
+```yaml
+queue:
+  server: lobby
+
+  title:
+    enabled: true
+    fade-in: 300      # milliseconds
+    stay: 2500
+    fade-out: 500
+
+  countdown:
+    enabled: true
+    seconds: 3
+    tick-sound: block.note_block.hat
+    go-sound: block.note_block.pling
+```
+
+The countdown adds to `server-start.wait-before-teleport`: the plugin first
+waits that grace period silently, letting the server settle, then counts down on
+screen. Set `seconds: 0` or `enabled: false` to move players as soon as the
+server is ready.
+
+> **Sounds are Velocity-only.** BungeeCord exposes no sound API at all — the
+> proxy forwards packets rather than producing them — so `tick-sound` and
+> `go-sound` have no effect there. The plugin says so on startup rather than
+> letting you wonder. The countdown itself still shows on screen.
+
+Players are then moved one at a time, `server-start.teleport-delay` seconds
+apart, so a full queue does not land on a freshly booted server all at once.
 
 ### Offline and starting MOTD
 

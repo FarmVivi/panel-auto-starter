@@ -99,7 +99,30 @@ motd:
     version-label: none
 
 queue:
+  # Serveur d'attente où patientent les joueurs pendant le démarrage
   server: lobby
+
+  # Titre affiché au joueur au moment où il rejoint la file d'attente.
+  # Durées en millisecondes.
+  title:
+    enabled: true
+    fade-in: 300
+    stay: 2500
+    fade-out: 500
+
+  # Compte à rebours affiché juste avant la téléportation, une fois le serveur
+  # prêt. Il s'ajoute à server-start.wait-before-teleport : le plugin attend
+  # d'abord ce délai en silence, puis décompte à l'écran.
+  countdown:
+    enabled: true
+    seconds: 3
+
+    # Sons joués pendant le décompte, puis au départ. Laisser vide pour aucun.
+    # ATTENTION : Velocity uniquement. BungeeCord n'expose aucune API de son —
+    # le proxy achemine les paquets sans en fabriquer — ces réglages y sont donc
+    # sans effet, et le plugin le signale au démarrage.
+    tick-sound: block.note_block.hat
+    go-sound: block.note_block.pling
 
 # Le nom de chaque serveur doit correspondre exactement à celui déclaré dans
 # la configuration de votre proxy (BungeeCord ou Velocity).

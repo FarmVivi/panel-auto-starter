@@ -217,4 +217,10 @@ public class VelocityProxy implements CommonProxy, EventListener {
     public void onServerConnected(ServerConnectedEvent event) {
         // Do nothing : le proxy ne se sert de cet evenement pour aucun cache.
     }
+
+    @Override
+    public boolean supportsSound() {
+        // Velocity expose Adventure : les joueurs sont des Audience.
+        return true;
+    }
 }

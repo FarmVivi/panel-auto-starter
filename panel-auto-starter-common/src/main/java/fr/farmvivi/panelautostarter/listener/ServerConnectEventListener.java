@@ -4,6 +4,8 @@ import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.PendingMessages;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
+import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
@@ -52,10 +54,18 @@ public class ServerConnectEventListener extends EventAdapter {
                     server.start();
                 }
 
-                Component message = Component.text(server.getServer().getDisplayName()).color(NamedTextColor.YELLOW)
-                        .append(Component.text(" en cours de démarrage...").color(NamedTextColor.GOLD))
-                        .appendNewline()
-                        .append(Component.text("Vous avez rejoint la file d'attente pour rejoindre ce serveur une fois démarré.").color(NamedTextColor.GRAY));
+                String serverName = server.getServer().getDisplayName();
+                Component message = Messages.joinedQueue(serverName,
+                        server.getQueue().indexOf(player) + 1, server.getQueue().size());
+
+                MessageSettings.TitleSettings title = plugin.getMessageSettings().getTitle();
+                if (title.enabled()) {
+                    // Le titre part immediatement meme pour un joueur qui arrive :
+                    // contrairement au chat, il est mis en file par le client et
+                    // s'affiche des l'entree en jeu.
+                    player.showTitle(Messages.startingTitle(), Messages.startingSubtitle(serverName),
+                            title.fadeIn(), title.stay(), title.fadeOut());
+                }
 
                 if (joiningTheProxy) {
                     // La connexion n'a pas encore atteint l'etat de jeu : un

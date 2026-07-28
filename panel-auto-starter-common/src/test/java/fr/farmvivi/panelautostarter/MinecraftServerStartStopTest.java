@@ -2,6 +2,7 @@ package fr.farmvivi.panelautostarter;
 
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
@@ -38,6 +39,7 @@ public class MinecraftServerStartStopTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(mockPanelAutoStarter.getMessageSettings()).thenReturn(MessageSettings.defaults());
 
         when(mockPanelAutoStarter.getConfig()).thenReturn(mockConfiguration);
         when(mockConfiguration.getLong("server-start.check-interval-normal", 15)).thenReturn(15L);

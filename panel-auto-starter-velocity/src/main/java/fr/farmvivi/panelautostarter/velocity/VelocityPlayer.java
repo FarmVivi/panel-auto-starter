@@ -5,8 +5,13 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
+import net.kyori.adventure.key.InvalidKeyException;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,6 +52,24 @@ public class VelocityPlayer implements CommonPlayer {
     @Override
     public void sendMessage(Component message) {
         player.sendMessage(message);
+    }
+
+    @Override
+    public void showTitle(Component title, Component subtitle, Duration fadeIn, Duration stay, Duration fadeOut) {
+        player.showTitle(Title.title(title, subtitle, Title.Times.times(fadeIn, stay, fadeOut)));
+    }
+
+    @Override
+    public void playSound(String soundKey, float volume, float pitch) {
+        Key key;
+        try {
+            key = Key.key(soundKey);
+        } catch (InvalidKeyException ex) {
+            // Un identifiant de son invalide vient de la configuration : on
+            // ignore plutot que de casser la teleportation en cours.
+            return;
+        }
+        player.playSound(Sound.sound(key, Sound.Source.MASTER, volume, pitch));
     }
 
     @Override

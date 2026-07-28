@@ -7,6 +7,7 @@ import fr.farmvivi.panelautostarter.panel.PanelClient;
 import fr.farmvivi.panelautostarter.panel.PanelClientFactory;
 import fr.farmvivi.panelautostarter.panel.PanelConfig;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.motd.MotdSettings;
 import fr.farmvivi.panelautostarter.motd.MotdStore;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
@@ -59,6 +60,7 @@ public final class PanelAutoStarter {
     private PanelClient panel;
     private MotdStore motdStore;
     private MotdSettings motdSettings;
+    private MessageSettings messageSettings;
     private final PendingMessages pendingMessages = new PendingMessages();
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
@@ -99,6 +101,10 @@ public final class PanelAutoStarter {
             for (String warning : this.motdSettings.getWarnings()) {
                 this.getLogger().warning(warning);
             }
+
+            // Player feedback: titles and countdown sounds
+            this.messageSettings = MessageSettings.from(config);
+            this.warnIfSoundIsUnsupported();
 
             // Connect to the panel
             PanelConfig panelConfig = PanelConfig.from(config);
@@ -166,6 +172,23 @@ public final class PanelAutoStarter {
         this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
 
         this.getLogger().info("Config loaded.");
+    }
+
+    /**
+     * Signale un son configuré sur une plateforme qui ne sait pas en jouer.
+     * <p>
+     * BungeeCord n'expose aucune API de son. Sans cet avertissement, un
+     * administrateur croirait à un réglage cassé plutôt qu'à une limite du
+     * proxy.
+     */
+    private void warnIfSoundIsUnsupported() {
+        if (!messageSettings.getCountdown().usesSound() || proxy.supportsSound()) {
+            return;
+        }
+        this.getLogger().warning("Un son de compte a rebours est configure, mais "
+                + proxy.getName() + " n'expose aucune API de son : les cles "
+                + "'queue.countdown.tick-sound' et 'queue.countdown.go-sound' resteront sans effet. "
+                + "Le decompte s'affiche normalement a l'ecran.");
     }
 
     private void initServers() {
@@ -236,6 +259,15 @@ public final class PanelAutoStarter {
      */
     public PendingMessages getPendingMessages() {
         return pendingMessages;
+    }
+
+    /**
+     * Retourne les réglages des retours visuels et sonores aux joueurs.
+     *
+     * @return les réglages, jamais null une fois le plugin activé
+     */
+    public MessageSettings getMessageSettings() {
+        return messageSettings;
     }
 
     public MotdSettings getMotdSettings() {
