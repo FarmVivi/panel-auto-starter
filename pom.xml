@@ -109,6 +109,16 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- Adventure Text Serializer Plain : sert a comparer un motif
+                 d'ejection a du texte, sans avoir a depouiller des codes de
+                 couleur a la main. -->
+            <dependency>
+                <groupId>net.kyori</groupId>
+                <artifactId>adventure-text-serializer-plain</artifactId>
+                <version>${adventure.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
             <!-- Adventure Text Serializer Legacy -->
             <dependency>
                 <groupId>net.kyori</groupId>

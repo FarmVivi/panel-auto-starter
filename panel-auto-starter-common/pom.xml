@@ -35,6 +35,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Adventure Text Serializer Plain -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-plain</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- Adventure Text Serializer ANSI -->
         <dependency>
             <groupId>net.kyori</groupId>

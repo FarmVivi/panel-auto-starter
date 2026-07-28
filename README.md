@@ -99,7 +99,13 @@ queue:
 
 Without this, what happens to the players depends on *how* the backend closed the connection: an abrupt drop triggers the proxy's own failover, a clean disconnect lets it kick them out. That is why a stopping server sometimes sent players back to the lobby and sometimes disconnected them outright.
 
-The plugin knows which servers it manages and where players wait, so it settles the question: anyone kicked from a managed server is sent to the queue server. The reason announced by the backend is still passed on, so an intentional kick is not hidden by the redirect.
+The plugin knows which servers it manages and where players wait, so it settles the question.
+
+**A deliberate kick is not caught.** Someone an admin threw out stays out, with their reason — only a server that is going away sends players back. The plugin tells the two apart from three signals, most reliable first:
+
+1. it knows it asked for the shutdown, or the server has stopped answering;
+2. the connection was cut without a word, which is what a crash looks like;
+3. the disconnect reason matches `queue.shutdown-reasons` — a stop launched from the panel announces `Server closed` before the watchdog has noticed anything, so that list is the only clue available at that moment. Adjust it to your server's language and plugins.
 
 Servers the plugin does not manage are left entirely to the proxy.
 

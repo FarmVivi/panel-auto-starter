@@ -1,5 +1,6 @@
 package fr.farmvivi.panelautostarter.listener;
 
+import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.PendingNotifications;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
@@ -8,19 +9,23 @@ import fr.farmvivi.panelautostarter.common.event.PlayerKickedEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.message.Messages;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+
+import java.util.List;
+import java.util.Locale;
 
 /**
- * Rattrape les joueurs éjectés d'un serveur géré et les renvoie vers le serveur
- * d'attente.
+ * Renvoie vers le serveur d'attente les joueurs qu'un serveur géré vient de
+ * perdre, quand ce serveur s'arrête ou tombe.
  * <p>
- * Quand un serveur géré s'arrête, le sort de ses joueurs dépendait jusqu'ici de
- * la manière dont il avait coupé la connexion : une fermeture brutale déclenche
- * le repli automatique du proxy, une déconnexion propre le laisse déconnecter le
- * joueur. D'où un comportement erratique — renvoyé au limbo une fois sur deux.
+ * Sans cela, leur sort dépend de la manière dont le serveur a coupé la
+ * connexion : une fermeture brutale déclenche le repli automatique du proxy, une
+ * déconnexion propre le laisse déconnecter le joueur. D'où un comportement
+ * erratique — renvoyé au limbo une fois sur deux.
  * <p>
- * Le plugin sait quels serveurs il gère et où patientent les joueurs : il impose
- * donc la destination. La raison annoncée par le serveur reste transmise, pour
- * ne pas masquer une éjection volontaire.
+ * Une exclusion volontaire n'est en revanche pas rattrapée : un joueur qu'un
+ * administrateur vient d'expulser doit rester dehors, avec son motif.
  */
 public class PlayerKickedEventListener extends EventAdapter {
     private final PanelAutoStarter plugin;
@@ -42,8 +47,18 @@ public class PlayerKickedEventListener extends EventAdapter {
         }
 
         CommonServer from = event.getFrom();
-        if (from == null || !plugin.getServers().containsKey(from)) {
+        if (from == null) {
+            return;
+        }
+
+        MinecraftServer managed = plugin.getServers().get(from);
+        if (managed == null) {
             // Serveur non gere par le plugin : ce n'est pas son affaire.
+            return;
+        }
+
+        if (!looksLikeShutdown(managed, event.getReason())) {
+            // Exclusion volontaire : le joueur doit rester dehors et lire son motif.
             return;
         }
 
@@ -56,6 +71,44 @@ public class PlayerKickedEventListener extends EventAdapter {
 
         event.setRedirectTo(queueServer);
         announceTo(event.getPlayer(), from, queueServer);
+    }
+
+    /**
+     * Distingue un serveur qui disparaît d'un administrateur qui expulse.
+     * <p>
+     * Trois indices, du plus fiable au moins :
+     * <ul>
+     *   <li>le plugin sait qu'il a demandé l'arrêt, ou que le serveur ne répond
+     *       plus — cas certain ;</li>
+     *   <li>aucun motif n'accompagne l'éjection : la connexion a été coupée sans
+     *       que rien ne soit dit, ce qu'un plantage produit ;</li>
+     *   <li>le motif figure parmi ceux annoncés à l'extinction. Un arrêt lancé
+     *       depuis le panel envoie « Server closed » avant que la surveillance
+     *       n'ait constaté quoi que ce soit ; c'est le seul indice disponible à
+     *       cet instant, d'où cette liste, ajustable selon la langue du serveur.</li>
+     * </ul>
+     */
+    private boolean looksLikeShutdown(MinecraftServer managed, Component reason) {
+        if (managed.isShuttingDownOrDown()) {
+            return true;
+        }
+        if (reason == null) {
+            return true;
+        }
+
+        String plain = PlainTextComponentSerializer.plainText().serialize(reason)
+                .toLowerCase(Locale.ROOT).trim();
+        if (plain.isEmpty()) {
+            return true;
+        }
+
+        List<String> patterns = plugin.getConfig().getStringList("queue.shutdown-reasons");
+        for (String pattern : patterns) {
+            if (!pattern.isBlank() && plain.contains(pattern.toLowerCase(Locale.ROOT).trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

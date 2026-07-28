@@ -64,6 +64,14 @@ public class MinecraftServer {
     private final AtomicBoolean teleportSequenceRunning = new AtomicBoolean(false);
     private volatile int countdownRemaining = 0;
 
+    /**
+     * Un arret a ete demande et le serveur n'est pas revenu en ligne depuis.
+     * Permet de distinguer une ejection due a l'extinction du serveur d'une
+     * exclusion volontaire, alors meme que la surveillance n'a pas encore
+     * constate la disparition.
+     */
+    private volatile boolean stopRequested = false;
+
     private long lastBusyTime = System.currentTimeMillis();
     private long serverStartedTime = 0;
     private long lastTeleportTime = 0;
@@ -209,6 +217,7 @@ public class MinecraftServer {
                 return;
             }
             status = MinecraftServerStatus.ONLINE;
+            stopRequested = false;
             serverStartedTime = curMillis;  // Enregistrer l'heure de démarrage
             logServerStatus("en ligne", NamedTextColor.GREEN);
         } else if (shouldSetOffline(result, curMillis)) {
@@ -400,8 +409,22 @@ public class MinecraftServer {
             return;
         }
         this.plugin.getLogger().info("Arrêt de " + server.getName() + "...");
+        this.stopRequested = true;
         this.panelServer.stop();
         this.lastBusyTime = System.currentTimeMillis();
+    }
+
+    /**
+     * Indique si le serveur est en train de s'éteindre ou n'est plus joignable.
+     * <p>
+     * L'arrêt demandé compte immédiatement : la surveillance ne passe que toutes
+     * les quinze secondes, et les joueurs sont éjectés bien avant qu'elle ne
+     * constate la disparition.
+     *
+     * @return true si le serveur n'est pas en état de recevoir des joueurs
+     */
+    public boolean isShuttingDownOrDown() {
+        return stopRequested || !status.equals(MinecraftServerStatus.ONLINE);
     }
 
     public CommonServer getServer() {

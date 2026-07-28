@@ -69,6 +69,11 @@ public class PlayerKickedEventListenerTest {
         when(mockPlugin.getProxy()).thenReturn(mockProxy);
         when(mockConfiguration.getBoolean(eq("queue.catch-kicks"), anyBoolean())).thenReturn(true);
         when(mockConfiguration.getString("queue.server")).thenReturn("limbo");
+        when(mockConfiguration.getStringList("queue.shutdown-reasons"))
+                .thenReturn(java.util.List.of("Server closed"));
+        // Par defaut les tests simulent un serveur qui s'eteint ; les cas
+        // d'exclusion volontaire le redressent explicitement.
+        when(mockManagedServer.isShuttingDownOrDown()).thenReturn(true);
         when(mockProxy.getServer("limbo")).thenReturn(queueServer);
 
         Map<CommonServer, MinecraftServer> servers = new HashMap<>();
@@ -79,9 +84,18 @@ public class PlayerKickedEventListenerTest {
     }
 
     private PlayerKickedEvent kickedFrom(CommonServer from) {
-        PlayerKickedEvent event = new PlayerKickedEvent(player, from, Component.text("Server closed"));
+        return kickedFrom(from, Component.text("Server closed"));
+    }
+
+    private PlayerKickedEvent kickedFrom(CommonServer from, Component reason) {
+        PlayerKickedEvent event = new PlayerKickedEvent(player, from, reason);
         listener.onPlayerKicked(event);
         return event;
+    }
+
+    /** Le serveur tourne toujours : le plugin ne peut pas conclure a un arret. */
+    private void givenServerStillRunning() {
+        when(mockManagedServer.isShuttingDownOrDown()).thenReturn(false);
     }
 
     @Test
@@ -212,5 +226,93 @@ public class PlayerKickedEventListenerTest {
         kickedFrom(unmanagedServer);
 
         assertEquals(0, pendingNotifications.size());
+    }
+
+    // ===================== Arrêt contre exclusion volontaire =====================
+
+    /**
+     * Le cas qui motive toute cette distinction : un joueur expulsé par un
+     * administrateur doit rester dehors et lire son motif, pas se retrouver
+     * tranquillement déposé au lobby.
+     */
+    @Test
+    public void testDeliberateKickIsNotCaught() {
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer,
+                Component.text("Comportement inapproprie"));
+
+        assertNull(event.getRedirectTo(), "Une exclusion volontaire ne doit pas etre rattrapee");
+        assertEquals(0, pendingNotifications.size(), "Ni aucun retour prepare");
+    }
+
+    /**
+     * Le plugin sait qu'il a demandé l'arrêt, ou que le serveur ne répond plus.
+     * C'est l'indice le plus sûr, il prime sur le motif.
+     */
+    @Test
+    public void testKnownShutdownIsCaughtWhateverTheReason() {
+        PlayerKickedEvent event = kickedFrom(managedServer,
+                Component.text("Un motif qui ne ressemble a rien"));
+
+        assertSame(queueServer, event.getRedirectTo());
+    }
+
+    /**
+     * Une connexion coupée sans un mot est le signe d'un plantage.
+     */
+    @Test
+    public void testKickWithoutReasonIsTreatedAsAFailure() {
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer, null);
+
+        assertSame(queueServer, event.getRedirectTo());
+    }
+
+    @Test
+    public void testEmptyReasonIsTreatedAsAFailure() {
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer, Component.text("   "));
+
+        assertSame(queueServer, event.getRedirectTo());
+    }
+
+    /**
+     * Un arrêt lancé depuis le panel annonce « Server closed » avant que la
+     * surveillance n'ait rien constaté : le motif est alors le seul indice.
+     */
+    @Test
+    public void testConfiguredShutdownReasonIsCaught() {
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer,
+                Component.text("Server closed"));
+
+        assertSame(queueServer, event.getRedirectTo());
+    }
+
+    @Test
+    public void testShutdownReasonMatchingIsCaseInsensitiveAndPartial() {
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer,
+                Component.text("[Panel] SERVER CLOSED by admin"));
+
+        assertSame(queueServer, event.getRedirectTo());
+    }
+
+    /**
+     * Les couleurs du motif ne doivent pas empêcher la comparaison.
+     */
+    @Test
+    public void testColouredReasonIsStillMatched() {
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer,
+                Component.text("Server closed", net.kyori.adventure.text.format.NamedTextColor.RED));
+
+        assertSame(queueServer, event.getRedirectTo());
     }
 }

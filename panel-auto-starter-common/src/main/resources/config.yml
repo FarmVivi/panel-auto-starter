@@ -110,9 +110,24 @@ queue:
   # une déconnexion propre le laisse déconnecter le joueur. D'où un
   # comportement erratique quand un serveur s'arrête.
   #
-  # La raison annoncée par le serveur reste transmise au joueur : une exclusion
-  # volontaire n'est donc pas masquée par la redirection.
+  # Une exclusion volontaire n'est PAS rattrapée : un joueur expulsé par un
+  # administrateur reste dehors, avec son motif.
   catch-kicks: true
+
+  # Motifs de déconnexion à considérer comme un arrêt du serveur plutôt que
+  # comme une exclusion volontaire. Comparaison insensible à la casse, sur une
+  # correspondance partielle.
+  #
+  # Le plugin reconnaît déjà seul un arrêt qu'il a lui-même demandé, un serveur
+  # devenu injoignable, ou une connexion coupée sans un mot. Cette liste ne sert
+  # qu'au cas restant : un arrêt lancé depuis le panel, qui annonce « Server
+  # closed » avant que la surveillance n'ait rien constaté. Adaptez-la à la
+  # langue et aux plugins de votre serveur.
+  shutdown-reasons:
+    - "Server closed"
+    - "Server is restarting"
+    - "Serveur fermé"
+    - "Multiplayer is disabled"
 
   # Retour adressé au joueur ainsi rattrapé, à son arrivée sur le serveur
   # d'attente. Il reprend les durées de « title » ci-dessous.
