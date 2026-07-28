@@ -119,9 +119,9 @@ queue:
     fade-out: 500
 
     sound:                                # accompanies the title
-      name: block.amethyst_block.chime
-      volume: 0.6
-      pitch: 1.2
+      name: block.note_block.bell
+      volume: 1.0
+      pitch: 1.0
 
   countdown:
     enabled: true
@@ -138,7 +138,9 @@ queue:
 
 Leave a `name` empty to drop that sound. The short form `sound: block.note_block.bell` also works, keeping the default volume and pitch.
 
-Volumes default below `1.0` on purpose: a sound repeated every second of a countdown gets grating at full blast.
+Countdown volumes default below `1.0` on purpose: a sound repeated every second gets grating at full blast.
+
+Inherent loudness varies wildly between Minecraft sounds — some, like `block.amethyst_block.chime`, stay inaudible even at full volume. If subtitles show the sound but you hear nothing, pick a different one rather than raising the volume.
 
 The countdown adds to `server-start.wait-before-teleport`: the plugin first
 waits that grace period silently, letting the server settle, then counts down on
