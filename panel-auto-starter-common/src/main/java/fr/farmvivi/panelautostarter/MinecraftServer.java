@@ -13,10 +13,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.time.Duration;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MinecraftServer {
@@ -25,7 +24,17 @@ public class MinecraftServer {
     private final CommonServer server;
     private final PanelServer panelServer;
     private final ServerMotd motd;
-    private final List<CommonPlayer> queue = new LinkedList<>();
+    /**
+     * File d'attente du serveur.
+     * <p>
+     * Elle est lue et modifiee depuis trois threads : les evenements du proxy
+     * quand un joueur demande le serveur ou se deconnecte, le planificateur
+     * pendant le decompte et les teleportations, et le rappel de surveillance
+     * quand le serveur disparait. D'ou une liste a copie sur ecriture, qui rend
+     * les parcours surs sans verrouiller les lectures ; les operations qui
+     * lisent puis ecrivent restent, elles, synchronisees.
+     */
+    private final List<CommonPlayer> queue = new CopyOnWriteArrayList<>();
     private MinecraftServerStatus status = MinecraftServerStatus.OFFLINE;
 
     /**
@@ -245,14 +254,15 @@ public class MinecraftServer {
         countdownRemaining = 0;
         teleportSequenceRunning.set(false);
 
-        if (!queue.isEmpty()) {
-            Iterator<CommonPlayer> iterator = queue.iterator();
-            while (iterator.hasNext()) {
-                CommonPlayer player = iterator.next();
-                plugin.getLogger().warning("Impossible de téléporter " + player.getUsername() + " sur " + server.getName());
-                player.sendMessage(Messages.teleportFailed(server.getDisplayName()));
-                iterator.remove();
-            }
+        // La liste est vidée avant d'écrire aux joueurs : un parcours par
+        // iterateur ne peut pas retirer d'element d'une liste a copie sur
+        // ecriture, et prevenir d'abord laisserait la file dans un etat
+        // incoherent le temps des envois.
+        List<CommonPlayer> waiting = List.copyOf(queue);
+        queue.clear();
+        for (CommonPlayer player : waiting) {
+            plugin.getLogger().warning("Impossible de téléporter " + player.getUsername() + " sur " + server.getName());
+            player.sendMessage(Messages.teleportFailed(server.getDisplayName()));
         }
     }
 
@@ -360,15 +370,20 @@ public class MinecraftServer {
             return;
         }
 
-        // Un joueur deja arrive sur place n'a plus rien a faire dans la file.
-        queue.removeIf(player -> server.equals(player.getServer()));
+        // Lire puis retirer doit etre indivisible : un joueur peut rejoindre ou
+        // quitter la file depuis un thread d'evenement entre les deux.
+        CommonPlayer next;
+        synchronized (this) {
+            // Un joueur deja arrive sur place n'a plus rien a faire dans la file.
+            queue.removeIf(player -> server.equals(player.getServer()));
 
-        if (queue.isEmpty()) {
-            teleportSequenceRunning.set(false);
-            return;
+            if (queue.isEmpty()) {
+                teleportSequenceRunning.set(false);
+                return;
+            }
+            next = queue.remove(0);
         }
 
-        CommonPlayer next = queue.remove(0);
         teleportPlayer(next);
         lastTeleportTime = System.currentTimeMillis();
 

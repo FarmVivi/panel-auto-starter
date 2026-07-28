@@ -1,7 +1,6 @@
 package fr.farmvivi.panelautostarter;
 
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
-import fr.farmvivi.panelautostarter.config.ConfigDiff;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.panel.PanelClient;
@@ -174,45 +173,7 @@ public final class PanelAutoStarter {
         // Load config
         this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
 
-        this.reportMissingKeys();
-
         this.getLogger().info("Config loaded.");
-    }
-
-    /**
-     * Signale les réglages apparus dans une mise à jour et absents du fichier
-     * de l'utilisateur.
-     * <p>
-     * Le config.yml n'est copié qu'à la première installation : une nouvelle
-     * option n'apparaît jamais chez les installations existantes, qui héritent
-     * silencieusement de sa valeur par défaut. L'administrateur cherche alors un
-     * réglage dans un fichier qui ne le contient pas.
-     * <p>
-     * Le fichier n'est pas réécrit pour autant : cela écraserait ses choix et
-     * ses commentaires.
-     */
-    private void reportMissingKeys() {
-        try (InputStream bundled = this.getResourceAsStream("config.yml")) {
-            if (bundled == null) {
-                return;
-            }
-            Configuration reference = ConfigurationProvider.getProvider(YamlConfiguration.class)
-                    .load(new java.io.InputStreamReader(bundled, java.nio.charset.StandardCharsets.UTF_8));
-
-            java.util.List<String> missing = ConfigDiff.missingKeys(config, reference);
-            if (missing.isEmpty()) {
-                return;
-            }
-
-            this.getLogger().warning(missing.size() + " reglage(s) absent(s) de votre config.yml utilisent "
-                    + "leur valeur par defaut. Ajoutez-les pour les personnaliser :");
-            for (String key : missing) {
-                this.getLogger().warning("  - " + key);
-            }
-        } catch (IOException | RuntimeException ex) {
-            // Purement informatif : un echec ne doit pas empecher le demarrage.
-            this.getLogger().warning("Impossible de comparer votre config.yml a celui livre : " + ex.getMessage());
-        }
     }
 
     /**

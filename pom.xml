@@ -6,7 +6,7 @@
 
     <groupId>fr.farmvivi.panel-auto-starter</groupId>
     <artifactId>panel-auto-starter-parent</artifactId>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>3.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>PanelAutoStarter</name>

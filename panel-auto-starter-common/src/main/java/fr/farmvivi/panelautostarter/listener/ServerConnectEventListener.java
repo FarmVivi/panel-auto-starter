@@ -11,7 +11,6 @@ import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 public class ServerConnectEventListener extends EventAdapter {
     private final PanelAutoStarter plugin;
