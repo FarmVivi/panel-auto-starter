@@ -36,6 +36,9 @@ public class MinecraftServerTest {
     @Mock
     private LoggerProxy mockLogger;
 
+    @Mock
+    private fr.farmvivi.panelautostarter.common.CommonProxy mockProxy;
+
     private CommonServer testServer;
     private MinecraftServer minecraftServer;
 
@@ -51,6 +54,10 @@ public class MinecraftServerTest {
 
         // Mock le logger
         when(mockPanelAutoStarter.getLogger()).thenReturn(mockLogger);
+
+        // La surveillance arme desormais le sondage suivant des la construction,
+        // sans attendre la reponse du precedent : le proxy doit donc exister.
+        when(mockPanelAutoStarter.getProxy()).thenReturn(mockProxy);
 
         // Créer un serveur de test
         testServer = new MockCommonServer("test-server", "Test Server");

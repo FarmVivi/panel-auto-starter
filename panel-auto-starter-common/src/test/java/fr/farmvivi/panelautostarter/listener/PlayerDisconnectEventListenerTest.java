@@ -67,6 +67,10 @@ public class PlayerDisconnectEventListenerTest {
         // Mock getServers() pour retourner une map mutable
         doReturn(serversMap).when(mockPlugin).getServers();
 
+        // La surveillance arme le sondage suivant des la construction d'un
+        // MinecraftServer, sans attendre la reponse du precedent.
+        when(mockPlugin.getProxy()).thenReturn(mock(fr.farmvivi.panelautostarter.common.CommonProxy.class));
+
         when(mockPlugin.getQueueCoordinator()).thenReturn(new QueueCoordinator(mockPlugin));
 
         listener = new PlayerDisconnectEventListener(mockPlugin);

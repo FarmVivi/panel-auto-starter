@@ -16,6 +16,19 @@ server-start:
   # Fréquence de vérification de l'état du serveur en secondes (pendant le démarrage)
   check-interval-startup: 3
 
+  # Attente maximale, en secondes, d'une réponse à un ping de surveillance.
+  #
+  # Un serveur en cours de démarrage accepte la connexion — le port est publié
+  # avant que le jeu n'écoute — sans y répondre. Sans cette borne, le proxy
+  # patiente son propre délai de lecture, une trentaine de secondes, pendant
+  # lesquelles aucun nouveau sondage n'est émis : check-interval-startup réglé
+  # à 3 s en vaudrait alors 33, et la mise en ligne se constaterait avec près
+  # d'une minute de retard.
+  #
+  # Un sondage abandonné ne dit rien à la machine à états : le serveur n'est
+  # pas considéré comme éteint, le sondage suivant retente simplement.
+  ping-timeout: 3
+
   # Fréquence de vérification d'un serveur éteint que personne ne ping.
   # Inutile d'interroger toutes les 15 s un serveur que personne ne regarde.
   check-interval-idle: 60

@@ -34,6 +34,9 @@ public class MinecraftServerStartStopTest {
     @Mock
     private LoggerProxy mockLogger;
 
+    @Mock
+    private fr.farmvivi.panelautostarter.common.CommonProxy mockProxy;
+
     private MinecraftServer minecraftServer;
 
     @BeforeEach
@@ -46,7 +49,11 @@ public class MinecraftServerStartStopTest {
         when(mockConfiguration.getLong("server-start.check-interval-startup", 3)).thenReturn(3L);
         when(mockPanelAutoStarter.getLogger()).thenReturn(mockLogger);
 
-        minecraftServer = new MinecraftServer(mockPanelAutoStarter, 
+        // La surveillance arme desormais le sondage suivant des la construction,
+        // sans attendre la reponse du precedent : le proxy doit donc exister.
+        when(mockPanelAutoStarter.getProxy()).thenReturn(mockProxy);
+
+        minecraftServer = new MinecraftServer(mockPanelAutoStarter,
             new MockCommonServer("test-server", "Test Server"), 
             mockPanelServer, mock(ServerMotd.class));
     }

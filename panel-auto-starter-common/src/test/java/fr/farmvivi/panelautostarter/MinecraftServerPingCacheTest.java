@@ -12,6 +12,7 @@ import fr.farmvivi.panelautostarter.panel.PanelServerState;
 import net.md_5.bungee.config.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -235,6 +236,7 @@ public class MinecraftServerPingCacheTest {
         minecraftServer.notifyWatched();
 
         schedulerCallback.done(null);
+        runNextSurveillanceCycle();
 
         verify(mockProxy).schedule(any(), any(), eq(15L), eq(TimeUnit.SECONDS));
     }
@@ -242,9 +244,29 @@ public class MinecraftServerPingCacheTest {
     @Test
     public void testOnlineServerKeepsNormalInterval() {
         schedulerCallback.done(new MockCommonServerPing());
-
         assertEquals(MinecraftServerStatus.ONLINE, minecraftServer.getStatus());
+
+        runNextSurveillanceCycle();
+
         verify(mockProxy).schedule(any(), any(), eq(15L), eq(TimeUnit.SECONDS));
+    }
+
+    /**
+     * Rejoue un tour de surveillance.
+     * <p>
+     * La cadence est armée au début du cycle et non à la réception de la
+     * réponse : elle ne dépend plus du temps que met le serveur sondé à
+     * répondre, un serveur qui démarre acceptant la connexion sans y répondre.
+     * L'intervalle choisi reflète donc le statut courant, ce qui suppose de
+     * déclencher un nouveau cycle pour l'observer.
+     */
+    private void runNextSurveillanceCycle() {
+        ArgumentCaptor<Runnable> tasks = ArgumentCaptor.forClass(Runnable.class);
+        verify(mockProxy, atLeastOnce()).schedule(any(), tasks.capture(), anyLong(), any());
+        clearInvocations(mockProxy);
+        for (Runnable task : tasks.getAllValues()) {
+            task.run();
+        }
     }
 
     /**

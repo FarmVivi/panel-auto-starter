@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MinecraftServer {
     private final PanelAutoStarter plugin;
@@ -64,6 +65,20 @@ public class MinecraftServer {
      * Empeche N pings clients simultanes de declencher N requetes vers le backend.
      */
     private final AtomicBoolean refreshInFlight = new AtomicBoolean(false);
+
+    /**
+     * Un sondage de surveillance est parti et n'a pas encore abouti.
+     * <p>
+     * La cadence de surveillance ne dépendant plus de la réponse, elle
+     * repasserait sinon pendant qu'un ping traîne et en ouvrirait un second.
+     */
+    private final AtomicBoolean pollInFlight = new AtomicBoolean(false);
+
+    /**
+     * Numéro d'ordre des sondages, qui permet de reconnaître la réponse tardive
+     * d'un sondage déjà abandonné.
+     */
+    private final AtomicLong pollGeneration = new AtomicLong();
 
     /**
      * Empeche deux sequences de teleportation de se chevaucher : la boucle de
@@ -121,29 +136,93 @@ public class MinecraftServer {
         checkServerStatusAndReschedule();
     }
 
+    /**
+     * Sonde le serveur et arme le sondage suivant.
+     * <p>
+     * La replanification est <strong>independante de la reponse</strong>. Elle
+     * vivait auparavant dans le rappel du ping, ce qui liait la cadence au temps
+     * de reponse du serveur sonde — precisement ce qui manque quand il demarre.
+     * Un serveur en cours de demarrage accepte la connexion sans y repondre : le
+     * ping restait alors en attente jusqu'au delai du proxy, une trentaine de
+     * secondes, pendant lesquelles aucun sondage n'etait emis. Un intervalle de
+     * demarrage regle a trois secondes en valait trente-trois, et le passage en
+     * ligne se constatait avec une minute de retard.
+     * <p>
+     * L'intervalle est en contrepartie calcule sur le statut courant et non sur
+     * celui qui resultera de ce sondage : au pire un sondage supplementaire a la
+     * cadence rapide juste apres la mise en ligne, ce qui va dans le bon sens.
+     */
     private void checkServerStatusAndReschedule() {
-        // Faire le check
-        server.ping(result -> {
-            long curMillis = System.currentTimeMillis();
-            storePing(result, curMillis);
-            updateServerStatus(result, curMillis);
+        long curMillis = System.currentTimeMillis();
 
-            // Le MOTD n'est conserve que depuis la surveillance, jamais depuis un
-            // rafraichissement declenche par un client : un seul ecrivain, et
-            // aucune ecriture disque sur le chemin d'un ping.
-            if (status.equals(MinecraftServerStatus.ONLINE)) {
-                motd.observeOnline(result);
-            }
+        // Ne pas empiler les sondages : sans cette garde, un ping qui n'aboutit
+        // pas laisserait la cadence en ouvrir un nouveau a chaque passage.
+        if (pollInFlight.compareAndSet(false, true)) {
+            pollOnce();
+        }
 
-            handleQueueAndShutdown(result, curMillis);
-
-            // Re-scheduler : l'intervalle est calcule apres la mise a jour du
-            // statut, pour qu'il reflete l'etat courant et non le precedent.
-            this.plugin.getProxy().schedule(plugin.getPlugin(),
+        this.plugin.getProxy().schedule(plugin.getPlugin(),
                 this::checkServerStatusAndReschedule,
                 resolveCheckInterval(curMillis),
                 TimeUnit.SECONDS);
-        });
+    }
+
+    private void pollOnce() {
+        long generation = pollGeneration.incrementAndGet();
+        long pingTimeout = plugin.getConfig().getLong("server-start.ping-timeout", 3);
+
+        try {
+            server.ping(result -> {
+                try {
+                    // Une reponse tardive est tout de meme traitee : elle porte
+                    // une information reelle sur le serveur, que l'abandon du
+                    // creneau ne rend pas fausse.
+                    handlePollResult(result);
+                } finally {
+                    releasePoll(generation);
+                }
+            }, Duration.ofSeconds(pingTimeout));
+        } catch (RuntimeException ex) {
+            releasePoll(generation);
+            throw ex;
+        }
+
+        // Abandon d'un sondage resté sans reponse. Le creneau est rendu, mais
+        // rien n'est dit a la machine a etats : une absence de reponse dans le
+        // delai imparti ne prouve pas que le serveur a disparu, et la traiter
+        // comme telle viderait la file d'attente d'un serveur simplement lent.
+        this.plugin.getProxy().schedule(plugin.getPlugin(), () -> releasePoll(generation),
+                pingTimeout, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Rend le créneau de sondage, sauf si un sondage plus récent l'a repris.
+     * <p>
+     * Sans ce numéro d'ordre, la réponse tardive d'un sondage abandonné
+     * libérerait le créneau de son successeur, et deux pings finiraient par se
+     * chevaucher — ce que la garde existe justement pour empêcher.
+     *
+     * @param generation le numéro du sondage qui demande la libération
+     */
+    private void releasePoll(long generation) {
+        if (pollGeneration.get() == generation) {
+            pollInFlight.set(false);
+        }
+    }
+
+    private void handlePollResult(CommonServerPing result) {
+        long curMillis = System.currentTimeMillis();
+        storePing(result, curMillis);
+        updateServerStatus(result, curMillis);
+
+        // Le MOTD n'est conserve que depuis la surveillance, jamais depuis un
+        // rafraichissement declenche par un client : un seul ecrivain, et
+        // aucune ecriture disque sur le chemin d'un ping.
+        if (status.equals(MinecraftServerStatus.ONLINE)) {
+            motd.observeOnline(result);
+        }
+
+        handleQueueAndShutdown(result, curMillis);
     }
 
     /**

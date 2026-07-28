@@ -1,5 +1,6 @@
 package fr.farmvivi.panelautostarter.velocity;
 
+import com.velocitypowered.api.proxy.server.PingOptions;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import fr.farmvivi.panelautostarter.common.Callback;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -31,6 +32,22 @@ public class VelocityServer implements CommonServer {
     @Override
     public void ping(Callback<CommonServerPing> callback) {
         server.ping().whenComplete((result, error) -> {
+            if (result == null) {
+                callback.done(null);
+                return;
+            }
+            callback.done(new VelocityServerPing(result));
+        });
+    }
+
+    /**
+     * Velocity sait borner l'attente, ce qui évite de laisser traîner une
+     * connexion ouverte jusqu'à son propre délai de lecture.
+     */
+    @Override
+    public void ping(Callback<CommonServerPing> callback, java.time.Duration timeout) {
+        PingOptions options = PingOptions.builder().timeout(timeout).build();
+        server.ping(options).whenComplete((result, error) -> {
             if (result == null) {
                 callback.done(null);
                 return;
