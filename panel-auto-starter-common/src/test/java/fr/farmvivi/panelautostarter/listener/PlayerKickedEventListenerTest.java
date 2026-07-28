@@ -69,7 +69,8 @@ public class PlayerKickedEventListenerTest {
         when(mockPlugin.getProxy()).thenReturn(mockProxy);
         when(mockConfiguration.getBoolean(eq("queue.catch-kicks"), anyBoolean())).thenReturn(true);
         when(mockConfiguration.getString("queue.server")).thenReturn("limbo");
-        when(mockConfiguration.getStringList("queue.shutdown-reasons"))
+        when(mockConfiguration.contains(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH)).thenReturn(true);
+        when(mockConfiguration.getStringList(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH))
                 .thenReturn(java.util.List.of("Server closed"));
         // Par defaut les tests simulent un serveur qui s'eteint ; les cas
         // d'exclusion volontaire le redressent explicitement.
@@ -314,5 +315,59 @@ public class PlayerKickedEventListenerTest {
                 Component.text("Server closed", net.kyori.adventure.text.format.NamedTextColor.RED));
 
         assertSame(queueServer, event.getRedirectTo());
+    }
+
+    /**
+     * Le bug vécu : le config.yml n'étant copié qu'à la première installation,
+     * une installation existante n'a pas la clé. Sans défaut codé en dur, la
+     * liste était vide et un {@code /stop} depuis le panel n'était jamais
+     * reconnu — le joueur se faisait déconnecter.
+     */
+    @Test
+    public void testMissingShutdownReasonsFallsBackToTheCodedDefaults() {
+        when(mockConfiguration.contains(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH)).thenReturn(false);
+        when(mockConfiguration.getStringList(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH))
+                .thenReturn(java.util.List.of());
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer, Component.text("Server closed"));
+
+        assertSame(queueServer, event.getRedirectTo(),
+                "Une installation sans la cle doit quand meme reconnaitre un arret");
+    }
+
+    /**
+     * Une liste volontairement vidée doit être respectée : l'administrateur a
+     * choisi de ne se fier qu'à l'état connu du serveur.
+     */
+    @Test
+    public void testExplicitlyEmptyListIsHonoured() {
+        when(mockConfiguration.contains(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH)).thenReturn(true);
+        when(mockConfiguration.getStringList(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH))
+                .thenReturn(java.util.List.of());
+        givenServerStillRunning();
+
+        PlayerKickedEvent event = kickedFrom(managedServer, Component.text("Server closed"));
+
+        assertNull(event.getRedirectTo());
+    }
+
+    /**
+     * Le config.yml livré doit lister au moins les motifs reconnus par défaut,
+     * sans quoi le fichier annoncerait moins que ce que le code fait.
+     */
+    @Test
+    public void testShippedConfigListsTheCodedDefaultReasons() throws Exception {
+        net.md_5.bungee.config.Configuration shipped;
+        try (java.io.InputStream in = getClass().getClassLoader().getResourceAsStream("config.yml")) {
+            assertNotNull(in);
+            shipped = net.md_5.bungee.config.ConfigurationProvider
+                    .getProvider(net.md_5.bungee.config.YamlConfiguration.class)
+                    .load(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+        }
+
+        assertEquals(PlayerKickedEventListener.DEFAULT_SHUTDOWN_REASONS,
+                shipped.getStringList(PlayerKickedEventListener.SHUTDOWN_REASONS_PATH),
+                "Le fichier livre doit refleter les motifs codes en dur");
     }
 }

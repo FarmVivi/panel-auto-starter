@@ -28,6 +28,17 @@ import java.util.Locale;
  * administrateur vient d'expulser doit rester dehors, avec son motif.
  */
 public class PlayerKickedEventListener extends EventAdapter {
+    static final String SHUTDOWN_REASONS_PATH = "queue.shutdown-reasons";
+
+    /**
+     * Motifs annoncés par un serveur qui s'éteint, reconnus sans configuration.
+     */
+    static final List<String> DEFAULT_SHUTDOWN_REASONS = List.of(
+            "Server closed",
+            "Server is restarting",
+            "Serveur fermé",
+            "Multiplayer is disabled");
+
     private final PanelAutoStarter plugin;
     private final PendingNotifications pendingNotifications;
 
@@ -102,7 +113,14 @@ public class PlayerKickedEventListener extends EventAdapter {
             return true;
         }
 
-        List<String> patterns = plugin.getConfig().getStringList("queue.shutdown-reasons");
+        // Le config.yml n'est copie qu'a la premiere installation : sans defaut
+        // code en dur, une installation existante lirait une liste vide et ne
+        // reconnaitrait jamais un arret lance depuis le panel. On ne retombe sur
+        // le defaut que si la cle est absente, pour respecter une liste
+        // volontairement videe.
+        List<String> patterns = plugin.getConfig().contains(SHUTDOWN_REASONS_PATH)
+                ? plugin.getConfig().getStringList(SHUTDOWN_REASONS_PATH)
+                : DEFAULT_SHUTDOWN_REASONS;
         for (String pattern : patterns) {
             if (!pattern.isBlank() && plain.contains(pattern.toLowerCase(Locale.ROOT).trim())) {
                 return true;

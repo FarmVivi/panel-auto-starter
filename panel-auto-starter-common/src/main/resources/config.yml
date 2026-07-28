@@ -147,12 +147,17 @@ queue:
     fade-out: 500
 
     # Son accompagnant le titre. Laisser « name » vide pour aucun son.
-    # La forme courte « sound: block.amethyst_block.chime » est acceptée : le
-    # volume et la hauteur gardent alors leurs valeurs par défaut.
+    # La forme courte « sound: block.note_block.bell » est acceptée : le volume
+    # et la hauteur gardent alors leurs valeurs par défaut.
+    #
+    # Le volume propre à chaque son varie énormément dans le jeu : certains,
+    # comme block.amethyst_block.chime, restent inaudibles même à plein volume.
+    # Si les sous-titres affichent bien le son mais que vous n'entendez rien,
+    # changez-en plutôt que de monter le volume.
     sound:
-      name: block.amethyst_block.chime
-      volume: 0.6
-      pitch: 1.2
+      name: block.note_block.bell
+      volume: 1.0
+      pitch: 1.0
 
   # Compte à rebours affiché juste avant la téléportation, une fois le serveur
   # prêt. Il s'ajoute à server-start.wait-before-teleport : le plugin attend

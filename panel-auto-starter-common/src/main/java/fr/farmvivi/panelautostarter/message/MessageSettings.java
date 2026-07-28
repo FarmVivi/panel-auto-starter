@@ -56,7 +56,7 @@ public final class MessageSettings {
 
     private static final TitleSettings DEFAULT_TITLE = new TitleSettings(
             true, Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500),
-            new SoundSpec("block.amethyst_block.chime", 0.6f, 1.2f));
+            new SoundSpec("block.note_block.bell", 1.0f, 1.0f));
 
     private static final CountdownSettings DEFAULT_COUNTDOWN = new CountdownSettings(
             true, 3,
