@@ -114,6 +114,15 @@ queue:
   # volontaire n'est donc pas masquée par la redirection.
   catch-kicks: true
 
+  # Retour adressé au joueur ainsi rattrapé, à son arrivée sur le serveur
+  # d'attente. Il reprend les durées de « title » ci-dessous.
+  kick-feedback:
+    enabled: true
+    sound:
+      name: block.note_block.bass
+      volume: 1.0
+      pitch: 0.8
+
   # Titre affiché au joueur au moment où il rejoint la file d'attente.
   # Durées en millisecondes.
   title:

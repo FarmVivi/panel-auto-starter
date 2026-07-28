@@ -103,6 +103,20 @@ The plugin knows which servers it manages and where players wait, so it settles 
 
 Servers the plugin does not manage are left entirely to the proxy.
 
+On arrival the player gets a title, a chat line naming both servers, and a low tone — so being yanked out of a world is explained rather than merely survived:
+
+```yaml
+queue:
+  kick-feedback:
+    enabled: true
+    sound:
+      name: block.note_block.bass
+      volume: 1.0
+      pitch: 0.8
+```
+
+Like the queue notice, this is held until the player actually lands: they are mid-transfer when the kick happens, and anything sent then is lost.
+
 ### Joining a stopped server
 
 When a player is put in the queue they get a title on screen, and once the

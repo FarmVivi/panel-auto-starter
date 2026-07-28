@@ -1,9 +1,13 @@
 package fr.farmvivi.panelautostarter.listener;
 
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
+import fr.farmvivi.panelautostarter.PendingNotifications;
+import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.PlayerKickedEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
+import fr.farmvivi.panelautostarter.message.Messages;
 
 /**
  * Rattrape les joueurs éjectés d'un serveur géré et les renvoie vers le serveur
@@ -20,9 +24,15 @@ import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
  */
 public class PlayerKickedEventListener extends EventAdapter {
     private final PanelAutoStarter plugin;
+    private final PendingNotifications pendingNotifications;
 
     public PlayerKickedEventListener(PanelAutoStarter plugin) {
+        this(plugin, plugin.getPendingNotifications());
+    }
+
+    PlayerKickedEventListener(PanelAutoStarter plugin, PendingNotifications pendingNotifications) {
         this.plugin = plugin;
+        this.pendingNotifications = pendingNotifications;
     }
 
     @Override
@@ -45,5 +55,31 @@ public class PlayerKickedEventListener extends EventAdapter {
         }
 
         event.setRedirectTo(queueServer);
+        announceTo(event.getPlayer(), from, queueServer);
+    }
+
+    /**
+     * Prévient le joueur de ce qui vient de lui arriver.
+     * <p>
+     * Le retour est mis de côté plutôt qu'envoyé tout de suite : le joueur est
+     * en cours de transfert, sa connexion au serveur d'attente n'est pas encore
+     * établie. Il lui sera délivré à son arrivée, par le même mécanisme que les
+     * messages d'entrée en file.
+     */
+    private void announceTo(CommonPlayer player, CommonServer from, CommonServer queueServer) {
+        MessageSettings.KickFeedbackSettings feedback = plugin.getMessageSettings().getKickFeedback();
+        if (player == null || !feedback.enabled()) {
+            return;
+        }
+
+        MessageSettings.TitleSettings title = plugin.getMessageSettings().getTitle();
+        if (title.enabled()) {
+            pendingNotifications.queueTitle(player, Messages.serverStoppedTitle(),
+                    Messages.serverStoppedSubtitle(from.getDisplayName()),
+                    title.fadeIn(), title.stay(), title.fadeOut());
+        }
+        pendingNotifications.queueSound(player, feedback.sound());
+        pendingNotifications.queueMessage(player,
+                Messages.sentBackToQueue(from.getDisplayName(), queueServer.getDisplayName()));
     }
 }

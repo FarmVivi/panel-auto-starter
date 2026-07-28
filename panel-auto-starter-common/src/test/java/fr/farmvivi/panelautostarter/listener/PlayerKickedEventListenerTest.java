@@ -2,11 +2,15 @@ package fr.farmvivi.panelautostarter.listener;
 
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
+import fr.farmvivi.panelautostarter.PendingNotifications;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
+import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.PlayerKickedEvent;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
+import fr.farmvivi.panelautostarter.message.Messages;
+import fr.farmvivi.panelautostarter.message.SoundSpec;
 import net.kyori.adventure.text.Component;
 import net.md_5.bungee.config.Configuration;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +52,7 @@ public class PlayerKickedEventListenerTest {
     private CommonServer unmanagedServer;
     private MockCommonPlayer player;
     private PlayerKickedEventListener listener;
+    private PendingNotifications pendingNotifications;
 
     @BeforeEach
     public void setUp() {
@@ -58,6 +63,8 @@ public class PlayerKickedEventListenerTest {
         unmanagedServer = new MockCommonServer("creatif", "Creatif");
         player = new MockCommonPlayer("Vivi");
 
+        pendingNotifications = new PendingNotifications();
+        when(mockPlugin.getMessageSettings()).thenReturn(MessageSettings.defaults());
         when(mockPlugin.getConfig()).thenReturn(mockConfiguration);
         when(mockPlugin.getProxy()).thenReturn(mockProxy);
         when(mockConfiguration.getBoolean(eq("queue.catch-kicks"), anyBoolean())).thenReturn(true);
@@ -68,7 +75,7 @@ public class PlayerKickedEventListenerTest {
         servers.put(managedServer, mockManagedServer);
         doReturn(servers).when(mockPlugin).getServers();
 
-        listener = new PlayerKickedEventListener(mockPlugin);
+        listener = new PlayerKickedEventListener(mockPlugin, pendingNotifications);
     }
 
     private PlayerKickedEvent kickedFrom(CommonServer from) {
@@ -148,5 +155,62 @@ public class PlayerKickedEventListenerTest {
         PlayerKickedEvent event = kickedFrom(managedServer);
 
         assertEquals(Component.text("Server closed"), event.getReason());
+    }
+
+    // ===================== Retour au joueur =====================
+
+    /**
+     * Le joueur est en cours de transfert au moment de l'éjection : lui parler
+     * tout de suite ne produirait rien. Le retour est donc mis de côté et
+     * délivré à son arrivée sur le serveur d'attente.
+     */
+    @Test
+    public void testFeedbackIsDeferredUntilThePlayerLands() {
+        kickedFrom(managedServer);
+
+        assertNull(player.getLastMessage(), "Rien ne doit partir pendant le transfert");
+        assertEquals(1, pendingNotifications.size(), "Le retour doit etre mis de cote");
+
+        pendingNotifications.flush(player);
+
+        assertNotNull(player.getLastMessage(), "Le chat doit etre delivre a l'arrivee");
+        assertEquals(Messages.serverStoppedTitle(), player.getLastTitle());
+        assertTrue(player.getPlayedSounds().contains(
+                        MessageSettings.defaults().getKickFeedback().sound().name()),
+                "Le son doit accompagner le retour");
+    }
+
+    @Test
+    public void testFeedbackNamesBothServers() {
+        kickedFrom(managedServer);
+        pendingNotifications.flush(player);
+
+        String chat = player.getLastMessage().toString();
+        assertTrue(chat.contains("Survie"), "Le serveur disparu doit etre nomme");
+        assertTrue(chat.contains("limbo"), "Le serveur d'accueil doit etre nomme");
+    }
+
+    @Test
+    public void testFeedbackCanBeDisabled() {
+        when(mockPlugin.getMessageSettings()).thenReturn(MessageSettings.of(
+                MessageSettings.defaults().getTitle(),
+                MessageSettings.defaults().getCountdown(),
+                new MessageSettings.KickFeedbackSettings(false, SoundSpec.SILENT)));
+
+        PlayerKickedEvent event = kickedFrom(managedServer);
+
+        assertSame(queueServer, event.getRedirectTo(), "La redirection reste active");
+        assertEquals(0, pendingNotifications.size(), "Mais aucun retour n'est prepare");
+    }
+
+    /**
+     * Un serveur non géré n'est pas redirigé, donc aucun retour ne doit être
+     * préparé non plus.
+     */
+    @Test
+    public void testNoFeedbackWhenNothingIsRedirected() {
+        kickedFrom(unmanagedServer);
+
+        assertEquals(0, pendingNotifications.size());
     }
 }

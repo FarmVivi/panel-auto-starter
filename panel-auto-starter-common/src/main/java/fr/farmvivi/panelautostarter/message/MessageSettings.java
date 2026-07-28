@@ -41,6 +41,19 @@ public final class MessageSettings {
         }
     }
 
+    /**
+     * Retour adressé au joueur ramené au serveur d'attente parce que le sien
+     * s'est arrêté.
+     *
+     * @param enabled affiche le retour
+     * @param sound   son l'accompagnant
+     */
+    public record KickFeedbackSettings(boolean enabled, SoundSpec sound) {
+    }
+
+    private static final KickFeedbackSettings DEFAULT_KICK_FEEDBACK = new KickFeedbackSettings(
+            true, new SoundSpec("block.note_block.bass", 1.0f, 0.8f));
+
     private static final TitleSettings DEFAULT_TITLE = new TitleSettings(
             true, Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500),
             new SoundSpec("block.amethyst_block.chime", 0.6f, 1.2f));
@@ -52,10 +65,13 @@ public final class MessageSettings {
 
     private final TitleSettings title;
     private final CountdownSettings countdown;
+    private final KickFeedbackSettings kickFeedback;
 
-    private MessageSettings(TitleSettings title, CountdownSettings countdown) {
+    private MessageSettings(TitleSettings title, CountdownSettings countdown,
+                            KickFeedbackSettings kickFeedback) {
         this.title = title;
         this.countdown = countdown;
+        this.kickFeedback = kickFeedback;
     }
 
     /**
@@ -64,7 +80,7 @@ public final class MessageSettings {
      * @return les réglages par défaut
      */
     public static MessageSettings defaults() {
-        return new MessageSettings(DEFAULT_TITLE, DEFAULT_COUNTDOWN);
+        return new MessageSettings(DEFAULT_TITLE, DEFAULT_COUNTDOWN, DEFAULT_KICK_FEEDBACK);
     }
 
     /**
@@ -75,7 +91,20 @@ public final class MessageSettings {
      * @return les réglages correspondants
      */
     public static MessageSettings of(TitleSettings title, CountdownSettings countdown) {
-        return new MessageSettings(title, countdown);
+        return new MessageSettings(title, countdown, DEFAULT_KICK_FEEDBACK);
+    }
+
+    /**
+     * Construit des réglages explicites, retour d'éjection compris.
+     *
+     * @param title        réglages du titre
+     * @param countdown    réglages du décompte
+     * @param kickFeedback réglages du retour après éjection
+     * @return les réglages correspondants
+     */
+    public static MessageSettings of(TitleSettings title, CountdownSettings countdown,
+                                     KickFeedbackSettings kickFeedback) {
+        return new MessageSettings(title, countdown, kickFeedback);
     }
 
     /**
@@ -100,7 +129,10 @@ public final class MessageSettings {
                         // Un decompte negatif n'a pas de sens ; 0 revient a le desactiver.
                         Math.max(0, config.getInt("queue.countdown.seconds", DEFAULT_COUNTDOWN.seconds())),
                         SoundSpec.from(config, "queue.countdown.tick-sound", DEFAULT_COUNTDOWN.tickSound()),
-                        SoundSpec.from(config, "queue.countdown.go-sound", DEFAULT_COUNTDOWN.goSound())));
+                        SoundSpec.from(config, "queue.countdown.go-sound", DEFAULT_COUNTDOWN.goSound())),
+                new KickFeedbackSettings(
+                        config.getBoolean("queue.kick-feedback.enabled", DEFAULT_KICK_FEEDBACK.enabled()),
+                        SoundSpec.from(config, "queue.kick-feedback.sound", DEFAULT_KICK_FEEDBACK.sound())));
     }
 
     private static Duration millis(Configuration config, String path, Duration fallback) {
@@ -113,5 +145,14 @@ public final class MessageSettings {
 
     public CountdownSettings getCountdown() {
         return countdown;
+    }
+
+    /**
+     * Retour adressé au joueur ramené au serveur d'attente.
+     *
+     * @return les réglages correspondants
+     */
+    public KickFeedbackSettings getKickFeedback() {
+        return kickFeedback;
     }
 }

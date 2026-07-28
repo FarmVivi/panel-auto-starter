@@ -147,4 +147,42 @@ public final class Messages {
     public static Component readyTitle() {
         return Component.text("C'est parti !", NamedTextColor.GREEN, TextDecoration.BOLD);
     }
+
+    // ===================== Serveur arrêté sous les pieds du joueur =====================
+
+    /**
+     * Chat adressé au joueur ramené au serveur d'attente parce que le sien
+     * s'est arrêté.
+     *
+     * @param serverDisplayName  le nom affiché du serveur disparu
+     * @param queueDisplayName   le nom affiché du serveur d'attente
+     * @return le message
+     */
+    public static Component sentBackToQueue(String serverDisplayName, String queueDisplayName) {
+        return headline(server(serverDisplayName)
+                .append(Component.text(" s'est arrêté", NamedTextColor.RED)))
+                .appendNewline()
+                .append(detail(Component.text("Vous avez été ramené sur ")
+                        .append(server(queueDisplayName))));
+    }
+
+    /**
+     * Titre affiché au joueur ramené au serveur d'attente.
+     *
+     * @return le titre
+     */
+    public static Component serverStoppedTitle() {
+        return Component.text("Serveur arrêté", NamedTextColor.RED, TextDecoration.BOLD);
+    }
+
+    /**
+     * Sous-titre affiché au joueur ramené au serveur d'attente.
+     *
+     * @param serverDisplayName le nom affiché du serveur disparu
+     * @return le sous-titre
+     */
+    public static Component serverStoppedSubtitle(String serverDisplayName) {
+        return server(serverDisplayName)
+                .append(Component.text(" n'est plus disponible", NamedTextColor.GRAY));
+    }
 }
