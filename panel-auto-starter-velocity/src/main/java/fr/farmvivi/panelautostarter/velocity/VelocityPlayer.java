@@ -69,7 +69,13 @@ public class VelocityPlayer implements CommonPlayer {
             // ignore plutot que de casser la teleportation en cours.
             return;
         }
-        player.playSound(Sound.sound(key, Sound.Source.MASTER, volume, pitch));
+        // L'emetteur est indispensable : playSound(Sound) seul est une methode
+        // par defaut d'Audience que Velocity n'implemente pas, le contrat
+        // d'Adventure exigeant de jouer le son a la position du joueur, que le
+        // proxy ignore. Avec Emitter.self(), le son est rattache a l'entite du
+        // joueur et le proxy sait l'emettre. Cote client, cela requiert 1.19.3
+        // ou plus recent ; en deca, le son est silencieusement ignore.
+        player.playSound(Sound.sound(key, Sound.Source.MASTER, volume, pitch), Sound.Emitter.self());
     }
 
     @Override

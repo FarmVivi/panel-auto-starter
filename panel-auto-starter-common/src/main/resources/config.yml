@@ -118,9 +118,13 @@ queue:
     seconds: 3
 
     # Sons joués pendant le décompte, puis au départ. Laisser vide pour aucun.
-    # ATTENTION : Velocity uniquement. BungeeCord n'expose aucune API de son —
-    # le proxy achemine les paquets sans en fabriquer — ces réglages y sont donc
-    # sans effet, et le plugin le signale au démarrage.
+    #
+    # ATTENTION, deux limites :
+    #  - Velocity uniquement. BungeeCord n'expose aucune API de son — le proxy
+    #    achemine les paquets sans en fabriquer — ces réglages y sont donc sans
+    #    effet, et le plugin le signale au démarrage.
+    #  - Client 1.19.3 minimum. En deçà, Velocity ne peut pas émettre le son et
+    #    l'ignore silencieusement. Le décompte reste affiché à l'écran.
     tick-sound: block.note_block.hat
     go-sound: block.note_block.pling
 

@@ -117,10 +117,12 @@ waits that grace period silently, letting the server settle, then counts down on
 screen. Set `seconds: 0` or `enabled: false` to move players as soon as the
 server is ready.
 
-> **Sounds are Velocity-only.** BungeeCord exposes no sound API at all — the
-> proxy forwards packets rather than producing them — so `tick-sound` and
-> `go-sound` have no effect there. The plugin says so on startup rather than
-> letting you wonder. The countdown itself still shows on screen.
+> **Sounds have two limits.** They are **Velocity-only**: BungeeCord exposes no
+> sound API at all — the proxy forwards packets rather than producing them — so
+> `tick-sound` and `go-sound` have no effect there, and the plugin says so on
+> startup rather than letting you wonder. They also require a **1.19.3+
+> client**: below that Velocity cannot emit the sound and drops it silently.
+> The countdown itself always shows on screen.
 
 Players are then moved one at a time, `server-start.teleport-delay` seconds
 apart, so a full queue does not land on a freshly booted server all at once.
