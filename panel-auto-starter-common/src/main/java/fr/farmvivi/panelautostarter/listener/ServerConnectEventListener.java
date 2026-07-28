@@ -9,6 +9,7 @@ import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
+import fr.farmvivi.panelautostarter.access.ServerAccess;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 import fr.farmvivi.panelautostarter.queue.QueueCoordinator;
 import net.kyori.adventure.text.Component;
@@ -42,6 +43,17 @@ public class ServerConnectEventListener extends EventAdapter {
 
         if (plugin.getServers().containsKey(target)) {
             MinecraftServer server = plugin.getServers().get(target);
+
+            // Le controle d'acces passe avant tout le reste, et vaut quel que
+            // soit l'etat du serveur : demarrer une machine pour quelqu'un qui
+            // n'y entrera pas serait absurde, et le laisser patienter dans une
+            // file dont il sera refoule a l'arrivee, malhonnete.
+            ServerAccess.Result access = plugin.getServerAccess().check(player, target);
+            if (!access.isAllowed()) {
+                denyAccess(event, player, server, access);
+                return;
+            }
+
             MinecraftServerStatus serverStatus = server.getStatus();
             if (serverStatus.equals(MinecraftServerStatus.OFFLINE) || serverStatus.equals(MinecraftServerStatus.STARTING)) {
                 // Un joueur deja en jeu est simplement retenu ; un joueur qui
@@ -88,6 +100,37 @@ public class ServerConnectEventListener extends EventAdapter {
                     player.sendMessage(message);
                 }
             }
+        }
+    }
+
+    /**
+     * Refuse l'entrée, et explique pourquoi.
+     * <p>
+     * Un joueur déjà en jeu est simplement retenu là où il est ; un joueur qui
+     * arrive sur le proxy est dérouté vers le serveur d'attente. Annuler sa
+     * connexion le déconnecterait purement et simplement — ce qui arriverait à
+     * quiconque se connecte par l'hôte forcé d'un serveur qui lui est interdit.
+     * <p>
+     * Le joueur est aussi retiré de sa file : il a pu y entrer avant qu'on ne
+     * lui retire l'accès.
+     */
+    private void denyAccess(ServerConnectEvent event, CommonPlayer player, MinecraftServer server,
+                            ServerAccess.Result reason) {
+        queueCoordinator.leaveAll(player);
+
+        String serverName = server.getServer().getDisplayName();
+        Component message = reason == ServerAccess.Result.NOT_WHITELISTED
+                ? Messages.notWhitelisted(serverName)
+                : Messages.accessDenied(serverName);
+
+        if (player.getServer() == null) {
+            event.setTarget(limboServer);
+            // La connexion n'a pas encore atteint l'etat de jeu : le message
+            // serait perdu s'il partait maintenant.
+            pendingNotifications.queueMessage(player, message);
+        } else {
+            event.setCancelled(true);
+            player.sendMessage(message);
         }
     }
 }

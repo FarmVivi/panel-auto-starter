@@ -5,6 +5,9 @@ import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.PendingNotifications;
+import fr.farmvivi.panelautostarter.access.AccessSettings;
+import fr.farmvivi.panelautostarter.access.ServerAccess;
+import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.queue.QueueCoordinator;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
@@ -85,7 +88,25 @@ public class ServerConnectEventListenerTest {
 
         when(mockPlugin.getQueueCoordinator()).thenReturn(new QueueCoordinator(mockPlugin));
 
+        // Controle d'acces permissif : ces tests portent sur la file d'attente,
+        // le refus d'entree a les siens.
+        when(mockPlugin.getServerAccess()).thenReturn(new ServerAccess(
+                new AccessSettings(false, false, false, ServerAccess.DEFAULT_PERMISSION_FORMAT),
+                new WhitelistStore(tempFolder(), message -> {
+                })));
+
         listener = new ServerConnectEventListener(mockPlugin);
+    }
+
+    /**
+     * Dossier jetable : le magasin de listes blanches lit un fichier au
+     * démarrage, absent ici, ce qui le laisse vide.
+     */
+    private static java.io.File tempFolder() {
+        java.io.File folder = new java.io.File(System.getProperty("java.io.tmpdir"),
+                "pas-test-" + java.util.UUID.randomUUID());
+        folder.deleteOnExit();
+        return folder;
     }
 
     /**

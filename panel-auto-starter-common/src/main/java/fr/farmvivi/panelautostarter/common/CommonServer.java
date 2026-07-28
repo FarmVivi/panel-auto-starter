@@ -32,6 +32,25 @@ public interface CommonServer {
      *
      * @param callback the callback
      */
+    /**
+     * Indique si le proxy interdit de lui-même ce serveur à un joueur.
+     * <p>
+     * BungeeCord possède la notion en propre : un serveur marqué
+     * {@code restricted} dans sa configuration exige la permission
+     * {@code bungeecord.server.<nom>}. La réutiliser évite de demander à
+     * l'administrateur de déclarer deux fois la même restriction.
+     * <p>
+     * Velocity n'a pas d'équivalent — {@code RegisteredServer} ignore la notion
+     * de permission — et répond donc toujours que l'accès est libre. La
+     * convention du plugin, elle, vaut sur les deux plateformes.
+     *
+     * @param player le joueur
+     * @return true si le proxy laisse passer ce joueur
+     */
+    default boolean isAllowedByProxy(CommonPlayer player) {
+        return true;
+    }
+
     void ping(Callback<CommonServerPing> callback);
 
     /**

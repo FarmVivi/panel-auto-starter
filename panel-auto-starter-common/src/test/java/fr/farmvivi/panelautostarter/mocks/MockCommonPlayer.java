@@ -43,6 +43,24 @@ public class MockCommonPlayer implements CommonPlayer {
         this.currentServer = null;
     }
 
+    private final java.util.Set<String> permissions = new java.util.HashSet<>();
+
+    @Override
+    public boolean hasPermission(String permission) {
+        return permissions.contains(permission);
+    }
+
+    /**
+     * Accorde une permission au joueur simulé.
+     *
+     * @param permission le nœud à accorder
+     * @return ce joueur, pour enchaîner
+     */
+    public MockCommonPlayer grant(String permission) {
+        permissions.add(permission);
+        return this;
+    }
+
     @Override
     public boolean isOnline() {
         return online;

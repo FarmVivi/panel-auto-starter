@@ -1,5 +1,8 @@
 package fr.farmvivi.panelautostarter;
 
+import fr.farmvivi.panelautostarter.access.AccessSettings;
+import fr.farmvivi.panelautostarter.access.ServerAccess;
+import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -64,6 +67,8 @@ public final class PanelAutoStarter {
     private MotdStore motdStore;
     private MotdSettings motdSettings;
     private MessageSettings messageSettings;
+    private WhitelistStore whitelistStore;
+    private ServerAccess serverAccess;
     private final PendingNotifications pendingNotifications = new PendingNotifications();
     private final QueueCoordinator queueCoordinator = new QueueCoordinator(this);
 
@@ -109,6 +114,11 @@ public final class PanelAutoStarter {
             // Player feedback: titles and countdown sounds
             this.messageSettings = MessageSettings.from(config);
             this.warnIfSoundIsUnsupported();
+
+            // Server access control: proxy restrictions, permission, whitelist
+            this.whitelistStore = new WhitelistStore(this.plugin.getDataFolder(),
+                    message -> this.getLogger().warning(message));
+            this.serverAccess = new ServerAccess(AccessSettings.from(config), whitelistStore);
 
             // Connect to the panel
             PanelConfig panelConfig = PanelConfig.from(config);
@@ -302,6 +312,24 @@ public final class PanelAutoStarter {
      */
     public QueueCoordinator getQueueCoordinator() {
         return queueCoordinator;
+    }
+
+    /**
+     * Retourne le contrôle d'accès aux serveurs gérés.
+     *
+     * @return le contrôle d'accès, jamais null une fois le plugin activé
+     */
+    public ServerAccess getServerAccess() {
+        return serverAccess;
+    }
+
+    /**
+     * Retourne les listes blanches par serveur.
+     *
+     * @return le registre des listes blanches, jamais null une fois le plugin activé
+     */
+    public WhitelistStore getWhitelistStore() {
+        return whitelistStore;
     }
 
     public MotdSettings getMotdSettings() {

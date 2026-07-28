@@ -38,6 +38,18 @@ public interface CommonPlayer {
     UUID getUniqueId();
 
     /**
+     * Indique si le joueur possède une permission.
+     * <p>
+     * Passe par l'API du proxy, que les gestionnaires de permissions —
+     * LuckPerms notamment — alimentent en s'y greffant. Il n'y a donc rien à
+     * intégrer de leur côté : demander au proxy revient à leur demander.
+     *
+     * @param permission le nœud de permission
+     * @return true si le joueur l'a
+     */
+    boolean hasPermission(String permission);
+
+    /**
      * Sends a message to the player.
      *
      * @param message the message to send

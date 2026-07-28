@@ -8,6 +8,50 @@ panel:
   # Token d'API *client* (compte utilisateur), pas un token d'API application
   token: abc
 
+# Contrôle d'accès aux serveurs gérés.
+#
+# Il s'applique aux ÉVÉNEMENTS de connexion, et non au menu de sélection : le
+# menu se contente de demander un serveur, comme le ferait un /server. Aucun
+# chemin détourné — commande, hôte forcé, redirection d'un autre plugin — ne
+# contourne donc la règle.
+#
+# Trois portes doivent s'ouvrir : la restriction propre au proxy, la permission
+# du plugin, puis la liste blanche du serveur.
+access:
+  enabled: true
+
+  # Exiger la permission panelautostarter.join.<serveur>.
+  #
+  # Désactivé par défaut à dessein : l'activer d'emblée fermerait tous les
+  # serveurs d'une installation existante dès la mise à jour, personne n'ayant
+  # encore accordé la permission. Accordez-la dans LuckPerms, puis passez ceci
+  # à true.
+  #
+  # Aucune intégration LuckPerms n'est nécessaire : le plugin interroge l'API
+  # de permissions du proxy, que LuckPerms alimente en s'y greffant.
+  require-permission: false
+
+  # Réutiliser la restriction déclarée au proxy plutôt que de la redéclarer.
+  #
+  # BungeeCord possède la notion en propre : un serveur marqué « restricted »
+  # dans sa configuration exige bungeecord.server.<nom>. Velocity n'a pas
+  # d'équivalent, ce réglage y est donc sans effet.
+  respect-proxy-restrictions: true
+
+  # Motif du nœud de permission. Le %s reçoit le nom du serveur, en minuscules.
+  # Un motif sans %s est refusé : tous les serveurs partageraient la même
+  # permission et la restriction par serveur ne voudrait plus rien dire.
+  permission-format: "panelautostarter.join.%s"
+
+# Les listes blanches, elles, vivent dans whitelist.yml, à côté de ce fichier :
+# elles se modifient en jeu, et réécrire ce fichier à chaque ajout en effacerait
+# les commentaires.
+#
+# Permission et liste blanche répondent à deux besoins distincts : la première
+# dit QUEL GROUPE a le droit d'entrer et se gère dans LuckPerms, la seconde
+# QUELLES PERSONNES et se gère en jeu. Une liste blanche ne dispense pas de la
+# permission.
+
 # Configuration du système de file d'attente et démarrage des serveurs
 server-start:
   # Fréquence de vérification de l'état du serveur en secondes (temps normal)

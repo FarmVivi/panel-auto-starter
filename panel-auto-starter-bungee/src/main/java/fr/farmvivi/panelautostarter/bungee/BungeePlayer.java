@@ -25,6 +25,11 @@ public class BungeePlayer implements CommonPlayer {
     }
 
     @Override
+    public boolean hasPermission(String permission) {
+        return player.hasPermission(permission);
+    }
+
+    @Override
     public void sendMessage(String message) {
         player.sendMessage(new TextComponent(message));
     }
@@ -97,6 +102,17 @@ public class BungeePlayer implements CommonPlayer {
 
         // Return null
         return null;
+    }
+
+    /**
+     * Donne accès au joueur BungeeCord sous-jacent, pour les API du proxy qui
+     * raisonnent en {@code CommandSender} — le contrôle d'accès aux serveurs
+     * notamment.
+     *
+     * @return le joueur BungeeCord
+     */
+    public ProxiedPlayer getProxiedPlayer() {
+        return player;
     }
 
     @Override

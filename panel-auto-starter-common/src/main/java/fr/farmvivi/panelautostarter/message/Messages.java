@@ -88,6 +88,39 @@ public final class Messages {
                 .append(detail(Component.text("Réessayez dans un instant")));
     }
 
+    // ===================== Accès refusé =====================
+
+    /**
+     * Refus opposé à un joueur qui n'a pas la permission d'entrer.
+     *
+     * @param serverDisplayName le nom affiché du serveur
+     * @return le message
+     */
+    public static Component accessDenied(String serverDisplayName) {
+        return headline(Component.text("Accès refusé à ", NamedTextColor.RED)
+                .append(server(serverDisplayName)))
+                .appendNewline()
+                .append(detail(Component.text("Vous n'avez pas la permission d'y entrer")));
+    }
+
+    /**
+     * Refus opposé à un joueur absent de la liste blanche.
+     * <p>
+     * Distinct du refus de permission : une liste blanche se corrige en
+     * demandant à être ajouté, là où une permission manquante relève des
+     * groupes. Confondre les deux enverrait le joueur frapper à la mauvaise
+     * porte.
+     *
+     * @param serverDisplayName le nom affiché du serveur
+     * @return le message
+     */
+    public static Component notWhitelisted(String serverDisplayName) {
+        return headline(server(serverDisplayName)
+                .append(Component.text(" est sur liste blanche", NamedTextColor.RED)))
+                .appendNewline()
+                .append(detail(Component.text("Demandez à un administrateur de vous y ajouter")));
+    }
+
     // ===================== Barre d'action =====================
 
     /**

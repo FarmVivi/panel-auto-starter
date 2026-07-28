@@ -28,6 +28,18 @@ public class BungeeServer implements CommonServer {
         return serverInfo.getPlayers().size();
     }
 
+    /**
+     * BungeeCord sait répondre lui-même : {@code canAccess} applique le
+     * {@code restricted} de sa configuration et la permission qui va avec.
+     */
+    @Override
+    public boolean isAllowedByProxy(fr.farmvivi.panelautostarter.common.CommonPlayer player) {
+        if (!(player instanceof BungeePlayer bungeePlayer)) {
+            return true;
+        }
+        return serverInfo.canAccess(bungeePlayer.getProxiedPlayer());
+    }
+
     @Override
     public void ping(Callback<CommonServerPing> callback) {
         serverInfo.ping((result, error) -> {
