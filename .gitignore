@@ -34,5 +34,14 @@ build/
 ### VS Code ###
 .vscode/
 
+### AI coding agents ###
+# Les instructions partagees vivent dans AGENTS.md et CLAUDE.md, versionnes.
+# Seuls les reglages et brouillons propres a chaque contributeur sont ignores.
+.claude/settings.local.json
+.claude/plans/
+.codex/
+.aider*
+.cursor/
+
 ### Mac OS ###
 .DS_Store

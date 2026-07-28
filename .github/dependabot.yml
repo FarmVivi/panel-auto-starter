@@ -5,8 +5,24 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+
   # Enable version updates for Maven
   - package-ecosystem: "maven"
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      # Pterodactyl4J numbers its releases 2.BETA_<n>. Maven treats neither the
+      # underscore nor what follows as a number, so versions are compared
+      # character by character: "BETA_99" sorts above "BETA_142". Dependabot
+      # therefore keeps proposing a downgrade — it opened PR #8 suggesting
+      # 2.BETA_142 -> 2.BETA_99 and reopened it after every close.
+      #
+      # No versioning-strategy fixes this: the comparator itself is the problem.
+      # The artifact also lives outside Maven Central, on repo.mattmalec.com,
+      # which Dependabot does not index.
+      #
+      # This dependency must therefore be bumped by hand. Check for newer
+      # versions at:
+      # https://repo.mattmalec.com/repository/releases/com/mattmalec/Pterodactyl4J/maven-metadata.xml
+      - dependency-name: "com.mattmalec:Pterodactyl4J"
