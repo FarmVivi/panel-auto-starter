@@ -90,6 +90,19 @@ With `disabled`, everyone gets their own MOTD back: the proxy on its address, ea
 
 Side benefit: Velocity no longer contacts a backend on every client ping, since the plugin serves from its cache.
 
+### When a server stops under players' feet
+
+```yaml
+queue:
+  catch-kicks: true
+```
+
+Without this, what happens to the players depends on *how* the backend closed the connection: an abrupt drop triggers the proxy's own failover, a clean disconnect lets it kick them out. That is why a stopping server sometimes sent players back to the lobby and sometimes disconnected them outright.
+
+The plugin knows which servers it manages and where players wait, so it settles the question: anyone kicked from a managed server is sent to the queue server. The reason announced by the backend is still passed on, so an intentional kick is not hidden by the redirect.
+
+Servers the plugin does not manage are left entirely to the proxy.
+
 ### Joining a stopped server
 
 When a player is put in the queue they get a title on screen, and once the

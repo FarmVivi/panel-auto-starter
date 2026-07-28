@@ -102,6 +102,18 @@ queue:
   # Serveur d'attente où patientent les joueurs pendant le démarrage
   server: lobby
 
+  # Renvoyer vers le serveur d'attente un joueur éjecté d'un serveur géré,
+  # plutôt que de le laisser être déconnecté.
+  #
+  # Sans cela, le sort du joueur dépend de la façon dont le serveur a coupé la
+  # connexion : une fermeture brutale déclenche le repli automatique du proxy,
+  # une déconnexion propre le laisse déconnecter le joueur. D'où un
+  # comportement erratique quand un serveur s'arrête.
+  #
+  # La raison annoncée par le serveur reste transmise au joueur : une exclusion
+  # volontaire n'est donc pas masquée par la redirection.
+  catch-kicks: true
+
   # Titre affiché au joueur au moment où il rejoint la file d'attente.
   # Durées en millisecondes.
   title:

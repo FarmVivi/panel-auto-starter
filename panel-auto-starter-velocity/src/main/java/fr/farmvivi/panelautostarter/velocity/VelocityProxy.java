@@ -10,6 +10,7 @@ import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
+import fr.farmvivi.panelautostarter.common.event.PlayerKickedEvent;
 import fr.farmvivi.panelautostarter.common.event.ProxyPingEvent;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectedEvent;
@@ -222,5 +223,10 @@ public class VelocityProxy implements CommonProxy, EventListener {
     public boolean supportsSound() {
         // Velocity expose Adventure : les joueurs sont des Audience.
         return true;
+    }
+
+    @Override
+    public void onPlayerKicked(PlayerKickedEvent event) {
+        // Do nothing : le proxy ne se sert de cet evenement pour aucun cache.
     }
 }

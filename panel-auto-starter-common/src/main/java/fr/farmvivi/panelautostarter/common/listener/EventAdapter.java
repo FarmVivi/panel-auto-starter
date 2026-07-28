@@ -1,6 +1,7 @@
 package fr.farmvivi.panelautostarter.common.listener;
 
 import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
+import fr.farmvivi.panelautostarter.common.event.PlayerKickedEvent;
 import fr.farmvivi.panelautostarter.common.event.ProxyPingEvent;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectedEvent;
@@ -39,6 +40,15 @@ public class EventAdapter implements EventListener {
      */
     @Override
     public void onServerConnected(ServerConnectedEvent event) {
+        // This is a default implementation for EventAdapter pattern
+    }
+
+    /**
+     * Default no-op implementation for subclasses that don't need this event.
+     * Subclasses can override this method to handle player kick events.
+     */
+    @Override
+    public void onPlayerKicked(PlayerKickedEvent event) {
         // This is a default implementation for EventAdapter pattern
     }
 }

@@ -12,6 +12,7 @@ import fr.farmvivi.panelautostarter.motd.MotdSettings;
 import fr.farmvivi.panelautostarter.motd.MotdStore;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
+import fr.farmvivi.panelautostarter.listener.PlayerKickedEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectedEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
@@ -126,6 +127,7 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new ProxyPingEventListener(this));
             this.getPlugin().addEventListener(new PlayerDisconnectEventListener(this));
             this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingNotifications));
+            this.getPlugin().addEventListener(new PlayerKickedEventListener(this));
             this.getLogger().info("Event listeners registered.");
 
             this.getLogger().info("Plugin enabled.");
