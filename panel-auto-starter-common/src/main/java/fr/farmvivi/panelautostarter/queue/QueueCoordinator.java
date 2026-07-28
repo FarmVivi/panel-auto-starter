@@ -132,7 +132,7 @@ public final class QueueCoordinator {
         for (MinecraftServer server : servers.get()) {
             // Pendant le décompte, le titre occupe déjà l'écran et dit la même
             // chose en plus grand : doubler l'information la rend confuse.
-            if (server.isTeleportSequenceRunning()) {
+            if (server.isShowingTeleportTitles()) {
                 continue;
             }
 

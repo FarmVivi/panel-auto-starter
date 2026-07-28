@@ -33,6 +33,9 @@ server-start:
 
   # Temps d'attente en secondes avant de commencer à TP les joueurs après que le serveur soit ONLINE
   # Cela laisse le temps au serveur de bien se lancer avant de recevoir des joueurs
+  #
+  # Ce délai est décompté sur sa propre échéance, indépendamment de
+  # check-interval-normal : il vaut exactement ce qui est écrit ici.
   wait-before-teleport: 5
 
   # Délai entre chaque téléportation de joueur (en secondes) pour éviter les overloads

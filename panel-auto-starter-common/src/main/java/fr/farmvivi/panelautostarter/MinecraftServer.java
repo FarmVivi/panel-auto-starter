@@ -74,6 +74,16 @@ public class MinecraftServer {
     private volatile int countdownRemaining = 0;
 
     /**
+     * Un titre de départ occupe l'écran des joueurs de la file.
+     * <p>
+     * Distinct de {@link #teleportSequenceRunning}, qui est levé dès la
+     * réservation de la séquence et couvre donc aussi le délai d'attente
+     * précédant le décompte. Confondre les deux ferait disparaître la barre
+     * d'action pendant ce délai, sans qu'aucun titre ne la remplace encore.
+     */
+    private volatile boolean showingTeleportTitles = false;
+
+    /**
      * Un arret a ete demande et le serveur n'est pas revenu en ligne depuis.
      * Permet de distinguer une ejection due a l'extinction du serveur d'une
      * exclusion volontaire, alors meme que la surveillance n'a pas encore
@@ -252,7 +262,7 @@ public class MinecraftServer {
         // Le serveur n'est plus la : toute sequence de teleportation en cours
         // n'a plus d'objet.
         countdownRemaining = 0;
-        teleportSequenceRunning.set(false);
+        endTeleportSequence();
 
         // La liste est vidée avant d'écrire aux joueurs : un parcours par
         // iterateur ne peut pas retirer d'element d'une liste a copie sur
@@ -291,16 +301,48 @@ public class MinecraftServer {
             return;
         }
 
-        // Laisser au serveur le temps d'etre reellement pret avant d'annoncer
-        // quoi que ce soit au joueur.
-        long waitBeforeTeleport = plugin.getConfig().getLong("server-start.wait-before-teleport", 5) * 1000;
-        if (curMillis - serverStartedTime < waitBeforeTeleport) {
-            return;
-        }
-
+        // Reserver la sequence avant d'attendre, et non apres : pendant le
+        // delai qui suit, la surveillance repasse et tenterait sinon d'en
+        // lancer une seconde.
         if (!teleportSequenceRunning.compareAndSet(false, true)) {
             return;
         }
+
+        // Laisser au serveur le temps d'etre reellement pret avant d'annoncer
+        // quoi que ce soit au joueur.
+        //
+        // Ce qui reste a attendre est planifie sur sa propre echeance. Se
+        // contenter de renoncer ici, en comptant sur le passage suivant de la
+        // surveillance, arrondissait ce delai a l'intervalle de surveillance :
+        // wait-before-teleport valait 5 secondes et les joueurs en
+        // patientaient 15, a regarder un serveur annonce pret. C'est le meme
+        // travers que celui corrige pour les teleportations elles-memes, dont
+        // le declencheur etait reste, lui, accroche a la boucle de
+        // surveillance.
+        long waitBeforeTeleport = plugin.getConfig().getLong("server-start.wait-before-teleport", 5) * 1000;
+        long remaining = waitBeforeTeleport - (curMillis - serverStartedTime);
+
+        if (remaining > 0) {
+            plugin.getProxy().schedule(plugin.getPlugin(), this::beginTeleportSequence,
+                    remaining, TimeUnit.MILLISECONDS);
+        } else {
+            beginTeleportSequence();
+        }
+    }
+
+    /**
+     * Ouvre le décompte, une fois le serveur laissé tranquille le temps voulu.
+     * <p>
+     * L'état est revérifié : le serveur a pu repartir, ou la file se vider,
+     * pendant le délai d'attente.
+     */
+    private void beginTeleportSequence() {
+        if (!status.equals(MinecraftServerStatus.ONLINE) || queue.isEmpty()) {
+            endTeleportSequence();
+            return;
+        }
+
+        showingTeleportTitles = true;
 
         MessageSettings.CountdownSettings countdown = plugin.getMessageSettings().getCountdown();
         if (countdown.enabled() && countdown.seconds() > 0) {
@@ -312,12 +354,20 @@ public class MinecraftServer {
     }
 
     /**
+     * Libère la séquence de téléportation, quelle qu'en soit l'issue.
+     */
+    private void endTeleportSequence() {
+        showingTeleportTitles = false;
+        teleportSequenceRunning.set(false);
+    }
+
+    /**
      * Affiche une seconde du décompte à toute la file, puis planifie la
      * suivante.
      */
     private void tickCountdown() {
         if (!status.equals(MinecraftServerStatus.ONLINE)) {
-            teleportSequenceRunning.set(false);
+            endTeleportSequence();
             return;
         }
 
@@ -366,7 +416,7 @@ public class MinecraftServer {
      */
     private void drainQueue() {
         if (!status.equals(MinecraftServerStatus.ONLINE)) {
-            teleportSequenceRunning.set(false);
+            endTeleportSequence();
             return;
         }
 
@@ -378,7 +428,7 @@ public class MinecraftServer {
             queue.removeIf(player -> server.equals(player.getServer()));
 
             if (queue.isEmpty()) {
-                teleportSequenceRunning.set(false);
+                endTeleportSequence();
                 return;
             }
             next = queue.remove(0);
@@ -388,7 +438,7 @@ public class MinecraftServer {
         lastTeleportTime = System.currentTimeMillis();
 
         if (queue.isEmpty()) {
-            teleportSequenceRunning.set(false);
+            endTeleportSequence();
             return;
         }
 
@@ -503,16 +553,16 @@ public class MinecraftServer {
     }
 
     /**
-     * Indique qu'un décompte ou une vague de téléportations est en cours.
+     * Indique qu'un titre de départ occupe l'écran des joueurs de la file.
      * <p>
-     * Ces deux moments occupent déjà l'écran du joueur avec un titre ; la barre
-     * d'action s'efface alors pour ne pas répéter la même chose en deux
-     * endroits.
+     * La barre d'action s'efface alors, pour ne pas répéter en petit ce que le
+     * titre dit déjà en grand. Elle reste en revanche affichée pendant le délai
+     * d'attente qui précède le décompte, où rien n'occupe encore l'écran.
      *
-     * @return true si la séquence de téléportation est en cours
+     * @return true si un titre de départ est affiché
      */
-    public boolean isTeleportSequenceRunning() {
-        return teleportSequenceRunning.get();
+    public boolean isShowingTeleportTitles() {
+        return showingTeleportTitles;
     }
 
     /**

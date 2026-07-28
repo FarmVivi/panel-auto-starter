@@ -217,7 +217,7 @@ public class QueueCoordinatorTest {
         MinecraftServer server = mock(MinecraftServer.class);
         when(server.getServer()).thenReturn(new MockCommonServer(name));
         when(server.getStatus()).thenReturn(status);
-        when(server.isTeleportSequenceRunning()).thenReturn(teleporting);
+        when(server.isShowingTeleportTitles()).thenReturn(teleporting);
         when(server.getQueue()).thenReturn(queue);
         servers.add(server);
         return server;
