@@ -22,7 +22,7 @@ public class PlayerDisconnectEventListener extends EventAdapter {
         }
 
         for (MinecraftServer server : plugin.getServers().values()) {
-            server.getQueue().removeIf(proxiedPlayer -> proxiedPlayer.equals(player));
+            server.dequeue(player);
         }
 
         // Un joueur parti avant d'arriver sur le limbo laisserait sinon ses

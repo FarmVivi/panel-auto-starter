@@ -49,7 +49,7 @@ public class ServerConnectEventListener extends EventAdapter {
                 } else {
                     event.setCancelled(true);
                 }
-                server.getQueue().add(player);
+                server.enqueue(player);
                 if (serverStatus.equals(MinecraftServerStatus.OFFLINE)) {
                     server.start();
                 }

@@ -245,4 +245,76 @@ public class MinecraftServerTest {
 
         assertEquals(statusBefore, statusAfter, "Le statut ne doit pas changer");
     }
+
+    // ===================== Unicité dans la file =====================
+
+    /**
+     * Le bug vécu : rien n'empêche un joueur de redemander le même serveur —
+     * commande répétée, clic insistant — et chaque demande passait par le même
+     * chemin. Il s'ajoutait autant de fois qu'il insistait, gonflant la file et
+     * faussant les positions annoncées à tout le monde.
+     */
+    @Test
+    public void testEnqueueingTwiceAddsThePlayerOnlyOnce() {
+        MockCommonPlayer player = new MockCommonPlayer("Vivi");
+
+        assertTrue(minecraftServer.enqueue(player), "La premiere demande place le joueur");
+        assertFalse(minecraftServer.enqueue(player), "La suivante ne doit rien changer");
+        assertFalse(minecraftServer.enqueue(player));
+
+        assertEquals(1, minecraftServer.getQueue().size());
+    }
+
+    /**
+     * L'unicité porte sur le joueur, pas sur l'objet qui le représente.
+     */
+    @Test
+    public void testUniquenessIsBasedOnThePlayerIdentifier() {
+        java.util.UUID uuid = java.util.UUID.randomUUID();
+        MockCommonPlayer first = new MockCommonPlayer("Vivi", uuid);
+        MockCommonPlayer other = new MockCommonPlayer("Vivi", uuid);
+
+        minecraftServer.enqueue(first);
+
+        assertFalse(minecraftServer.enqueue(other),
+                "Une autre instance du meme joueur ne doit pas s'ajouter");
+        assertEquals(1, minecraftServer.getQueue().size());
+    }
+
+    @Test
+    public void testDistinctPlayersBothQueue() {
+        assertTrue(minecraftServer.enqueue(new MockCommonPlayer("Vivi")));
+        assertTrue(minecraftServer.enqueue(new MockCommonPlayer("Bob")));
+
+        assertEquals(2, minecraftServer.getQueue().size());
+    }
+
+    @Test
+    public void testDequeueRemovesWhicheverInstanceRepresentsThePlayer() {
+        java.util.UUID uuid = java.util.UUID.randomUUID();
+        minecraftServer.enqueue(new MockCommonPlayer("Vivi", uuid));
+
+        minecraftServer.dequeue(new MockCommonPlayer("Vivi", uuid));
+
+        assertTrue(minecraftServer.getQueue().isEmpty());
+    }
+
+    @Test
+    public void testIsQueuedReflectsTheQueue() {
+        MockCommonPlayer player = new MockCommonPlayer("Vivi");
+
+        assertFalse(minecraftServer.isQueued(player));
+        minecraftServer.enqueue(player);
+        assertTrue(minecraftServer.isQueued(player));
+        minecraftServer.dequeue(player);
+        assertFalse(minecraftServer.isQueued(player));
+    }
+
+    @Test
+    public void testNullPlayerIsIgnored() {
+        assertFalse(minecraftServer.enqueue(null));
+        assertFalse(minecraftServer.isQueued(null));
+        assertDoesNotThrow(() -> minecraftServer.dequeue(null));
+        assertTrue(minecraftServer.getQueue().isEmpty());
+    }
 }

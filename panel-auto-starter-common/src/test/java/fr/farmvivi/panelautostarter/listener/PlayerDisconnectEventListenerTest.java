@@ -83,20 +83,18 @@ public class PlayerDisconnectEventListenerTest {
     }
 
     /**
-     * Test : Vérifier que le joueur est retiré de la queue
+     * Le retrait est délégué au serveur, qui compare les joueurs sur leur
+     * identifiant : rien ne garantit qu'une même connexion soit toujours
+     * représentée par la même instance.
      */
     @Test
-    public void testPlayerRemovedFromQueue() {
-        CommonServer server = new MockCommonServer("test-server");
+    public void testPlayerIsRemovedFromEveryQueue() {
         when(mockEvent.getPlayer()).thenReturn(testPlayer);
-        when(mockMinecraftServer.getQueue()).thenReturn(new java.util.LinkedList<>());
+        serversMap.put(new MockCommonServer("test-server"), mockMinecraftServer);
 
-        serversMap.put(server, mockMinecraftServer);
-
-        mockMinecraftServer.getQueue().add(testPlayer);
         listener.onPlayerDisconnect(mockEvent);
 
-        assertFalse(mockMinecraftServer.getQueue().contains(testPlayer), "Le joueur ne doit pas être dans la queue");
+        verify(mockMinecraftServer).dequeue(testPlayer);
     }
 
     /**

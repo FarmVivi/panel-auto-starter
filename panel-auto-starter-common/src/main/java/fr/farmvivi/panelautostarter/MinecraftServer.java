@@ -435,6 +435,54 @@ public class MinecraftServer {
         return queue;
     }
 
+    /**
+     * Place un joueur dans la file, sans l'y mettre deux fois.
+     * <p>
+     * Rien n'empêche un joueur de redemander le même serveur — une commande
+     * répétée, un clic insistant — et chaque demande passe par le même chemin.
+     * Sans cette garde, il s'ajoutait autant de fois qu'il insistait, gonflant
+     * la file et faussant les positions annoncées à tout le monde.
+     * <p>
+     * La comparaison se fait sur l'identifiant du joueur et non sur l'objet :
+     * rien ne garantit qu'une même connexion soit toujours représentée par la
+     * même instance.
+     *
+     * @param player le joueur
+     * @return true s'il vient d'être ajouté, false s'il y était déjà
+     */
+    public synchronized boolean enqueue(CommonPlayer player) {
+        if (player == null || isQueued(player)) {
+            return false;
+        }
+        queue.add(player);
+        return true;
+    }
+
+    /**
+     * Retire un joueur de la file, quelle que soit l'instance qui le
+     * représente.
+     *
+     * @param player le joueur
+     */
+    public synchronized void dequeue(CommonPlayer player) {
+        if (player != null) {
+            queue.removeIf(queued -> queued.getUniqueId().equals(player.getUniqueId()));
+        }
+    }
+
+    /**
+     * Indique si un joueur attend déjà ce serveur.
+     *
+     * @param player le joueur
+     * @return true s'il est dans la file
+     */
+    public boolean isQueued(CommonPlayer player) {
+        if (player == null) {
+            return false;
+        }
+        return queue.stream().anyMatch(queued -> queued.getUniqueId().equals(player.getUniqueId()));
+    }
+
     public MinecraftServerStatus getStatus() {
         return status;
     }
