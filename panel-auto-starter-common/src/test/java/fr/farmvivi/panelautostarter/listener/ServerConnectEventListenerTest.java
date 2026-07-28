@@ -5,6 +5,7 @@ import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.PendingNotifications;
+import fr.farmvivi.panelautostarter.queue.QueueCoordinator;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
@@ -81,6 +82,8 @@ public class ServerConnectEventListenerTest {
         
         // Mock getServers() pour retourner une map mutable
         doReturn(serversMap).when(mockPlugin).getServers();
+
+        when(mockPlugin.getQueueCoordinator()).thenReturn(new QueueCoordinator(mockPlugin));
 
         listener = new ServerConnectEventListener(mockPlugin);
     }

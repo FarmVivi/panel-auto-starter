@@ -55,6 +55,11 @@ public class VelocityPlayer implements CommonPlayer {
     }
 
     @Override
+    public void sendActionBar(Component message) {
+        player.sendActionBar(message);
+    }
+
+    @Override
     public void showTitle(Component title, Component subtitle, Duration fadeIn, Duration stay, Duration fadeOut) {
         player.showTitle(Title.title(title, subtitle, Title.Times.times(fadeIn, stay, fadeOut)));
     }

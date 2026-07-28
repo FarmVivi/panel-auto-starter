@@ -134,4 +134,33 @@ public class MockCommonPlayer implements CommonPlayer {
     public java.util.List<String> getPlayedSounds() {
         return playedSounds;
     }
+
+    // ===================== Barre d'action =====================
+
+    private final java.util.List<Component> actionBars = new java.util.ArrayList<>();
+
+    @Override
+    public void sendActionBar(Component message) {
+        actionBars.add(message);
+    }
+
+    /**
+     * Retourne toutes les barres d'action reçues, dans l'ordre. Leur nombre
+     * compte autant que leur contenu : la barre d'action doit être réémise
+     * régulièrement pour rester visible.
+     *
+     * @return les barres d'action reçues
+     */
+    public java.util.List<Component> getActionBars() {
+        return actionBars;
+    }
+
+    /**
+     * Retourne la dernière barre d'action reçue.
+     *
+     * @return la dernière barre d'action, ou null si aucune
+     */
+    public Component getLastActionBar() {
+        return actionBars.isEmpty() ? null : actionBars.get(actionBars.size() - 1);
+    }
 }

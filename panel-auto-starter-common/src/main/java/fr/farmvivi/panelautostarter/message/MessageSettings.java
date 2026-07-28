@@ -51,6 +51,23 @@ public final class MessageSettings {
     public record KickFeedbackSettings(boolean enabled, SoundSpec sound) {
     }
 
+    /**
+     * Barre d'action rappelant au joueur ce qu'il attend.
+     * <p>
+     * Elle est réémise à intervalle régulier : le client efface la barre
+     * d'action de lui-même au bout de quelques secondes, un envoi unique ne
+     * tiendrait donc pas le temps d'un démarrage.
+     *
+     * @param enabled      affiche la barre d'action
+     * @param interval     délai entre deux rafraîchissements
+     * @param showPosition affiche la place du joueur dans la file
+     */
+    public record ActionBarSettings(boolean enabled, Duration interval, boolean showPosition) {
+    }
+
+    private static final ActionBarSettings DEFAULT_ACTION_BAR = new ActionBarSettings(
+            true, Duration.ofSeconds(1), true);
+
     private static final KickFeedbackSettings DEFAULT_KICK_FEEDBACK = new KickFeedbackSettings(
             true, new SoundSpec("block.note_block.bass", 1.0f, 0.8f));
 
@@ -66,12 +83,14 @@ public final class MessageSettings {
     private final TitleSettings title;
     private final CountdownSettings countdown;
     private final KickFeedbackSettings kickFeedback;
+    private final ActionBarSettings actionBar;
 
     private MessageSettings(TitleSettings title, CountdownSettings countdown,
-                            KickFeedbackSettings kickFeedback) {
+                            KickFeedbackSettings kickFeedback, ActionBarSettings actionBar) {
         this.title = title;
         this.countdown = countdown;
         this.kickFeedback = kickFeedback;
+        this.actionBar = actionBar;
     }
 
     /**
@@ -80,7 +99,8 @@ public final class MessageSettings {
      * @return les réglages par défaut
      */
     public static MessageSettings defaults() {
-        return new MessageSettings(DEFAULT_TITLE, DEFAULT_COUNTDOWN, DEFAULT_KICK_FEEDBACK);
+        return new MessageSettings(DEFAULT_TITLE, DEFAULT_COUNTDOWN, DEFAULT_KICK_FEEDBACK,
+                DEFAULT_ACTION_BAR);
     }
 
     /**
@@ -91,7 +111,7 @@ public final class MessageSettings {
      * @return les réglages correspondants
      */
     public static MessageSettings of(TitleSettings title, CountdownSettings countdown) {
-        return new MessageSettings(title, countdown, DEFAULT_KICK_FEEDBACK);
+        return new MessageSettings(title, countdown, DEFAULT_KICK_FEEDBACK, DEFAULT_ACTION_BAR);
     }
 
     /**
@@ -104,7 +124,21 @@ public final class MessageSettings {
      */
     public static MessageSettings of(TitleSettings title, CountdownSettings countdown,
                                      KickFeedbackSettings kickFeedback) {
-        return new MessageSettings(title, countdown, kickFeedback);
+        return new MessageSettings(title, countdown, kickFeedback, DEFAULT_ACTION_BAR);
+    }
+
+    /**
+     * Construit des réglages explicites, barre d'action comprise.
+     *
+     * @param title        réglages du titre
+     * @param countdown    réglages du décompte
+     * @param kickFeedback réglages du retour après éjection
+     * @param actionBar    réglages de la barre d'action
+     * @return les réglages correspondants
+     */
+    public static MessageSettings of(TitleSettings title, CountdownSettings countdown,
+                                     KickFeedbackSettings kickFeedback, ActionBarSettings actionBar) {
+        return new MessageSettings(title, countdown, kickFeedback, actionBar);
     }
 
     /**
@@ -132,7 +166,27 @@ public final class MessageSettings {
                         SoundSpec.from(config, "queue.countdown.go-sound", DEFAULT_COUNTDOWN.goSound())),
                 new KickFeedbackSettings(
                         config.getBoolean("queue.kick-feedback.enabled", DEFAULT_KICK_FEEDBACK.enabled()),
-                        SoundSpec.from(config, "queue.kick-feedback.sound", DEFAULT_KICK_FEEDBACK.sound())));
+                        SoundSpec.from(config, "queue.kick-feedback.sound", DEFAULT_KICK_FEEDBACK.sound())),
+                new ActionBarSettings(
+                        config.getBoolean("queue.actionbar.enabled", DEFAULT_ACTION_BAR.enabled()),
+                        // Un intervalle nul ou negatif ferait tourner le
+                        // planificateur en boucle ; un intervalle trop long
+                        // laisserait la barre s'effacer entre deux envois, le
+                        // client l'oubliant au bout de quelques secondes.
+                        clamp(millis(config, "queue.actionbar.interval", DEFAULT_ACTION_BAR.interval()),
+                                MIN_ACTION_BAR_INTERVAL, MAX_ACTION_BAR_INTERVAL),
+                        config.getBoolean("queue.actionbar.show-position",
+                                DEFAULT_ACTION_BAR.showPosition())));
+    }
+
+    private static final Duration MIN_ACTION_BAR_INTERVAL = Duration.ofMillis(250);
+    private static final Duration MAX_ACTION_BAR_INTERVAL = Duration.ofSeconds(3);
+
+    private static Duration clamp(Duration value, Duration min, Duration max) {
+        if (value.compareTo(min) < 0) {
+            return min;
+        }
+        return value.compareTo(max) > 0 ? max : value;
     }
 
     private static Duration millis(Configuration config, String path, Duration fallback) {
@@ -154,5 +208,14 @@ public final class MessageSettings {
      */
     public KickFeedbackSettings getKickFeedback() {
         return kickFeedback;
+    }
+
+    /**
+     * Barre d'action rappelant au joueur ce qu'il attend.
+     *
+     * @return les réglages correspondants
+     */
+    public ActionBarSettings getActionBar() {
+        return actionBar;
     }
 }

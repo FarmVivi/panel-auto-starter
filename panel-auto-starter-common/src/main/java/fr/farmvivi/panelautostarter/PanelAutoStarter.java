@@ -16,6 +16,7 @@ import fr.farmvivi.panelautostarter.listener.PlayerKickedEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectedEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
+import fr.farmvivi.panelautostarter.queue.QueueCoordinator;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.md_5.bungee.config.Configuration;
@@ -29,6 +30,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.SEVERE;
@@ -63,6 +65,7 @@ public final class PanelAutoStarter {
     private MotdSettings motdSettings;
     private MessageSettings messageSettings;
     private final PendingNotifications pendingNotifications = new PendingNotifications();
+    private final QueueCoordinator queueCoordinator = new QueueCoordinator(this);
 
     public PanelAutoStarter(CommonPlugin plugin, Logger logger) {
         this.plugin = plugin;
@@ -130,6 +133,9 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new PlayerKickedEventListener(this));
             this.getLogger().info("Event listeners registered.");
 
+            // Barre d'action des joueurs en attente
+            this.scheduleActionBar();
+
             this.getLogger().info("Plugin enabled.");
         } catch (Exception ex) {
             this.getLogger().log(SEVERE, "An error occurred while enabling the plugin.", ex);
@@ -191,6 +197,23 @@ public final class PanelAutoStarter {
                 + proxy.getName() + " n'expose aucune API de son : les cles "
                 + "'queue.countdown.tick-sound' et 'queue.countdown.go-sound' resteront sans effet. "
                 + "Le decompte s'affiche normalement a l'ecran.");
+    }
+
+    /**
+     * Lance la tâche qui entretient la barre d'action des joueurs en attente.
+     * <p>
+     * Une seule tâche parcourt toutes les files : le coût est celui du nombre
+     * de joueurs qui attendent, pas du nombre de serveurs déclarés, et le
+     * balayage ne fait rien tant que personne n'attend.
+     */
+    private void scheduleActionBar() {
+        MessageSettings.ActionBarSettings actionBar = messageSettings.getActionBar();
+        if (!actionBar.enabled()) {
+            return;
+        }
+        long interval = actionBar.interval().toMillis();
+        this.proxy.schedule(plugin, queueCoordinator::tickActionBar, interval, interval,
+                TimeUnit.MILLISECONDS);
     }
 
     private void initServers() {
@@ -270,6 +293,15 @@ public final class PanelAutoStarter {
      */
     public MessageSettings getMessageSettings() {
         return messageSettings;
+    }
+
+    /**
+     * Retourne l'arbitre des files de tous les serveurs gérés.
+     *
+     * @return le coordinateur de files
+     */
+    public QueueCoordinator getQueueCoordinator() {
+        return queueCoordinator;
     }
 
     public MotdSettings getMotdSettings() {

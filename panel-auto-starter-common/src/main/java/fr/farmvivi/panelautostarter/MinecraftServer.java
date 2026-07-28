@@ -503,6 +503,19 @@ public class MinecraftServer {
     }
 
     /**
+     * Indique qu'un décompte ou une vague de téléportations est en cours.
+     * <p>
+     * Ces deux moments occupent déjà l'écran du joueur avec un titre ; la barre
+     * d'action s'efface alors pour ne pas répéter la même chose en deux
+     * endroits.
+     *
+     * @return true si la séquence de téléportation est en cours
+     */
+    public boolean isTeleportSequenceRunning() {
+        return teleportSequenceRunning.get();
+    }
+
+    /**
      * Retourne le dernier ping connu sans declencher de rafraichissement.
      *
      * @return le ping en cache, ou null si aucun n'a encore abouti

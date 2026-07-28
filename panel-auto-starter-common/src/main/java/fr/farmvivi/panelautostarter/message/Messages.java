@@ -88,6 +88,59 @@ public final class Messages {
                 .append(detail(Component.text("Réessayez dans un instant")));
     }
 
+    // ===================== Barre d'action =====================
+
+    /**
+     * Séparateur des segments de la barre d'action. Assez discret pour ne pas
+     * concurrencer l'information qu'il sépare.
+     */
+    private static final Component SEPARATOR = Component.text("  ·  ", NamedTextColor.DARK_GRAY);
+
+    /**
+     * Images successives de l'indicateur d'activité.
+     * <p>
+     * La barre d'action étant réémise à intervalle régulier, faire tourner un
+     * point donne au joueur la seule information qu'un texte fixe ne peut pas
+     * lui donner : que le plugin travaille toujours pour lui. Les caractères
+     * sont choisis dans la police par défaut du jeu, contrairement aux
+     * fuseaux braille habituels que le client rend en carrés.
+     */
+    private static final String[] SPINNER = {"●○○", "○●○", "○○●", "○●○"};
+
+    /**
+     * Ligne affichée dans la barre d'action tant que le joueur attend.
+     *
+     * @param serverDisplayName le nom affiché du serveur attendu
+     * @param position          la place du joueur, à partir de 1
+     * @param size              la taille de la file
+     * @param starting          true si le serveur est en cours de démarrage,
+     *                          false s'il est prêt et que la téléportation approche
+     * @param showPosition      affiche la place dans la file
+     * @param frame             le numéro de rafraîchissement, qui anime l'indicateur
+     * @return la ligne à afficher
+     */
+    public static Component queueActionBar(String serverDisplayName, int position, int size,
+                                           boolean starting, boolean showPosition, int frame) {
+        Component line = Component.text(SPINNER[Math.floorMod(frame, SPINNER.length)],
+                        starting ? NamedTextColor.GOLD : NamedTextColor.GREEN)
+                .append(Component.text(" "))
+                .append(server(serverDisplayName));
+
+        line = line.append(SEPARATOR).append(starting
+                ? Component.text("démarrage", NamedTextColor.GOLD)
+                : Component.text("prêt", NamedTextColor.GREEN));
+
+        // Annoncer « 1/1 » à quelqu'un qui attend seul n'apprend rien et occupe
+        // de la place pour rien.
+        if (showPosition && size > 1) {
+            line = line.append(SEPARATOR)
+                    .append(Component.text(position, NamedTextColor.WHITE))
+                    .append(Component.text("/" + size, NamedTextColor.GRAY));
+        }
+
+        return line;
+    }
+
     // ===================== Titres =====================
 
     /**

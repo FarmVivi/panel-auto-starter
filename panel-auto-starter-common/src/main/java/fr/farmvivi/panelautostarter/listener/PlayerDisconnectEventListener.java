@@ -1,6 +1,5 @@
 package fr.farmvivi.panelautostarter.listener;
 
-import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
@@ -21,9 +20,7 @@ public class PlayerDisconnectEventListener extends EventAdapter {
             return;
         }
 
-        for (MinecraftServer server : plugin.getServers().values()) {
-            server.dequeue(player);
-        }
+        plugin.getQueueCoordinator().leaveAll(player);
 
         // Un joueur parti avant d'arriver sur le limbo laisserait sinon ses
         // messages differes en memoire indefiniment.

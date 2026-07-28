@@ -138,6 +138,30 @@ queue:
       volume: 1.0
       pitch: 0.8
 
+  # Barre d'action affichée au-dessus de la barre d'inventaire tant que le
+  # joueur attend, avec le serveur attendu, son état et la place dans la file.
+  #
+  # Elle est réémise en boucle, et non envoyée une fois : le client efface la
+  # barre d'action de lui-même au bout de quelques secondes, un envoi unique
+  # ne tiendrait donc pas le temps d'un démarrage.
+  #
+  # Elle s'efface d'elle-même pendant le compte à rebours, où le titre dit
+  # déjà la même chose en plus grand.
+  #
+  # Disponible sur les deux proxys, contrairement aux sons : la barre d'action
+  # est une variante du paquet de chat, que BungeeCord sait fabriquer.
+  actionbar:
+    enabled: true
+
+    # Délai entre deux rafraîchissements, en millisecondes.
+    # Ramené entre 250 et 3000 : en deçà on inonde le client pour rien,
+    # au-delà la barre s'efface entre deux envois.
+    interval: 1000
+
+    # Affiche la place dans la file (« 2/5 »). Sans effet pour un joueur qui
+    # attend seul : lui annoncer « 1/1 » ne lui apprend rien.
+    show-position: true
+
   # Titre affiché au joueur au moment où il rejoint la file d'attente.
   # Durées en millisecondes.
   title:

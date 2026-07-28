@@ -5,6 +5,7 @@ import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -33,6 +34,16 @@ public class BungeePlayer implements CommonPlayer {
         // Convert the Component to legacy string format (§-codes)
         String legacyMessage = LegacyComponentSerializer.legacySection().serialize(message);
         player.sendMessage(new TextComponent(legacyMessage));
+    }
+
+    /**
+     * Contrairement au son, la barre d'action existe bien en natif sur
+     * BungeeCord : c'est une variante du paquet de chat, que le proxy sait
+     * fabriquer.
+     */
+    @Override
+    public void sendActionBar(Component message) {
+        player.sendMessage(ChatMessageType.ACTION_BAR, toBungee(message));
     }
 
     @Override

@@ -10,20 +10,24 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
+import fr.farmvivi.panelautostarter.queue.QueueCoordinator;
 import net.kyori.adventure.text.Component;
 
 public class ServerConnectEventListener extends EventAdapter {
     private final PanelAutoStarter plugin;
     private final CommonServer limboServer;
     private final PendingNotifications pendingNotifications;
+    private final QueueCoordinator queueCoordinator;
 
     public ServerConnectEventListener(PanelAutoStarter plugin) {
-        this(plugin, plugin.getPendingNotifications());
+        this(plugin, plugin.getPendingNotifications(), plugin.getQueueCoordinator());
     }
 
-    ServerConnectEventListener(PanelAutoStarter plugin, PendingNotifications pendingNotifications) {
+    ServerConnectEventListener(PanelAutoStarter plugin, PendingNotifications pendingNotifications,
+                               QueueCoordinator queueCoordinator) {
         this.plugin = plugin;
         this.pendingNotifications = pendingNotifications;
+        this.queueCoordinator = queueCoordinator;
         this.limboServer = plugin.getProxy().getServer(plugin.getConfig().getString("queue.server"));
     }
 
@@ -48,7 +52,10 @@ public class ServerConnectEventListener extends EventAdapter {
                 } else {
                     event.setCancelled(true);
                 }
-                server.enqueue(player);
+                // Passer par le coordinateur, et non par server.enqueue : c'est
+                // lui qui garantit que le joueur n'attend qu'un serveur a la
+                // fois, en le retirant de la file qu'il vient d'abandonner.
+                queueCoordinator.join(server, player);
                 if (serverStatus.equals(MinecraftServerStatus.OFFLINE)) {
                     server.start();
                 }

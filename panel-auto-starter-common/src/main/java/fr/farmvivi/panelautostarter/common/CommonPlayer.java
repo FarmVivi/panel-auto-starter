@@ -52,6 +52,20 @@ public interface CommonPlayer {
     void sendMessage(Component message);
 
     /**
+     * Affiche un message dans la barre d'action, juste au-dessus de la barre
+     * d'inventaire.
+     * <p>
+     * Contrairement au chat, cet emplacement n'accumule rien : chaque envoi
+     * remplace le précédent. C'est ce qui permet de le rafraîchir chaque
+     * seconde sans noyer le joueur, et ce qui impose de le réémettre
+     * régulièrement — le client l'efface de lui-même au bout de quelques
+     * secondes.
+     *
+     * @param message le message à afficher
+     */
+    void sendActionBar(Component message);
+
+    /**
      * Displays a title and subtitle on the player's screen.
      *
      * @param title    the title, may be empty
