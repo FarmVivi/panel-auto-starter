@@ -16,6 +16,23 @@ server-start:
   # Fréquence de vérification de l'état du serveur en secondes (pendant le démarrage)
   check-interval-startup: 3
 
+  # Interroger le panel sur l'état du serveur, en plus de le pinger.
+  #
+  # Le panel est la source la plus sûre pour constater une disparition : il
+  # sait que le serveur est arrêté, souvent parce que c'est lui qui l'a
+  # arrêté, là où le ping doit attendre l'expiration d'une connexion. Sans
+  # cela, un serveur éteint reste cru en ligne le temps de plusieurs sondages,
+  # pendant lesquels les joueurs ne sont ni mis en file ni suivis d'un
+  # redémarrage — ils se heurtent à une connexion qui expire.
+  #
+  # L'inverse n'est pas vrai : un panel qui annonce le serveur démarré ne
+  # garantit pas que le jeu accepte les connexions. Le passage EN LIGNE reste
+  # donc décidé par le ping seul.
+  #
+  # Coût : un appel à l'API du panel par serveur et par sondage. À désactiver
+  # si votre panel est lent ou si vous gérez beaucoup de serveurs.
+  use-panel-state: true
+
   # Attente maximale, en secondes, d'une réponse à un ping de surveillance.
   #
   # Un serveur en cours de démarrage accepte la connexion — le port est publié

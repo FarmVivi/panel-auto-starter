@@ -81,6 +81,17 @@ public class MinecraftServer {
     private final AtomicLong pollGeneration = new AtomicLong();
 
     /**
+     * Dernier état rapporté par le panel.
+     * <p>
+     * Relevé en tâche de fond plutôt qu'à la demande : {@code retrieveState()}
+     * est un appel HTTP bloquant, et il était jusqu'ici effectué depuis le
+     * rappel du ping — c'est-à-dire, sur Velocity, depuis la boucle
+     * d'événements réseau, qu'il immobilisait le temps d'un aller-retour vers
+     * le panel.
+     */
+    private volatile PanelServerState lastPanelState = PanelServerState.UNKNOWN;
+
+    /**
      * Empeche deux sequences de teleportation de se chevaucher : la boucle de
      * surveillance passe regulierement et relancerait sinon un decompte a
      * chaque sondage.
@@ -187,12 +198,79 @@ public class MinecraftServer {
             throw ex;
         }
 
+        pollPanelState();
+
         // Abandon d'un sondage resté sans reponse. Le creneau est rendu, mais
         // rien n'est dit a la machine a etats : une absence de reponse dans le
         // delai imparti ne prouve pas que le serveur a disparu, et la traiter
         // comme telle viderait la file d'attente d'un serveur simplement lent.
         this.plugin.getProxy().schedule(plugin.getPlugin(), () -> releasePoll(generation),
                 pingTimeout, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Interroge le panel sur l'état du serveur, hors du fil appelant.
+     * <p>
+     * L'appel est bloquant : il ne doit pas se faire depuis le rappel du ping,
+     * qui s'exécute sur la boucle d'événements réseau du proxy.
+     */
+    private void pollPanelState() {
+        if (!plugin.getConfig().getBoolean("server-start.use-panel-state", true)) {
+            return;
+        }
+        plugin.getProxy().runAsync(plugin.getPlugin(), () -> {
+            try {
+                applyPanelState(panelServer.retrieveState());
+            } catch (RuntimeException ex) {
+                // Le panel injoignable ne doit pas interrompre la surveillance :
+                // le ping reste la seconde source, et le tour suivant reessaiera.
+                plugin.getLogger().warning("Etat du panel indisponible pour "
+                        + server.getName() + " : " + ex.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Confronte l'état rapporté par le panel à celui que le plugin croit.
+     * <p>
+     * Le panel est la source la plus sûre pour constater une disparition : il
+     * <em>sait</em> que le serveur est arrêté, souvent parce que c'est lui qui
+     * l'a arrêté, là où le ping doit attendre l'expiration d'une connexion. Sans
+     * cela, un serveur éteint restait cru en ligne le temps de plusieurs
+     * sondages : les joueurs n'étaient ni mis en file ni suivis d'un
+     * redémarrage, mais laissés se heurter à une connexion qui expire.
+     * <p>
+     * L'inverse n'est pas vrai : un panel qui annonce le serveur démarré ne
+     * garantit pas que le jeu accepte les connexions. Passer <em>en ligne</em>
+     * reste donc décidé par le ping seul.
+     * <p>
+     * Un état hors-ligne n'est pris en compte que si le plugin croyait le
+     * serveur en ligne. Pendant un démarrage, le panel rapporte brièvement le
+     * serveur éteint avant que le conteneur ne parte, et l'écouter alors
+     * annulerait le démarrage que l'on vient de demander.
+     *
+     * @param state l'état rapporté, éventuellement null
+     */
+    synchronized void applyPanelState(PanelServerState state) {
+        if (state == null) {
+            return;
+        }
+        lastPanelState = state;
+
+        boolean panelSaysDown = state == PanelServerState.OFFLINE
+                || state == PanelServerState.STOPPING;
+        if (!panelSaysDown || !status.equals(MinecraftServerStatus.ONLINE)) {
+            return;
+        }
+
+        status = MinecraftServerStatus.OFFLINE;
+        logServerStatus("hors-ligne (rapporté par le panel)", NamedTextColor.RED);
+        clearQueue();
+        serverStartedTime = 0;
+        // Remettre la memoire du sondage a zero, sans quoi la remise en ligne,
+        // qui se detecte sur la transition « aucun ping connu puis un ping »,
+        // ne serait plus jamais constatee.
+        lastPolledPing = null;
     }
 
     /**
@@ -311,7 +389,7 @@ public class MinecraftServer {
 
     private void updateServerStatus(CommonServerPing result, long curMillis) {
         if (lastPolledPing == null && result != null) {
-            if (panelServer.retrieveState() == PanelServerState.STARTING) {
+            if (lastPanelState == PanelServerState.STARTING) {
                 return;
             }
             status = MinecraftServerStatus.ONLINE;

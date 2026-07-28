@@ -132,6 +132,11 @@ server is ready a countdown runs before anyone is moved.
 queue:
   server: lobby
 
+  actionbar:                              # while the player waits
+    enabled: true
+    interval: 1000                        # milliseconds, clamped to 250–3000
+    show-position: true
+
   title:
     enabled: true
     fade-in: 300      # milliseconds
@@ -155,6 +160,18 @@ queue:
       volume: 0.7
       pitch: 1.2
 ```
+
+A line sits above the hotbar for as long as the player waits, naming the server, its state and the player's place in the queue:
+
+```
+●○○ Survie  ·  démarrage  ·  2/5
+```
+
+The indicator turns on each refresh — the one thing static text cannot convey is that the plugin is still working. The line is re-sent rather than sent once, because the client clears the action bar on its own after a few seconds. It steps aside during the countdown, where the title already says the same thing in bigger letters, and it does not tell a lone player they are `1/1`.
+
+Unlike sounds, **the action bar works on both proxies**: it is a variant of the chat packet, which BungeeCord can build.
+
+**A player only ever waits for one server.** Asking for another one removes them from the previous queue — otherwise they stayed announced on queues they had abandoned, skewing the positions shown to everyone else.
 
 Leave a `name` empty to drop that sound. The short form `sound: block.note_block.bell` also works, keeping the default volume and pitch.
 
@@ -248,9 +265,19 @@ server-start:
   idle-threshold: 300
   # How long a cached ping stays valid before the MOTD refreshes it
   ping-cache-ttl: 5
+  # How long to wait for a watchdog ping before giving up on it
+  ping-timeout: 3
+  # Also ask the panel whether the server is running
+  use-panel-state: true
 ```
 
 The plugin does not merely poll servers at a fixed rate: a client ping on a stale cache triggers a background refresh, without ever delaying the response sent to the player. Conversely, an offline server that nobody is watching is polled less often. The defaults are fine for most setups.
+
+**The polling cadence does not depend on how fast a server answers.** A booting server accepts the connection — the container publishes the port before the game listens — without replying, so the ping hangs until the proxy's own read timeout, around thirty seconds. Since the next round is armed at the start of a cycle rather than when a reply arrives, `check-interval-startup: 3` means three seconds and not thirty-three. A ping that stays unanswered for `ping-timeout` is dropped; its slot is released, but **nothing is reported to the state machine** — silence does not prove a server is gone, and treating it as such would empty the queue of a merely slow server.
+
+**The panel is the surer source for noticing a server has disappeared.** It *knows* the server is stopped, usually because it stopped it, where a ping has to wait for a connection to expire. Without `use-panel-state`, a stopped server stays believed online for several polls, during which players are neither queued nor followed by a restart — they run into a connection timeout instead. The converse does not hold: a panel reporting the server as running does not mean the game accepts connections, so **going online stays decided by the ping alone**. A panel reporting it stopped is likewise ignored while a start is under way, since the panel briefly reports the server down before the container comes up.
+
+It costs one panel API call per server per poll. Turn it off if your panel is slow or you manage many servers.
 
 ## Architecture
 

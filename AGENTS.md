@@ -74,7 +74,22 @@ background. Waiting on the backend would add its latency to every client ping
 and hand out a trivial abuse lever. An `AtomicBoolean` guards against a burst of
 pings triggering a burst of backend requests.
 
-**4. The shipped `config.yml` must match the coded defaults.**
+**4. Nothing blocks the proxy's network thread.**
+Ping callbacks run on Velocity's Netty event loop. `PanelServer.retrieveState()`
+is a blocking HTTP call and was once made from there, freezing the event loop
+for a panel round-trip. Panel calls go through `CommonProxy.runAsync`; the
+watchdog reads a cached `lastPanelState` instead.
+
+**5. The watchdog cadence is independent of how fast a server answers.**
+The next round is armed at the *start* of a cycle, never from the ping callback.
+A booting server accepts the connection without replying, so the ping hangs
+until the proxy's read timeout — chaining the reschedule to the reply turned
+`check-interval-startup: 3` into thirty-three seconds. A poll left unanswered
+for `ping-timeout` is dropped and its slot released, but **nothing is reported
+to the state machine**: silence is not proof a server is gone. A generation
+counter tells a late reply apart from its successor's slot.
+
+**6. The shipped `config.yml` must match the coded defaults.**
 `MotdSettingsTest` loads the real resource and compares it to
 `MotdSettings.defaults()`. Without it the file would silently advertise
 behaviour the code does not implement.
