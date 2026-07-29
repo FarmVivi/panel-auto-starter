@@ -7,6 +7,8 @@ import fr.farmvivi.panelautostarter.bungee.listener.BungeeServerConnectEventList
 import fr.farmvivi.panelautostarter.bungee.listener.BungeeServerConnectedEventListener;
 import fr.farmvivi.panelautostarter.bungee.listener.BungeePlayerKickedEventListener;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
+import fr.farmvivi.panelautostarter.bungee.command.BungeeCommandAdapter;
+import fr.farmvivi.panelautostarter.common.command.CommonCommand;
 import fr.farmvivi.panelautostarter.common.listener.EventListener;
 import net.md_5.bungee.api.plugin.Plugin;
 
@@ -53,5 +55,11 @@ public class BungeePlugin extends Plugin implements CommonPlugin {
     @Override
     public void removeEventListener(EventListener eventListener) {
         this.eventListeners.remove(eventListener);
+    }
+
+    @Override
+    public void registerCommand(CommonCommand command) {
+        getProxy().getPluginManager().registerCommand(this,
+                new BungeeCommandAdapter(command, PanelAutoStarter.getInstance().getProxy()));
     }
 }

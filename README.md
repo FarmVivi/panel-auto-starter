@@ -247,6 +247,47 @@ A server that has never been seen online has nothing cached, so `description: ca
 | Subtle | `favicon-badge: false`, `favicon-grayscale: true` |
 | Change nothing | every field on `proxy`, `version-label: none` |
 
+### Access control and administration
+
+Three doors must open before a player enters a managed server, and they are checked **on the connection event** — never in a selection menu. A menu only asks for a server, exactly as `/server` does; filtering there would let the command, a forced host and other plugins' redirects straight through while looking like protection.
+
+```yaml
+access:
+  enabled: true
+  require-permission: false             # see below
+  respect-proxy-restrictions: true      # BungeeCord's own `restricted` flag
+  permission-format: "panelautostarter.join.%s"
+```
+
+| Node | Grants |
+|---|---|
+| `panelautostarter.join.<server>` | entering that server |
+| `panelautostarter.admin` | administering every managed server |
+| `panelautostarter.admin.<server>` | administering that one server |
+
+Server names are lowercased in permission nodes, so a server called `Survie` yields `panelautostarter.join.survie` rather than a node nobody could grant.
+
+**Nothing to integrate on the LuckPerms side.** The plugin asks the proxy's permission API, which LuckPerms hooks into — asking the proxy *is* asking LuckPerms.
+
+`require-permission` is `false` by default on purpose: turning it on out of the box would shut every server of an existing install on upgrade, since nobody has been granted anything yet. Grant the nodes first, then flip it.
+
+On BungeeCord a server marked `restricted` already requires `bungeecord.server.<name>`, and `ServerInfo.canAccess` answers the question — the plugin reuses it rather than asking you to declare the same restriction twice. Velocity has no equivalent (`RegisteredServer` has no notion of permission), so that setting has no effect there; the plugin's own node works on both.
+
+**Whitelists live in `whitelist.yml`**, next to `config.yml` — which the plugin never rewrites, so your comments and formatting survive. Players are keyed by UUID, with the username kept alongside for readability: a username can change, and letting the new bearer of an old name in would defeat the point.
+
+A permission and a whitelist answer different questions and do not replace each other: the permission says **which group** may enter and is managed in LuckPerms, the whitelist says **which people** and is managed in game. Holding the permission does not exempt from the whitelist, nor the reverse.
+
+```
+/pas status [server]                     state of the servers you administer
+/pas start <server>
+/pas stop <server>
+/pas whitelist <server>                  show the list
+/pas whitelist <server> on|off
+/pas whitelist <server> add|remove <player>
+```
+
+The command only ever shows and completes the servers its author administers. A player can be added by name while online, or by UUID; removal also accepts the name stored in the list, so somebody can be removed while offline — which is the actual need.
+
 ### Startup tuning
 
 ```yaml

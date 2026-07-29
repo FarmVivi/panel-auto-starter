@@ -8,7 +8,11 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
+import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.CommandMeta;
+import fr.farmvivi.panelautostarter.common.command.CommonCommand;
 import fr.farmvivi.panelautostarter.common.listener.EventListener;
+import fr.farmvivi.panelautostarter.velocity.command.VelocityCommandAdapter;
 import fr.farmvivi.panelautostarter.velocity.listener.VelocityPlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.velocity.listener.VelocityProxyPingEventListener;
 import fr.farmvivi.panelautostarter.velocity.listener.VelocityServerConnectEventListener;
@@ -95,5 +99,16 @@ public class VelocityPlugin implements CommonPlugin {
     @Override
     public void removeEventListener(EventListener eventListener) {
         this.eventListeners.remove(eventListener);
+    }
+
+    @Override
+    public void registerCommand(CommonCommand command) {
+        CommandManager manager = server.getCommandManager();
+        CommandMeta meta = manager.metaBuilder(command.getName())
+                .aliases(command.getAliases().toArray(new String[0]))
+                .plugin(this)
+                .build();
+        manager.register(meta, new VelocityCommandAdapter(command,
+                PanelAutoStarter.getInstance().getProxy()));
     }
 }

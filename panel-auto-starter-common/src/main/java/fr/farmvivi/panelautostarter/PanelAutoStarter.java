@@ -3,6 +3,7 @@ package fr.farmvivi.panelautostarter;
 import fr.farmvivi.panelautostarter.access.AccessSettings;
 import fr.farmvivi.panelautostarter.access.ServerAccess;
 import fr.farmvivi.panelautostarter.access.WhitelistStore;
+import fr.farmvivi.panelautostarter.command.AdminCommand;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -142,6 +143,9 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingNotifications));
             this.getPlugin().addEventListener(new PlayerKickedEventListener(this));
             this.getLogger().info("Event listeners registered.");
+
+            // Commande d'administration
+            this.getPlugin().registerCommand(new AdminCommand(this));
 
             // Barre d'action des joueurs en attente
             this.scheduleActionBar();
