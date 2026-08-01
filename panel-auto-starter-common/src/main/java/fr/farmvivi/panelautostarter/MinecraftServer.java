@@ -92,6 +92,27 @@ public class MinecraftServer {
     private volatile PanelServerState lastPanelState = PanelServerState.UNKNOWN;
 
     /**
+     * Écart minimal entre deux demandes de confirmation, pour ne pas marteler
+     * le panel pendant un démarrage où les sondages s'enchaînent.
+     */
+    private static final long CONFIRMATION_THROTTLE_MILLIS = 2000;
+
+    /**
+     * Au bout de ce délai sans réponse du panel, le ping reprend la main :
+     * bloquer indéfiniment la mise en ligne sur une panne du panel serait pire
+     * que le défaut que sa consultation corrige.
+     */
+    private static final long PANEL_GRACE_MILLIS = 60_000;
+
+    private final Object panelQueryLock = new Object();
+    private long lastPanelQueryAt = 0;
+
+    /**
+     * Depuis quand le panel ne répond plus, ou 0 s'il répond.
+     */
+    private volatile long panelUnreachableSince = 0;
+
+    /**
      * Empeche deux sequences de teleportation de se chevaucher : la boucle de
      * surveillance passe regulierement et relancerait sinon un decompte a
      * chaque sondage.
@@ -198,7 +219,13 @@ public class MinecraftServer {
             throw ex;
         }
 
-        pollPanelState();
+        // Le panel n'est plus interroge a chaque tour. Tant que le serveur est
+        // cru en ligne, une verification espacee suffit a constater sa
+        // disparition ; le moment ou son avis compte vraiment — la mise en
+        // ligne — declenche sa propre demande.
+        if (status.equals(MinecraftServerStatus.ONLINE)) {
+            requestPanelState(System.currentTimeMillis(), panelStateIntervalMillis());
+        }
 
         // Abandon d'un sondage resté sans reponse. Le creneau est rendu, mais
         // rien n'est dit a la machine a etats : une absence de reponse dans le
@@ -214,16 +241,81 @@ public class MinecraftServer {
      * L'appel est bloquant : il ne doit pas se faire depuis le rappel du ping,
      * qui s'exécute sur la boucle d'événements réseau du proxy.
      */
-    private void pollPanelState() {
-        if (!plugin.getConfig().getBoolean("server-start.use-panel-state", true)) {
+    private boolean usePanelState() {
+        return plugin.getConfig().getBoolean("server-start.use-panel-state", true);
+    }
+
+    private long panelStateIntervalMillis() {
+        return plugin.getConfig().getLong("server-start.panel-state-interval", 30) * 1000;
+    }
+
+    /**
+     * Décide si le panel autorise le passage en ligne.
+     * <p>
+     * Un ping qui aboutit prouve que le jeu écoute, pas que le démarrage soit
+     * terminé du point de vue du panel : celui-ci peut encore appliquer sa
+     * séquence, et les joueurs téléportés dans cette fenêtre tombent sur un
+     * serveur qui n'est pas prêt à les recevoir. On exige donc que le panel
+     * dise explicitement {@code RUNNING}.
+     * <p>
+     * Si le panel reste muet — injoignable, ou consultation désactivée — le
+     * ping reprend la main : refuser indéfiniment le passage en ligne
+     * bloquerait le réseau entier sur une panne du panel, ce qui serait pire
+     * que le défaut corrigé ici.
+     *
+     * @param curMillis l'instant courant
+     * @return true si le passage en ligne peut se faire
+     */
+    private boolean panelConfirmsRunning(long curMillis) {
+        if (!usePanelState()) {
+            return true;
+        }
+        if (lastPanelState == PanelServerState.RUNNING) {
+            return true;
+        }
+        if (panelUnreachableSince > 0
+                && curMillis - panelUnreachableSince >= PANEL_GRACE_MILLIS) {
+            plugin.getLogger().warning("Le panel reste injoignable pour " + server.getName()
+                    + " : mise en ligne decidee sur le seul ping.");
+            return true;
+        }
+
+        // Le moment ou l'avis du panel compte : on le demande, en bridant les
+        // rafales pour ne pas le marteler pendant un demarrage.
+        requestPanelState(curMillis, CONFIRMATION_THROTTLE_MILLIS);
+        return false;
+    }
+
+    /**
+     * Interroge le panel en tâche de fond, pas plus d'une fois par intervalle.
+     * <p>
+     * L'appel est bloquant : il ne doit pas se faire depuis le rappel du ping,
+     * qui s'exécute sur la boucle d'événements réseau du proxy.
+     *
+     * @param curMillis    l'instant courant
+     * @param minGapMillis l'écart minimal depuis la demande précédente
+     */
+    private void requestPanelState(long curMillis, long minGapMillis) {
+        if (!usePanelState()) {
             return;
         }
+        synchronized (panelQueryLock) {
+            if (lastPanelQueryAt > 0 && curMillis - lastPanelQueryAt < minGapMillis) {
+                return;
+            }
+            lastPanelQueryAt = curMillis;
+        }
+
         plugin.getProxy().runAsync(plugin.getPlugin(), () -> {
             try {
                 applyPanelState(panelServer.retrieveState());
+                panelUnreachableSince = 0;
             } catch (RuntimeException ex) {
                 // Le panel injoignable ne doit pas interrompre la surveillance :
                 // le ping reste la seconde source, et le tour suivant reessaiera.
+                if (panelUnreachableSince == 0) {
+                    panelUnreachableSince = System.currentTimeMillis();
+                }
                 plugin.getLogger().warning("Etat du panel indisponible pour "
                         + server.getName() + " : " + ex.getMessage());
             }
@@ -389,7 +481,11 @@ public class MinecraftServer {
 
     private void updateServerStatus(CommonServerPing result, long curMillis) {
         if (lastPolledPing == null && result != null) {
-            if (lastPanelState == PanelServerState.STARTING) {
+            if (!panelConfirmsRunning(curMillis)) {
+                // Le jeu repond, mais le panel n'a pas encore dit que le
+                // demarrage etait termine. Le ping n'est volontairement pas
+                // memorise : la transition reste a faire, et le sondage suivant
+                // la retentera avec la reponse du panel.
                 return;
             }
             status = MinecraftServerStatus.ONLINE;

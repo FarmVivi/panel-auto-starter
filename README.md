@@ -247,6 +247,26 @@ A server that has never been seen online has nothing cached, so `description: ca
 | Subtle | `favicon-badge: false`, `favicon-grayscale: true` |
 | Change nothing | every field on `proxy`, `version-label: none` |
 
+### Menus
+
+```yaml
+menu:
+  enabled: true
+  renderer: auto          # auto | chat
+  command: servers        # opens the server list
+  server-command: server  # the proxy command a click runs
+```
+
+`/servers` lists the managed servers with their state and player count, one clickable line each; `/pas menu` does the same for administration, with start, stop and whitelist buttons.
+
+**Every menu action is a command**, never a callback. That is what lets a chat renderer and an inventory renderer coexist — a chat click can only carry a command — and it means a menu can do nothing its user could not have typed, so every action goes through the same checks.
+
+**The selection menu is deliberately dumb.** It lists servers and forwards the request exactly as a hand-typed `/server` would, and does **not** filter by permission — the connection event decides, and it alone. Filtering there would protect nothing, since the command stays open, while looking like protection: the worst of both, because you then stop checking where it counts. Someone clicking a server they may not enter gets the same reasoned refusal they would have got from the command.
+
+The administration menu *does* filter, and that is not a contradiction: it would otherwise reflect servers its reader cannot touch, announcing infrastructure that is none of their business.
+
+Renderers are tried richest-first and the chat one always closes the march — it depends on nothing and cannot decline, so a menu always opens. Naming a renderer explicitly is a requirement rather than a hint: asking for `chat` forbids opening anything else. Only `auto` lets the plugin choose. That fallback is what makes a packet-based renderer adoptable without risk: if it stops working — a library lagging behind the game version, a client too new — menus render in chat instead of vanishing.
+
 ### Access control and administration
 
 Three doors must open before a player enters a managed server, and they are checked **on the connection event** — never in a selection menu. A menu only asks for a server, exactly as `/server` does; filtering there would let the command, a forced host and other plugins' redirects straight through while looking like protection.
@@ -308,13 +328,19 @@ server-start:
   ping-cache-ttl: 5
   # How long to wait for a watchdog ping before giving up on it
   ping-timeout: 3
-  # Also ask the panel whether the server is running
+  # Require the panel to report RUNNING before announcing a server online
   use-panel-state: true
+  # How often the panel is asked while a server is believed online
+  panel-state-interval: 30
 ```
 
 The plugin does not merely poll servers at a fixed rate: a client ping on a stale cache triggers a background refresh, without ever delaying the response sent to the player. Conversely, an offline server that nobody is watching is polled less often. The defaults are fine for most setups.
 
 **The polling cadence does not depend on how fast a server answers.** A booting server accepts the connection — the container publishes the port before the game listens — without replying, so the ping hangs until the proxy's own read timeout, around thirty seconds. Since the next round is armed at the start of a cycle rather than when a reply arrives, `check-interval-startup: 3` means three seconds and not thirty-three. A ping that stays unanswered for `ping-timeout` is dropped; its slot is released, but **nothing is reported to the state machine** — silence does not prove a server is gone, and treating it as such would empty the queue of a merely slow server.
+
+**Going online needs both signals.** A successful ping proves the game listens, not that the panel considers the boot finished — players teleported in that window land on a server that is not ready to take them. So the panel must report `RUNNING` before a server is announced online. If it stays unreachable for a minute the ping takes over: blocking every start on a panel outage would be worse than the problem this solves.
+
+**The panel is asked when its answer matters, not on a timer.** It is queried at the decision point — confirming a start, throttled so a boot does not hammer it — and then, while a server is believed online, every `panel-state-interval` seconds. An idle offline server costs no API call at all.
 
 **The panel is the surer source for noticing a server has disappeared.** It *knows* the server is stopped, usually because it stopped it, where a ping has to wait for a connection to expire. Without `use-panel-state`, a stopped server stays believed online for several polls, during which players are neither queued nor followed by a restart — they run into a connection timeout instead. The converse does not hold: a panel reporting the server as running does not mean the game accepts connections, so **going online stays decided by the ping alone**. A panel reporting it stopped is likewise ignored while a start is under way, since the panel briefly reports the server down before the container comes up.
 

@@ -8,6 +8,38 @@ panel:
   # Token d'API *client* (compte utilisateur), pas un token d'API application
   token: abc
 
+# Menus.
+#
+# Le menu de sélection est VOLONTAIREMENT bête : il liste les serveurs et
+# transmet la demande, exactement comme un /server tapé à la main. Il ne filtre
+# pas selon les permissions — c'est l'événement de connexion qui décide, et lui
+# seul. Filtrer ici ne protégerait rien, la commande restant ouverte, mais
+# donnerait l'illusion d'une protection.
+#
+# Le menu d'administration, lui, ne montre que les serveurs dont son lecteur est
+# responsable : il n'a rien à lui apprendre sur une infrastructure qu'il ne peut
+# pas toucher.
+menu:
+  enabled: true
+
+  # Rendu employé :
+  #   auto  — le meilleur disponible, avec repli automatique
+  #   chat  — lignes cliquables, sans dépendance, sur les deux proxys
+  #
+  # Un rendu nommé explicitement est exigé, non suggéré : demander « chat »
+  # interdit d'ouvrir autre chose. Seul « auto » laisse le choix au plugin.
+  #
+  # Le rendu en chat ferme toujours la marche et ne peut pas se dérober : un
+  # menu s'ouvre donc toujours, même si un rendu plus riche devient
+  # indisponible.
+  renderer: auto
+
+  # Nom de la commande ouvrant le menu des serveurs.
+  command: servers
+
+  # Commande de connexion du proxy, exécutée au clic sur un serveur.
+  server-command: server
+
 # Contrôle d'accès aux serveurs gérés.
 #
 # Il s'applique aux ÉVÉNEMENTS de connexion, et non au menu de sélection : le
@@ -73,9 +105,25 @@ server-start:
   # garantit pas que le jeu accepte les connexions. Le passage EN LIGNE reste
   # donc décidé par le ping seul.
   #
-  # Coût : un appel à l'API du panel par serveur et par sondage. À désactiver
-  # si votre panel est lent ou si vous gérez beaucoup de serveurs.
+  # Le panel doit dire RUNNING pour qu'un serveur passe EN LIGNE. Un ping qui
+  # aboutit prouve que le jeu écoute, pas que le démarrage soit terminé de son
+  # point de vue : les joueurs téléportés dans cette fenêtre tombent sur un
+  # serveur qui n'est pas prêt à les recevoir.
+  #
+  # Si le panel reste injoignable une minute, le ping reprend la main : bloquer
+  # indéfiniment la mise en ligne sur une panne du panel serait pire que le
+  # défaut que sa consultation corrige.
+  #
+  # Le panel n'est PAS interrogé à chaque sondage. Il l'est au moment où son
+  # avis compte — la mise en ligne — puis, tant que le serveur est cru en
+  # ligne, à la cadence ci-dessous. Un serveur éteint que personne ne demande
+  # ne provoque aucun appel.
   use-panel-state: true
+
+  # Intervalle, en secondes, entre deux vérifications auprès du panel pendant
+  # qu'un serveur est cru en ligne. C'est ce qui borne le délai de détection
+  # d'un arrêt. Augmentez-le pour ménager un panel lent.
+  panel-state-interval: 30
 
   # Attente maximale, en secondes, d'une réponse à un ping de surveillance.
   #

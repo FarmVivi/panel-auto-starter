@@ -89,7 +89,32 @@ for `ping-timeout` is dropped and its slot released, but **nothing is reported
 to the state machine**: silence is not proof a server is gone. A generation
 counter tells a late reply apart from its successor's slot.
 
-**6. The shipped `config.yml` must match the coded defaults.**
+**6. Going online needs both the ping and the panel; going offline needs either.**
+A successful ping proves the game listens, not that the panel considers the
+boot finished — players teleported in that window land on a server that is not
+ready. So `RUNNING` is required to reach `ONLINE`, and an unconfirmed ping is
+deliberately *not* stored in `lastPolledPing`, leaving the transition to be
+retried. The converse is asymmetric on purpose: a panel reporting the server
+stopped is believed at once, but it is ignored while a start is under way, when
+the panel briefly reports the container down.
+
+**7. The panel is asked when its answer matters, not on a timer.**
+`retrieveState()` used to run every watchdog round — every three seconds during
+a boot. It now runs at the decision point (confirming a start, throttled) and,
+while a server is believed online, at `panel-state-interval`. An idle offline
+server costs zero API calls. If the panel stays unreachable for a minute, the
+ping takes over: blocking every start on a panel outage is worse than the bug
+this guards against.
+
+**8. Menu actions are commands, never callbacks.**
+This is what lets a chat renderer and an inventory renderer coexist — a chat
+click can only carry a command — and it means a menu can do nothing its user
+could not have typed, so every action goes through the same checks. The
+selection menu is deliberately dumb and does **not** filter by permission; the
+connection event decides. Filtering there would protect nothing (the command
+stays open) while looking like protection.
+
+**9. The shipped `config.yml` must match the coded defaults.**
 `MotdSettingsTest` loads the real resource and compares it to
 `MotdSettings.defaults()`. Without it the file would silently advertise
 behaviour the code does not implement.

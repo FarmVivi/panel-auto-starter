@@ -71,9 +71,79 @@ public class MinecraftServerPanelStateTest {
                 mock(ServerMotd.class));
     }
 
+    /**
+     * Amène le serveur en ligne. Il faut désormais deux choses : que le jeu
+     * réponde, et que le panel dise que le démarrage est terminé.
+     */
     private void bringOnline() {
+        minecraftServer.applyPanelState(PanelServerState.RUNNING);
         server.simulatePingResponse(new MockCommonServerPing());
         assertEquals(MinecraftServerStatus.ONLINE, minecraftServer.getStatus());
+    }
+
+    // ===================== Confirmation avant la mise en ligne =====================
+
+    /**
+     * Le cœur de la garantie : un ping qui aboutit prouve que le jeu écoute,
+     * pas que le panel considère le démarrage terminé. Les joueurs téléportés
+     * dans cette fenêtre tombent sur un serveur qui n'est pas prêt.
+     */
+    @Test
+    public void testAPingAloneDoesNotBringTheServerOnline() {
+        server.simulatePingResponse(new MockCommonServerPing());
+
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus(),
+                "Sans confirmation du panel, la mise en ligne doit attendre");
+    }
+
+    @Test
+    public void testTheTransitionIsRetriedOnceThePanelConfirms() {
+        server.simulatePingResponse(new MockCommonServerPing());
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+
+        minecraftServer.applyPanelState(PanelServerState.RUNNING);
+        server.simulatePingResponse(new MockCommonServerPing());
+
+        assertEquals(MinecraftServerStatus.ONLINE, minecraftServer.getStatus(),
+                "Le sondage suivant doit reussir la transition laissee en attente");
+    }
+
+    /**
+     * Un ping non confirmé ne doit pas être mémorisé : sinon la transition,
+     * qui se détecte sur « aucun ping connu puis un ping », ne se
+     * représenterait jamais.
+     */
+    @Test
+    public void testAnUnconfirmedPingIsNotRemembered() {
+        server.simulatePingResponse(new MockCommonServerPing());
+        server.simulatePingResponse(new MockCommonServerPing());
+        server.simulatePingResponse(new MockCommonServerPing());
+
+        minecraftServer.applyPanelState(PanelServerState.RUNNING);
+        server.simulatePingResponse(new MockCommonServerPing());
+
+        assertEquals(MinecraftServerStatus.ONLINE, minecraftServer.getStatus());
+    }
+
+    @Test
+    public void testAStartingPanelStateStillHoldsTheTransitionBack() {
+        minecraftServer.applyPanelState(PanelServerState.STARTING);
+        server.simulatePingResponse(new MockCommonServerPing());
+
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
+    }
+
+    @Test
+    public void testWithoutPanelConsultationThePingDecidesAlone() {
+        when(mockConfiguration.getBoolean(eq("server-start.use-panel-state"), anyBoolean()))
+                .thenReturn(false);
+        MockCommonServer autre = new MockCommonServer("autre");
+        MinecraftServer sansPanel = new MinecraftServer(mockPlugin, autre, mockPanelServer,
+                mock(ServerMotd.class));
+
+        autre.simulatePingResponse(new MockCommonServerPing());
+
+        assertEquals(MinecraftServerStatus.ONLINE, sansPanel.getStatus());
     }
 
     @Test
@@ -120,7 +190,10 @@ public class MinecraftServerPanelStateTest {
     public void testTheServerCanComeBackOnlineAfterwards() {
         bringOnline();
         minecraftServer.applyPanelState(PanelServerState.OFFLINE);
+        assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
 
+        // Le serveur repart : le panel le redit demarre, et le jeu repond.
+        minecraftServer.applyPanelState(PanelServerState.RUNNING);
         server.simulatePingResponse(new MockCommonServerPing());
 
         assertEquals(MinecraftServerStatus.ONLINE, minecraftServer.getStatus(),
@@ -172,19 +245,57 @@ public class MinecraftServerPanelStateTest {
      */
     @Test
     public void testThePanelIsQueriedOffTheProxyThread() {
+        server.simulatePingResponse(new MockCommonServerPing());
+
         verify(mockProxy, atLeastOnce()).runAsync(any(), any());
         verify(mockPanelServer, never()).retrieveState();
     }
 
     @Test
     public void testThePanelIsLeftAloneWhenDisabled() {
-        clearInvocations(mockProxy);
         when(mockConfiguration.getBoolean(eq("server-start.use-panel-state"), anyBoolean()))
                 .thenReturn(false);
+        MockCommonServer autre = new MockCommonServer("autre");
+        clearInvocations(mockProxy);
 
-        new MinecraftServer(mockPlugin, new MockCommonServer("autre"), mockPanelServer,
+        MinecraftServer sansPanel = new MinecraftServer(mockPlugin, autre, mockPanelServer,
                 mock(ServerMotd.class));
+        autre.simulatePingResponse(new MockCommonServerPing());
+        sansPanel.getStatus();
 
         verify(mockProxy, never()).runAsync(any(), any());
+    }
+
+    // ===================== Menagement du panel =====================
+
+    /**
+     * Un serveur éteint que personne ne demande ne doit provoquer aucun appel :
+     * le panel était jusqu'ici interrogé à chaque tour de surveillance, soit
+     * toutes les trois secondes pendant un démarrage.
+     */
+    @Test
+    public void testAnIdleOfflineServerNeverAsksThePanel() {
+        clearInvocations(mockProxy);
+
+        // Plusieurs tours de surveillance sans reponse du serveur.
+        server.simulatePingTimeout();
+        server.simulatePingTimeout();
+
+        verify(mockProxy, never()).runAsync(any(), any());
+    }
+
+    /**
+     * Pendant un démarrage les sondages s'enchaînent toutes les trois
+     * secondes : le panel ne doit pas être martelé pour autant.
+     */
+    @Test
+    public void testRepeatedConfirmationAttemptsAreThrottled() {
+        clearInvocations(mockProxy);
+
+        for (int i = 0; i < 10; i++) {
+            server.simulatePingResponse(new MockCommonServerPing());
+        }
+
+        verify(mockProxy, times(1)).runAsync(any(), any());
     }
 }
