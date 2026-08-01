@@ -15,6 +15,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCl
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
 import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
@@ -37,11 +38,12 @@ import java.util.function.Function;
  * Rend un menu dans un coffre, en fabriquant les paquets d'inventaire.
  * <p>
  * <strong>Le proxy ouvre ici une fenêtre que le serveur d'arrière-plan
- * ignore.</strong> C'est toute la difficulté : le client, lui, la croit réelle
- * et enverra ses clics et sa fermeture au backend, qui n'en sait rien et
- * répondrait par une resynchronisation — l'inventaire du joueur se mettrait à
- * clignoter, voire à perdre des objets. Les paquets portant notre identifiant
- * de fenêtre sont donc interceptés et <em>ne sont jamais transmis</em>.
+ * ignore.</strong> C'est toute la difficulté. Le client, lui, la croit réelle :
+ * il enverra ses clics au backend, qui n'en sait rien, et surtout il
+ * <em>anticipe</em> le résultat de chaque clic sans attendre de réponse. Refuser
+ * de transmettre le paquet ne suffit donc pas — l'objet suit quand même le
+ * curseur à l'écran. Il faut, en plus, réaffirmer au client ce qu'il aurait dû
+ * voir : curseur vide, case inchangée.
  * <p>
  * L'identifiant de fenêtre est volontairement élevé : les serveurs numérotent
  * les leurs à partir de 1, et une collision ferait passer nos clics pour ceux
@@ -62,11 +64,13 @@ public final class ChestMenuRenderer implements MenuRenderer {
      */
     private static final int WINDOW_ID = 119;
 
-    /** Type de conteneur « coffre » ; sa taille est donnée par le nombre de rangées. */
-    private static final int CHEST_TYPE_OFFSET = 0;
+    private static final int COLUMNS = 9;
 
-    private static final int SLOTS_PER_ROW = 9;
-    private static final int MAX_ROWS = 6;
+    /** Colonnes utiles : la première et la dernière portent la bordure. */
+    private static final int CONTENT_COLUMNS = COLUMNS - 2;
+
+    /** Un coffre ne dépasse pas six rangées ; deux servent aux bordures. */
+    private static final int MAX_CONTENT_ROWS = 4;
 
     /**
      * Le format d'objet moderne repose sur les composants de données, qu'un
@@ -78,8 +82,18 @@ public final class ChestMenuRenderer implements MenuRenderer {
     private final Function<UUID, CommonPlayer> playerResolver;
     private final BiConsumer<CommonPlayer, String> commandRunner;
 
-    /** Menus actuellement ouverts, pour retrouver l'action d'un clic. */
-    private final Map<UUID, List<MenuItem>> openMenus = new ConcurrentHashMap<>();
+    /** Fenêtres actuellement ouvertes, pour interpréter et corriger les clics. */
+    private final Map<UUID, OpenView> openViews = new ConcurrentHashMap<>();
+
+    /**
+     * Ce qu'une fenêtre ouverte contient, tel que le client devrait le voir.
+     *
+     * @param actions   action de chaque case, null pour les cases inertes
+     * @param contents  objet de chaque case, pour rétablir ce qu'un clic a déplacé
+     * @param closeSlot case du bouton de fermeture
+     */
+    private record OpenView(List<MenuItem> actions, List<ItemStack> contents, int closeSlot) {
+    }
 
     /**
      * @param logger         pour signaler ce qui échoue silencieusement
@@ -103,7 +117,7 @@ public final class ChestMenuRenderer implements MenuRenderer {
     public boolean isAvailable(CommonPlayer viewer) {
         try {
             ClientVersion version = PacketEvents.getAPI().getPlayerManager()
-                    .getUser(platformPlayer(viewer)).getClientVersion();
+                    .getUser(viewer.getPlatformHandle()).getClientVersion();
             return version != null && version.isNewerThanOrEquals(MINIMUM_VERSION);
         } catch (Throwable ex) {
             // Un joueur que PacketEvents ne connait pas encore, ou une
@@ -113,37 +127,88 @@ public final class ChestMenuRenderer implements MenuRenderer {
         }
     }
 
+    // ===================== Mise en page =====================
+
     @Override
     public void open(CommonPlayer viewer, Menu menu) {
         List<MenuItem> items = menu.items();
-        int rows = Math.min(MAX_ROWS, Math.max(1,
-                (items.size() + SLOTS_PER_ROW - 1) / SLOTS_PER_ROW));
-        int size = rows * SLOTS_PER_ROW;
+        int contentRows = Math.max(1, Math.min(MAX_CONTENT_ROWS,
+                (items.size() + CONTENT_COLUMNS - 1) / CONTENT_COLUMNS));
+        int rows = contentRows + 2;
+        int size = rows * COLUMNS;
 
         List<ItemStack> contents = new ArrayList<>(size);
-        List<MenuItem> placed = new ArrayList<>(size);
+        List<MenuItem> actions = new ArrayList<>(size);
         for (int slot = 0; slot < size; slot++) {
-            MenuItem item = slot < items.size() ? items.get(slot) : null;
-            contents.add(item == null ? ItemStack.EMPTY : toItemStack(item));
-            placed.add(item);
+            contents.add(border());
+            actions.add(null);
         }
 
-        Object platform = platformPlayer(viewer);
+        placeContent(items, contents, actions, contentRows);
+
+        int closeSlot = size - COLUMNS + COLUMNS / 2;
+        contents.set(closeSlot, closeButton());
+
+        Object platform = viewer.getPlatformHandle();
         try {
             PacketEvents.getAPI().getPlayerManager().sendPacket(platform,
-                    new WrapperPlayServerOpenWindow(WINDOW_ID, CHEST_TYPE_OFFSET + rows - 1,
-                            menu.title()));
+                    new WrapperPlayServerOpenWindow(WINDOW_ID, rows - 1, menu.title()));
             PacketEvents.getAPI().getPlayerManager().sendPacket(platform,
                     new WrapperPlayServerWindowItems(WINDOW_ID, 0, contents, ItemStack.EMPTY));
-            openMenus.put(viewer.getUniqueId(), placed);
+            openViews.put(viewer.getUniqueId(), new OpenView(actions, contents, closeSlot));
         } catch (RuntimeException ex) {
             // Ne pas laisser le joueur devant rien : on rend la main a
             // l'appelant, qui retombera sur le rendu en chat.
-            openMenus.remove(viewer.getUniqueId());
+            openViews.remove(viewer.getUniqueId());
             logger.warning("Ouverture du menu en coffre impossible pour "
                     + viewer.getUsername() + " : " + ex.getMessage());
             throw ex;
         }
+    }
+
+    /**
+     * Dispose les entrées dans la zone intérieure, rangée par rangée.
+     * <p>
+     * Une rangée incomplète est centrée : un seul serveur posé dans le coin
+     * gauche d'un coffre vide se lit comme un oubli, au milieu comme un choix.
+     */
+    private void placeContent(List<MenuItem> items, List<ItemStack> contents,
+                              List<MenuItem> actions, int contentRows) {
+        int index = 0;
+        for (int row = 0; row < contentRows && index < items.size(); row++) {
+            int remaining = items.size() - index;
+            int onThisRow = Math.min(CONTENT_COLUMNS, remaining);
+            int leftPadding = (CONTENT_COLUMNS - onThisRow) / 2;
+
+            for (int column = 0; column < onThisRow; column++) {
+                MenuItem item = items.get(index++);
+                int slot = (row + 1) * COLUMNS + 1 + leftPadding + column;
+                contents.set(slot, toItemStack(item));
+                actions.set(slot, item);
+            }
+        }
+    }
+
+    /**
+     * Vitre de bordure : un nom vide plutôt qu'absent, sans quoi le client
+     * affiche « Vitre teintée grise » sous le curseur.
+     */
+    private ItemStack border() {
+        return ItemStack.builder()
+                .type(ItemTypes.GRAY_STAINED_GLASS_PANE)
+                .amount(1)
+                .component(ComponentTypes.CUSTOM_NAME, Component.empty())
+                .build();
+    }
+
+    private ItemStack closeButton() {
+        return ItemStack.builder()
+                .type(ItemTypes.BARRIER)
+                .amount(1)
+                .component(ComponentTypes.CUSTOM_NAME,
+                        Component.text("Fermer", NamedTextColor.RED)
+                                .decoration(TextDecoration.ITALIC, false))
+                .build();
     }
 
     private ItemStack toItemStack(MenuItem item) {
@@ -178,14 +243,31 @@ public final class ChestMenuRenderer implements MenuRenderer {
         return builder.build();
     }
 
-    private static Object platformPlayer(CommonPlayer viewer) {
-        return viewer.getPlatformHandle();
-    }
+    // ===================== Clics =====================
 
     private void close(CommonPlayer viewer) {
-        openMenus.remove(viewer.getUniqueId());
-        PacketEvents.getAPI().getPlayerManager().sendPacket(platformPlayer(viewer),
+        openViews.remove(viewer.getUniqueId());
+        PacketEvents.getAPI().getPlayerManager().sendPacket(viewer.getPlatformHandle(),
                 new WrapperPlayServerCloseWindow(WINDOW_ID));
+    }
+
+    /**
+     * Rétablit chez le client l'état qu'il aurait dû garder.
+     * <p>
+     * Indispensable : le client anticipe le résultat d'un clic sans attendre de
+     * réponse. Sans ce rappel, refuser le clic le laisse persuadé d'avoir pris
+     * l'objet — il le voit accroché à son curseur, et le glisse dans son
+     * inventaire.
+     */
+    private void resync(Object platform, OpenView view, int slot) {
+        // Curseur d'abord : c'est la qu'atterrit l'objet qu'on refuse.
+        PacketEvents.getAPI().getPlayerManager().sendPacket(platform,
+                new WrapperPlayServerSetSlot(-1, 0, -1, ItemStack.EMPTY));
+
+        if (slot >= 0 && slot < view.contents().size()) {
+            PacketEvents.getAPI().getPlayerManager().sendPacket(platform,
+                    new WrapperPlayServerSetSlot(WINDOW_ID, 0, slot, view.contents().get(slot)));
+        }
     }
 
     /**
@@ -216,26 +298,37 @@ public final class ChestMenuRenderer implements MenuRenderer {
             }
             event.setCancelled(true);
 
-            UUID uuid = event.getUser().getUUID();
-            List<MenuItem> items = uuid == null ? null : openMenus.get(uuid);
-            if (items == null) {
+            UUID uuid = event.getUser() == null ? null : event.getUser().getUUID();
+            OpenView view = uuid == null ? null : openViews.get(uuid);
+            if (view == null) {
+                return;
+            }
+
+            CommonPlayer player = playerResolver.apply(uuid);
+            if (player == null) {
                 return;
             }
 
             int slot = packet.getSlot();
-            if (slot < 0 || slot >= items.size()) {
-                // Un clic dans l'inventaire du joueur, ou hors de la fenetre :
-                // rien a faire, mais surtout rien a transmettre.
+
+            // Toujours corriger, y compris pour un clic dans la partie
+            // inventaire de la fenetre : le client anticipe la aussi, et
+            // deplacerait ses propres objets dans une fenetre imaginaire.
+            resync(player.getPlatformHandle(), view, slot);
+
+            if (slot == view.closeSlot()) {
+                close(player);
                 return;
             }
 
-            MenuItem item = items.get(slot);
+            MenuItem item = slot >= 0 && slot < view.actions().size()
+                    ? view.actions().get(slot) : null;
             if (item == null || !item.isActionable()) {
                 return;
             }
 
-            openMenus.remove(uuid);
-            runChoice(uuid, item.command());
+            close(player);
+            commandRunner.accept(player, item.command());
         }
 
         private void handleClose(PacketReceiveEvent event) {
@@ -244,26 +337,10 @@ public final class ChestMenuRenderer implements MenuRenderer {
                 return;
             }
             event.setCancelled(true);
-            UUID uuid = event.getUser().getUUID();
+            UUID uuid = event.getUser() == null ? null : event.getUser().getUUID();
             if (uuid != null) {
-                openMenus.remove(uuid);
+                openViews.remove(uuid);
             }
         }
-    }
-
-    /**
-     * Exécute la commande choisie.
-     * <p>
-     * Le joueur est retrouvé par son identifiant plutôt que porté depuis le
-     * paquet : le clic arrive sur le fil réseau, et l'objet qui représentait le
-     * joueur au moment de l'ouverture peut n'être plus valable.
-     */
-    private void runChoice(UUID uuid, String command) {
-        CommonPlayer player = playerResolver.apply(uuid);
-        if (player == null) {
-            return;
-        }
-        close(player);
-        commandRunner.accept(player, command);
     }
 }

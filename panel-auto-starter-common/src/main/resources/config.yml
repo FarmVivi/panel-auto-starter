@@ -46,6 +46,24 @@ menu:
   # Commande de connexion du proxy, exécutée au clic sur un serveur.
   server-command: server
 
+  # Boussole posée dans la barre d'action rapide, sur le serveur d'attente
+  # uniquement, qui ouvre le menu au clic droit. Nécessite PacketEvents.
+  #
+  # ATTENTION, cet objet n'existe que chez le client : le proxy ne possède pas
+  # l'inventaire du joueur, il affirme seulement qu'une case le contient. Le
+  # premier serveur qui touche à cet inventaire réaffirme le sien et la
+  # boussole disparaît. Un serveur d'attente n'en fait rien, elle y tient ; un
+  # serveur de jeu ordinaire la ferait clignoter, d'où sa limitation au seul
+  # serveur d'attente.
+  compass:
+    enabled: true
+
+    # Case de la barre d'action rapide, de 0 (à gauche) à 8 (à droite).
+    slot: 4
+
+    item: minecraft:compass
+    name: "Choisir un serveur"
+
 # Contrôle d'accès aux serveurs gérés.
 #
 # Il s'applique aux ÉVÉNEMENTS de connexion, et non au menu de sélection : le

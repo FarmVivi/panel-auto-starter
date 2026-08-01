@@ -219,30 +219,52 @@ public class MenuTest {
     /**
      * Proposer « démarrer » sur un serveur allumé n'aboutirait qu'à un refus.
      */
+    /**
+     * Le menu racine ne fait que lister : chaque entrée mène au menu du serveur.
+     * Tout mettre à plat devenait illisible dès le deuxième serveur.
+     */
+    @Test
+    public void testTheRootMenuListsServersAndLeadsToTheirOwnMenu() {
+        Menu menu = AdminMenu.build(servers(), whitelists,
+                new FakeSource().grant("panelautostarter.admin"), "pas");
+
+        assertEquals(2, menu.items().size(), "Une entree par serveur, et rien de plus");
+        assertTrue(commands(menu).contains("pas menu survie"));
+        assertTrue(commands(menu).contains("pas menu creatif"));
+    }
+
     @Test
     public void testOnlyTheRelevantActionIsOffered() {
-        Menu offline = AdminMenu.build(List.of(survieServer), whitelists,
-                new FakeSource().grant("panelautostarter.admin"), "pas");
+        Menu offline = AdminMenu.buildForServer(survieServer, whitelists.get("survie"), "pas");
         assertTrue(commands(offline).contains("pas start survie"));
         assertFalse(commands(offline).contains("pas stop survie"));
 
-        survie.simulatePingResponse(new MockCommonServerPing());
-        Menu online = AdminMenu.build(List.of(survieServer), whitelists,
-                new FakeSource().grant("panelautostarter.admin"), "pas");
+        bringOnline(survie);
+        Menu online = AdminMenu.buildForServer(survieServer, whitelists.get("survie"), "pas");
         assertTrue(commands(online).contains("pas stop survie"));
         assertFalse(commands(online).contains("pas start survie"));
     }
 
     @Test
     public void testTheWhitelistToggleReflectsItsCurrentState() {
-        Menu off = AdminMenu.build(List.of(survieServer), whitelists,
-                new FakeSource().grant("panelautostarter.admin"), "pas");
+        Menu off = AdminMenu.buildForServer(survieServer, whitelists.get("survie"), "pas");
         assertTrue(commands(off).contains("pas whitelist survie on"));
 
         whitelists.get("survie").setEnabled(true);
-        Menu on = AdminMenu.build(List.of(survieServer), whitelists,
-                new FakeSource().grant("panelautostarter.admin"), "pas");
+        Menu on = AdminMenu.buildForServer(survieServer, whitelists.get("survie"), "pas");
         assertTrue(commands(on).contains("pas whitelist survie off"));
+    }
+
+    /**
+     * Sans retour, on ne peut plus atteindre les autres serveurs sans retaper
+     * la commande.
+     */
+    @Test
+    public void testTheServerMenuOffersAWayBack() {
+        Menu menu = AdminMenu.buildForServer(survieServer, whitelists.get("survie"), "pas");
+
+        assertTrue(commands(menu).contains("pas menu"),
+                "Le menu d'un serveur doit ramener a la liste");
     }
 
     /**
@@ -260,6 +282,18 @@ public class MenuTest {
                         "Une action doit etre une commande : " + item.command());
             }
         }
+    }
+
+    /**
+     * Le panel doit confirmer la mise en ligne : un ping seul ne suffit plus.
+     */
+    private void bringOnline(MockCommonServer target) {
+        for (MinecraftServer server : servers()) {
+            if (server.getServer().equals(target)) {
+                server.applyPanelState(fr.farmvivi.panelautostarter.panel.PanelServerState.RUNNING);
+            }
+        }
+        target.simulatePingResponse(new MockCommonServerPing());
     }
 
     private static List<String> commands(Menu menu) {
@@ -339,7 +373,8 @@ public class MenuTest {
     @Test
     public void testAnExplicitRendererIsHonoured() {
         MenuService service = new MenuService(
-                new MenuSettings(true, ChatMenuRenderer.NAME, "servers", "server"));
+                new MenuSettings(true, ChatMenuRenderer.NAME, "servers", "server",
+                        MenuSettings.CompassSettings.defaults()));
         service.register(available("coffre"));
         service.register(new ChatMenuRenderer());
 
@@ -350,7 +385,8 @@ public class MenuTest {
     @Test
     public void testAnExplicitButUnavailableRendererStillFallsBack() {
         MenuService service = new MenuService(
-                new MenuSettings(true, "coffre", "servers", "server"));
+                new MenuSettings(true, "coffre", "servers", "server",
+                        MenuSettings.CompassSettings.defaults()));
         service.register(unavailable("coffre"));
         service.register(new ChatMenuRenderer());
 

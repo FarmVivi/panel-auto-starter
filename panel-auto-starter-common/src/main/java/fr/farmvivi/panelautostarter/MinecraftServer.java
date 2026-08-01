@@ -343,7 +343,7 @@ public class MinecraftServer {
      *
      * @param state l'état rapporté, éventuellement null
      */
-    synchronized void applyPanelState(PanelServerState state) {
+    public synchronized void applyPanelState(PanelServerState state) {
         if (state == null) {
             return;
         }

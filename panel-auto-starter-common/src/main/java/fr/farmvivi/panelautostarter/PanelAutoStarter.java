@@ -8,6 +8,7 @@ import fr.farmvivi.panelautostarter.command.ServerMenuCommand;
 import fr.farmvivi.panelautostarter.menu.ChatMenuRenderer;
 import fr.farmvivi.panelautostarter.menu.PacketEventsSupport;
 import fr.farmvivi.panelautostarter.menu.chest.ChestMenuRenderer;
+import fr.farmvivi.panelautostarter.menu.chest.LimboCompass;
 import fr.farmvivi.panelautostarter.menu.MenuService;
 import fr.farmvivi.panelautostarter.menu.MenuSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
@@ -23,6 +24,7 @@ import fr.farmvivi.panelautostarter.motd.MotdStore;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.listener.PlayerDisconnectEventListener;
 import fr.farmvivi.panelautostarter.listener.PlayerKickedEventListener;
+import fr.farmvivi.panelautostarter.listener.HotbarItemListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectedEventListener;
 import fr.farmvivi.panelautostarter.listener.ProxyPingEventListener;
 import fr.farmvivi.panelautostarter.listener.ServerConnectEventListener;
@@ -256,6 +258,15 @@ public final class PanelAutoStarter {
                     uuid -> proxy.getPlayer(uuid),
                     (player, command) -> proxy.dispatchCommand(player, command)));
             this.getLogger().info("PacketEvents detecte : menus en coffre disponibles.");
+
+            MenuSettings.CompassSettings compass = menuService.getSettings().compass();
+            if (compass.enabled()) {
+                LimboCompass item = new LimboCompass(compass, uuid -> proxy.getPlayer(uuid),
+                        player -> proxy.dispatchCommand(player,
+                                menuService.getSettings().command()));
+                this.getPlugin().addEventListener(new HotbarItemListener(item,
+                        config.getString("queue.server")));
+            }
         } catch (Throwable ex) {
             // Une bibliotheque en desaccord avec cette version du jeu ne doit
             // pas empecher le plugin de demarrer : les menus s'afficheront en

@@ -62,7 +62,7 @@ public final class AdminCommand implements CommonCommand {
             case "start" -> startOrStop(source, args, true);
             case "stop" -> startOrStop(source, args, false);
             case "whitelist" -> whitelist(source, args);
-            case "menu" -> menu(source);
+            case "menu" -> menu(source, args);
             default -> source.sendMessage(AdminMessages.usage("pas"));
         }
     }
@@ -74,13 +74,24 @@ public final class AdminCommand implements CommonCommand {
      * ses entrées exécute la commande correspondante, et passe donc par les
      * mêmes contrôles.
      */
-    private void menu(CommonCommandSource source) {
+    private void menu(CommonCommandSource source, String[] args) {
         CommonPlayer player = source.asPlayer();
         if (player == null) {
             // La console n'a pas d'ecran : le meme contenu, en texte.
             status(source, new String[]{"status"});
             return;
         }
+
+        if (args.length >= 2) {
+            MinecraftServer server = resolveServer(source, args[1]);
+            if (server == null) {
+                return;
+            }
+            plugin.getMenuService().open(player, AdminMenu.buildForServer(server,
+                    plugin.getWhitelistStore().get(server.getServer().getName()), "pas"));
+            return;
+        }
+
         plugin.getMenuService().open(player, AdminMenu.build(plugin.getServers().values(),
                 plugin.getWhitelistStore(), source, "pas"));
     }

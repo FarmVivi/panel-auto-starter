@@ -16,15 +16,21 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Menu d'administration.
+ * Menu d'administration, en deux niveaux.
  * <p>
- * Contrairement au menu de sélection, celui-ci <em>filtre</em> : il ne montre
- * que les serveurs dont son lecteur est responsable. La différence n'est pas
- * une incohérence. Le menu de sélection cache un serveur que tout le monde peut
- * déjà nommer par commande, ce qui ne protégerait rien ; le menu
- * d'administration, lui, refléterait autrement des serveurs sur lesquels son
- * lecteur ne peut rien, et lui annoncerait l'existence d'une infrastructure qui
- * ne le regarde pas.
+ * Le premier liste les serveurs, un par entrée ; le second offre les actions
+ * d'un serveur donné. Tout mettre à plat marchait tant qu'il n'y avait qu'un
+ * serveur, et devenait illisible dès le deuxième : quatre entrées par serveur
+ * se suivant sans séparation, on ne savait plus laquelle appartenait à quoi.
+ * Avec un seul serveur le premier niveau n'apprend rien, mais il reste : une
+ * disposition qui change selon le nombre de serveurs se réapprend à chaque
+ * fois.
+ * <p>
+ * Contrairement au menu de sélection, celui-ci <em>filtre</em>. La différence
+ * n'est pas une incohérence : le menu de sélection cacherait un serveur que
+ * tout le monde peut déjà nommer par commande, ce qui ne protégerait rien ; le
+ * menu d'administration, lui, refléterait des serveurs sur lesquels son lecteur
+ * ne peut rien, et lui annoncerait une infrastructure qui ne le regarde pas.
  * <p>
  * Les entrées restent des commandes, soumises aux mêmes contrôles : le menu ne
  * peut rien faire que son utilisateur n'aurait pu taper lui-même.
@@ -35,7 +41,7 @@ public final class AdminMenu {
     }
 
     /**
-     * Construit le menu pour un administrateur.
+     * Construit le menu racine : un serveur par entrée.
      *
      * @param servers    les serveurs gérés
      * @param whitelists les listes blanches
@@ -52,7 +58,7 @@ public final class AdminMenu {
             if (!AdminAccess.canAdminister(source, name)) {
                 continue;
             }
-            items.addAll(entriesFor(server, whitelists.get(name), label));
+            items.add(serverEntry(server, whitelists.get(name), label));
         }
 
         if (items.isEmpty()) {
@@ -65,11 +71,60 @@ public final class AdminMenu {
                 items);
     }
 
-    private static List<MenuItem> entriesFor(MinecraftServer server, Whitelist whitelist,
-                                             String label) {
+    /**
+     * Construit le menu d'un serveur : ses actions.
+     *
+     * @param server    le serveur
+     * @param whitelist sa liste blanche
+     * @param label     le nom de la commande d'administration
+     * @return le menu
+     */
+    public static Menu buildForServer(MinecraftServer server, Whitelist whitelist, String label) {
         String name = server.getServer().getName();
         MinecraftServerStatus status = server.getStatus();
         List<MenuItem> items = new ArrayList<>();
+
+        // Une seule action possible a la fois : proposer « demarrer » sur un
+        // serveur allume, ou l'inverse, n'aboutirait qu'a un refus.
+        if (status.equals(MinecraftServerStatus.OFFLINE)) {
+            items.add(MenuItem.of("minecraft:lime_dye",
+                    Component.text("Démarrer", NamedTextColor.GREEN),
+                    List.of(Component.text("Le serveur est éteint", NamedTextColor.GRAY)),
+                    label + " start " + name));
+        } else if (status.equals(MinecraftServerStatus.ONLINE)) {
+            items.add(MenuItem.of("minecraft:red_dye",
+                    Component.text("Arrêter", NamedTextColor.RED),
+                    List.of(Component.text("Les joueurs présents seront ramenés",
+                            NamedTextColor.GRAY)),
+                    label + " stop " + name));
+        } else {
+            items.add(MenuItem.info("minecraft:orange_dye",
+                    Component.text("Démarrage en cours", NamedTextColor.GOLD),
+                    List.of(Component.text("Patientez", NamedTextColor.GRAY))));
+        }
+
+        items.add(MenuItem.of("minecraft:paper",
+                whitelist.isEnabled()
+                        ? Component.text("Désactiver la liste blanche", NamedTextColor.GOLD)
+                        : Component.text("Activer la liste blanche", NamedTextColor.AQUA),
+                List.of(Component.text(whitelist.size() + " inscrit"
+                        + (whitelist.size() > 1 ? "s" : ""), NamedTextColor.DARK_GRAY)),
+                label + " whitelist " + name + (whitelist.isEnabled() ? " off" : " on")));
+
+        items.add(MenuItem.of("minecraft:book",
+                Component.text("Voir la liste blanche", NamedTextColor.GRAY),
+                List.of(), label + " whitelist " + name + " list"));
+
+        items.add(MenuItem.of("minecraft:arrow",
+                Component.text("Retour", NamedTextColor.GRAY),
+                List.of(), label + " menu"));
+
+        return new Menu(Component.text(name, NamedTextColor.AQUA, TextDecoration.BOLD), items);
+    }
+
+    private static MenuItem serverEntry(MinecraftServer server, Whitelist whitelist, String label) {
+        String name = server.getServer().getName();
+        MinecraftServerStatus status = server.getStatus();
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text("État : ", NamedTextColor.GRAY)
@@ -82,38 +137,10 @@ public final class AdminMenu {
                         ? Component.text("active (" + whitelist.size() + ")", NamedTextColor.GREEN)
                         : Component.text("inactive", NamedTextColor.DARK_GRAY)));
 
-        items.add(MenuItem.info(icon(status), AdminMessages.statusDot(status)
-                .append(Component.text(" "))
-                .append(Component.text(name, NamedTextColor.YELLOW)), lore));
-
-        // Une seule action possible a la fois : proposer « demarrer » sur un
-        // serveur allume, ou l'inverse, n'aboutirait qu'a un refus.
-        if (status.equals(MinecraftServerStatus.OFFLINE)) {
-            items.add(MenuItem.of("minecraft:lime_dye",
-                    Component.text("   Démarrer", NamedTextColor.GREEN),
-                    List.of(), label + " start " + name));
-        } else if (status.equals(MinecraftServerStatus.ONLINE)) {
-            items.add(MenuItem.of("minecraft:red_dye",
-                    Component.text("   Arrêter", NamedTextColor.RED),
-                    List.of(), label + " stop " + name));
-        } else {
-            items.add(MenuItem.info("minecraft:orange_dye",
-                    Component.text("   Démarrage en cours", NamedTextColor.GOLD), List.of()));
-        }
-
-        items.add(MenuItem.of("minecraft:paper",
-                whitelist.isEnabled()
-                        ? Component.text("   Désactiver la liste blanche", NamedTextColor.GOLD)
-                        : Component.text("   Activer la liste blanche", NamedTextColor.AQUA),
-                List.of(Component.text(whitelist.size() + " inscrit"
-                        + (whitelist.size() > 1 ? "s" : ""), NamedTextColor.DARK_GRAY)),
-                label + " whitelist " + name + (whitelist.isEnabled() ? " off" : " on")));
-
-        items.add(MenuItem.of("minecraft:book",
-                Component.text("   Voir la liste blanche", NamedTextColor.GRAY),
-                List.of(), label + " whitelist " + name + " list"));
-
-        return items;
+        return MenuItem.of(icon(status), AdminMessages.statusDot(status)
+                        .append(Component.text(" "))
+                        .append(Component.text(name, NamedTextColor.YELLOW)),
+                lore, label + " menu " + name);
     }
 
     private static String icon(MinecraftServerStatus status) {

@@ -13,7 +13,28 @@ import java.util.Locale;
  * @param command       nom de la commande ouvrant le menu des serveurs
  * @param serverCommand commande de connexion du proxy, appelée au clic
  */
-public record MenuSettings(boolean enabled, String renderer, String command, String serverCommand) {
+public record MenuSettings(boolean enabled, String renderer, String command, String serverCommand,
+                           CompassSettings compass) {
+
+    /**
+     * Boussole posée dans la barre d'action rapide du serveur d'attente.
+     *
+     * @param enabled la pose
+     * @param slot    la case, de 0 à 8
+     * @param item    l'identifiant de l'objet
+     * @param name    son nom affiché
+     */
+    public record CompassSettings(boolean enabled, int slot, String item, String name) {
+
+        /**
+         * Réglages par défaut.
+         *
+         * @return les réglages par défaut
+         */
+        public static CompassSettings defaults() {
+            return new CompassSettings(true, 4, "minecraft:compass", "Choisir un serveur");
+        }
+    }
 
     /** Choisit le meilleur rendu disponible. */
     public static final String RENDERER_AUTO = "auto";
@@ -24,7 +45,8 @@ public record MenuSettings(boolean enabled, String renderer, String command, Str
      * @return les réglages par défaut
      */
     public static MenuSettings defaults() {
-        return new MenuSettings(true, RENDERER_AUTO, "servers", "server");
+        return new MenuSettings(true, RENDERER_AUTO, "servers", "server",
+                CompassSettings.defaults());
     }
 
     /**
@@ -45,7 +67,17 @@ public record MenuSettings(boolean enabled, String renderer, String command, Str
                 blankToDefault(config.getString("menu.command", fallback.command()),
                         fallback.command()),
                 blankToDefault(config.getString("menu.server-command", fallback.serverCommand()),
-                        fallback.serverCommand()));
+                        fallback.serverCommand()),
+                new CompassSettings(
+                        config.getBoolean("menu.compass.enabled", fallback.compass().enabled()),
+                        // Hors de la barre d'action rapide, la case n'existe
+                        // pas : on ramene plutot que d'ecrire dans le vide.
+                        Math.max(0, Math.min(8,
+                                config.getInt("menu.compass.slot", fallback.compass().slot()))),
+                        blankToDefault(config.getString("menu.compass.item",
+                                fallback.compass().item()), fallback.compass().item()),
+                        blankToDefault(config.getString("menu.compass.name",
+                                fallback.compass().name()), fallback.compass().name())));
     }
 
     /**
