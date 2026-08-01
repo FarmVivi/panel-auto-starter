@@ -287,6 +287,62 @@ public class MenuTest {
         assertTrue(commands(on).contains("pas whitelist survie off"));
     }
 
+    // ===================== Liste blanche depuis le menu =====================
+
+    @Test
+    public void testTheAddMenuListsOnlinePlayers() {
+        MockCommonPlayer vivi = new MockCommonPlayer("Vivi");
+
+        Menu menu = AdminMenu.buildWhitelistAdd("survie", whitelists.get("survie"),
+                List.of(vivi), "pas");
+
+        assertTrue(commands(menu).contains("pas whitelist survie add Vivi"));
+    }
+
+    /**
+     * Proposer d'inscrire quelqu'un qui y figure déjà n'aboutirait qu'à un
+     * message disant qu'il y figure déjà.
+     */
+    @Test
+    public void testAnAlreadyListedPlayerIsNotOffered() {
+        MockCommonPlayer vivi = new MockCommonPlayer("Vivi");
+        whitelists.get("survie").add(vivi.getUniqueId(), "Vivi");
+
+        Menu menu = AdminMenu.buildWhitelistAdd("survie", whitelists.get("survie"),
+                List.of(vivi), "pas");
+
+        assertFalse(commands(menu).contains("pas whitelist survie add Vivi"));
+    }
+
+    /**
+     * Le retrait porte sur les inscrits, présents ou non : c'est justement
+     * quelqu'un d'absent qu'on veut retirer.
+     */
+    @Test
+    public void testTheRemoveMenuListsWhoeverIsOnTheList() {
+        whitelists.get("survie").add(java.util.UUID.randomUUID(), "Absent");
+
+        Menu menu = AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"), "pas");
+
+        assertTrue(commands(menu).contains("pas whitelist survie remove Absent"));
+    }
+
+    @Test
+    public void testBothWhitelistMenusLeadBackToTheServer() {
+        assertTrue(commands(AdminMenu.buildWhitelistAdd("survie", whitelists.get("survie"),
+                List.of(), "pas")).contains("pas menu survie"));
+        assertTrue(commands(AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"),
+                "pas")).contains("pas menu survie"));
+    }
+
+    @Test
+    public void testTheServerMenuOffersWhitelistEditing() {
+        Menu menu = AdminMenu.buildForServer(survieServer, whitelists.get("survie"), "pas");
+
+        assertTrue(commands(menu).contains("pas menu survie add"));
+        assertTrue(commands(menu).contains("pas menu survie remove"));
+    }
+
     /**
      * Sans retour, on ne peut plus atteindre les autres serveurs sans retaper
      * la commande.

@@ -22,6 +22,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -63,6 +64,12 @@ public final class LimboCompass implements HotbarItem {
 
     /** Case tenue par chaque joueur, pour reconnaître un clic sur la boussole. */
     private final Map<UUID, Integer> heldSlots = new ConcurrentHashMap<>();
+
+    /**
+     * Joueurs a qui la boussole a ete posee. Seuls leurs clics sont
+     * interceptes : ailleurs, le plugin n'a rien a dire sur un inventaire.
+     */
+    private final Set<UUID> holders = ConcurrentHashMap.newKeySet();
 
     /**
      * @param settings       réglages de la boussole
@@ -111,6 +118,23 @@ public final class LimboCompass implements HotbarItem {
         // sans cette note, on croirait qu'il tient toujours la premiere, et le
         // premier clic droit sur la boussole passerait inapercu.
         heldSlots.put(player.getUniqueId(), settings.slot());
+        holders.add(player.getUniqueId());
+    }
+
+    /**
+     * Repose la boussole et vide le curseur.
+     * <p>
+     * Le curseur d'abord : c'est la qu'atterrit l'objet que le client
+     * croit avoir ramasse.
+     */
+    private void restore(UUID uuid) {
+        CommonPlayer player = playerResolver.apply(uuid);
+        if (player == null) {
+            return;
+        }
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player.getPlatformHandle(),
+                new WrapperPlayServerSetSlot(-1, 0, -1, ItemStack.EMPTY));
+        give(player);
     }
 
     /**
@@ -120,6 +144,7 @@ public final class LimboCompass implements HotbarItem {
      */
     public void forget(UUID uuid) {
         heldSlots.remove(uuid);
+        holders.remove(uuid);
     }
 
     private final class UseListener extends PacketListenerAbstract {
@@ -137,6 +162,28 @@ public final class LimboCompass implements HotbarItem {
 
             if (event.getPacketType() == PacketType.Play.Client.HELD_ITEM_CHANGE) {
                 heldSlots.put(uuid, new WrapperPlayClientHeldItemChange(event).getSlot());
+                return;
+            }
+
+            // Un clic dans un inventaire, quel qu'il soit, peut emporter la
+            // boussole : le client anticipe le ramassage, et personne ne le
+            // dement — le serveur d'attente ignore l'existence de cet objet.
+            // On refuse le clic et on la repose.
+            if (event.getPacketType() == PacketType.Play.Client.CLICK_WINDOW) {
+                if (holders.contains(uuid)) {
+                    event.setCancelled(true);
+                    restore(uuid);
+                }
+                return;
+            }
+
+            // Un menu se referme sur l'inventaire du joueur : c'est le moment
+            // ou une reaffirmation porte, une fenetre ouverte masquant les
+            // cases de l'inventaire propre.
+            if (event.getPacketType() == PacketType.Play.Client.CLOSE_WINDOW) {
+                if (holders.contains(uuid)) {
+                    restore(uuid);
+                }
                 return;
             }
 

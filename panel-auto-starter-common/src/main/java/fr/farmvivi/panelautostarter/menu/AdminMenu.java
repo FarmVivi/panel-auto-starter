@@ -5,6 +5,7 @@ import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.access.AdminAccess;
 import fr.farmvivi.panelautostarter.access.Whitelist;
 import fr.farmvivi.panelautostarter.access.WhitelistStore;
+import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.command.CommonCommandSource;
 import fr.farmvivi.panelautostarter.message.AdminMessages;
 import net.kyori.adventure.text.Component;
@@ -14,6 +15,8 @@ import net.kyori.adventure.text.format.TextDecoration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Menu d'administration, en deux niveaux.
@@ -111,15 +114,100 @@ public final class AdminMenu {
                         + (whitelist.size() > 1 ? "s" : ""), NamedTextColor.DARK_GRAY)),
                 label + " whitelist " + name + (whitelist.isEnabled() ? " off" : " on")));
 
+        items.add(MenuItem.of("minecraft:player_head",
+                Component.text("Inscrire un joueur", NamedTextColor.GREEN),
+                List.of(Component.text("Parmi les joueurs connectés", NamedTextColor.DARK_GRAY)),
+                label + " menu " + name + " add"));
+
         items.add(MenuItem.of("minecraft:book",
-                Component.text("Voir la liste blanche", NamedTextColor.GRAY),
-                List.of(), label + " whitelist " + name + " list"));
+                Component.text("Voir et retirer", NamedTextColor.GRAY),
+                List.of(Component.text(whitelist.size() + " inscrit"
+                        + (whitelist.size() > 1 ? "s" : ""), NamedTextColor.DARK_GRAY)),
+                label + " menu " + name + " remove"));
 
         items.add(MenuItem.of("minecraft:arrow",
                 Component.text("Retour", NamedTextColor.GRAY),
                 List.of(), label + " menu"));
 
         return new Menu(Component.text(name, NamedTextColor.AQUA, TextDecoration.BOLD), items);
+    }
+
+    /**
+     * Menu d'inscription : les joueurs connectés qui ne figurent pas encore sur
+     * la liste.
+     * <p>
+     * Choisir dans une liste plutôt que saisir un pseudo — au clavier, ou dans
+     * une enclume détournée — évite la faute de frappe, qui sur une liste
+     * blanche ne se voit pas : on inscrit un nom qui n'existe pas et on croit
+     * l'affaire réglée jusqu'à ce que l'intéressé se plaigne. Un joueur absent
+     * reste inscriptible par la commande, qui accepte aussi un identifiant.
+     *
+     * @param serverName le serveur
+     * @param whitelist  sa liste blanche
+     * @param online     les joueurs connectés
+     * @param label      le nom de la commande d'administration
+     * @return le menu
+     */
+    public static Menu buildWhitelistAdd(String serverName, Whitelist whitelist,
+                                         Collection<CommonPlayer> online, String label) {
+        List<MenuItem> items = new ArrayList<>();
+
+        for (CommonPlayer player : online) {
+            if (whitelist.contains(player.getUniqueId())) {
+                continue;
+            }
+            items.add(MenuItem.of("minecraft:player_head",
+                    Component.text(player.getUsername(), NamedTextColor.WHITE),
+                    List.of(Component.text("Inscrire sur " + serverName, NamedTextColor.GRAY)),
+                    label + " whitelist " + serverName + " add " + player.getUsername()));
+        }
+
+        if (items.isEmpty()) {
+            items.add(MenuItem.info("minecraft:barrier",
+                    Component.text("Personne à inscrire", NamedTextColor.GRAY),
+                    List.of(Component.text("Tous les joueurs connectés y figurent déjà",
+                            NamedTextColor.DARK_GRAY))));
+        }
+
+        items.add(MenuItem.of("minecraft:arrow", Component.text("Retour", NamedTextColor.GRAY),
+                List.of(), label + " menu " + serverName));
+
+        return new Menu(Component.text("Inscrire — " + serverName, NamedTextColor.AQUA,
+                TextDecoration.BOLD), items);
+    }
+
+    /**
+     * Menu de retrait : les joueurs inscrits, présents ou non.
+     *
+     * @param serverName le serveur
+     * @param whitelist  sa liste blanche
+     * @param label      le nom de la commande d'administration
+     * @return le menu
+     */
+    public static Menu buildWhitelistRemove(String serverName, Whitelist whitelist, String label) {
+        List<MenuItem> items = new ArrayList<>();
+
+        for (Map.Entry<UUID, String> entry : whitelist.getPlayers().entrySet()) {
+            // Le pseudo enregistre suffit a la commande de retrait, et se lit
+            // mieux qu'un identifiant ; celui-ci prend le relais s'il manque.
+            String target = entry.getValue() != null && !entry.getValue().isBlank()
+                    ? entry.getValue() : entry.getKey().toString();
+            items.add(MenuItem.of("minecraft:player_head",
+                    Component.text(target, NamedTextColor.WHITE),
+                    List.of(Component.text("Retirer de " + serverName, NamedTextColor.RED)),
+                    label + " whitelist " + serverName + " remove " + target));
+        }
+
+        if (items.isEmpty()) {
+            items.add(MenuItem.info("minecraft:barrier",
+                    Component.text("Personne n'y figure", NamedTextColor.GRAY), List.of()));
+        }
+
+        items.add(MenuItem.of("minecraft:arrow", Component.text("Retour", NamedTextColor.GRAY),
+                List.of(), label + " menu " + serverName));
+
+        return new Menu(Component.text("Liste blanche — " + serverName, NamedTextColor.AQUA,
+                TextDecoration.BOLD), items);
     }
 
     private static MenuItem serverEntry(MinecraftServer server, Whitelist whitelist, String label) {

@@ -64,6 +64,12 @@ menu:
     item: minecraft:compass
     name: "Choisir un serveur"
 
+    # Tant qu'un joueur porte la boussole, ses clics d'inventaire sont refusés
+    # et l'objet reposé : sans cela le client, qui anticipe le ramassage sans
+    # attendre de réponse, la ferait disparaître de son écran. Le suivi cesse
+    # dès qu'il quitte le serveur d'attente — le plugin n'a rien à dire sur
+    # l'inventaire d'un serveur de jeu.
+
 # Contrôle d'accès aux serveurs gérés.
 #
 # Il s'applique aux ÉVÉNEMENTS de connexion, et non au menu de sélection : le

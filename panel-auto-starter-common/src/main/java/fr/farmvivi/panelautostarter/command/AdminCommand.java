@@ -9,6 +9,7 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.command.CommonCommand;
 import fr.farmvivi.panelautostarter.common.command.CommonCommandSource;
 import fr.farmvivi.panelautostarter.menu.AdminMenu;
+import fr.farmvivi.panelautostarter.menu.Menu;
 import fr.farmvivi.panelautostarter.message.AdminMessages;
 
 import java.util.ArrayList;
@@ -87,8 +88,17 @@ public final class AdminCommand implements CommonCommand {
             if (server == null) {
                 return;
             }
-            plugin.getMenuService().open(player, AdminMenu.buildForServer(server,
-                    plugin.getWhitelistStore().get(server.getServer().getName()), "pas"));
+            String name = server.getServer().getName();
+            Whitelist whitelist = plugin.getWhitelistStore().get(name);
+
+            String page = args.length >= 3 ? args[2].toLowerCase(Locale.ROOT) : "";
+            Menu menu = switch (page) {
+                case "add" -> AdminMenu.buildWhitelistAdd(name, whitelist,
+                        List.of(plugin.getProxy().getPlayers()), "pas");
+                case "remove" -> AdminMenu.buildWhitelistRemove(name, whitelist, "pas");
+                default -> AdminMenu.buildForServer(server, whitelist, "pas");
+            };
+            plugin.getMenuService().open(player, menu);
             return;
         }
 

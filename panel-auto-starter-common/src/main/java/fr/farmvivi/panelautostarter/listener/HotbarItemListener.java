@@ -1,6 +1,7 @@
 package fr.farmvivi.panelautostarter.listener;
 
 import fr.farmvivi.panelautostarter.common.CommonServer;
+import fr.farmvivi.panelautostarter.common.event.PlayerDisconnectEvent;
 import fr.farmvivi.panelautostarter.common.event.ServerConnectedEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 import fr.farmvivi.panelautostarter.menu.HotbarItem;
@@ -35,10 +36,23 @@ public class HotbarItemListener extends EventAdapter {
     @Override
     public void onServerConnected(ServerConnectedEvent event) {
         CommonServer server = event.getServer();
-        if (server == null || limboServerName == null
-                || !limboServerName.equalsIgnoreCase(server.getName())) {
-            return;
+        boolean onLimbo = server != null && limboServerName != null
+                && limboServerName.equalsIgnoreCase(server.getName());
+
+        if (onLimbo) {
+            item.give(event.getPlayer());
+        } else {
+            // Ailleurs, l'objet n'a plus lieu d'etre — et surtout, continuer a
+            // croire le joueur porteur ferait intercepter ses clics dans
+            // l'inventaire d'un serveur de jeu.
+            item.forget(event.getPlayer().getUniqueId());
         }
-        item.give(event.getPlayer());
+    }
+
+    @Override
+    public void onPlayerDisconnect(PlayerDisconnectEvent event) {
+        if (event.getPlayer() != null) {
+            item.forget(event.getPlayer().getUniqueId());
+        }
     }
 }
