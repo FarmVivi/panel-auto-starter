@@ -173,6 +173,38 @@ public class MenuTest {
                 "Un serveur en ligne annonce sa frequentation");
     }
 
+    /**
+     * Le MOTD retenu, et non celui du ping courant : c'est justement quand le
+     * serveur est éteint qu'il a quelque chose à dire.
+     */
+    @Test
+    public void testTheRememberedMotdIsShown() {
+        ServerMotd motd = mock(ServerMotd.class);
+        when(motd.isEmpty()).thenReturn(false);
+        when(motd.getDescription()).thenReturn(Component.text("Serveur survie saison 3"));
+        MinecraftServer avecMotd = new MinecraftServer(mockPlugin, new MockCommonServer("survie"),
+                surviePanel, motd);
+
+        Menu menu = ServerMenu.build(List.of(avecMotd), new MockCommonPlayer("Vivi"), "server");
+
+        assertTrue(menu.items().get(0).lore().stream()
+                        .anyMatch(line -> plain(line).contains("saison 3")),
+                "Le MOTD doit apparaitre dans le detail de l'entree");
+    }
+
+    @Test
+    public void testAnAbsentMotdLeavesNoBlankLine() {
+        ServerMotd motd = mock(ServerMotd.class);
+        when(motd.isEmpty()).thenReturn(true);
+        MinecraftServer sansMotd = new MinecraftServer(mockPlugin, new MockCommonServer("survie"),
+                surviePanel, motd);
+
+        Menu menu = ServerMenu.build(List.of(sansMotd), new MockCommonPlayer("Vivi"), "server");
+
+        assertFalse(menu.items().get(0).lore().stream().anyMatch(line -> plain(line).isEmpty()),
+                "Pas de ligne vide quand il n'y a rien a separer");
+    }
+
     @Test
     public void testAnEmptyNetworkStillProducesAMenu() {
         Menu menu = ServerMenu.build(List.of(), new MockCommonPlayer("Vivi"), "server");

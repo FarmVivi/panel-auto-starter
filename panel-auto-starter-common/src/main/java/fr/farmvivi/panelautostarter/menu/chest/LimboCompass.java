@@ -11,6 +11,7 @@ import com.github.retrooper.packetevents.protocol.item.type.ItemType;
 import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientHeldItemChange;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerHeldItemChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.menu.HotbarItem;
@@ -100,6 +101,16 @@ public final class LimboCompass implements HotbarItem {
         PacketEvents.getAPI().getPlayerManager().sendPacket(player.getPlatformHandle(),
                 new WrapperPlayServerSetSlot(PLAYER_INVENTORY_WINDOW, 0,
                         HOTBAR_OFFSET + settings.slot(), stack));
+
+        // Selectionner la case, pour que la boussole soit en main a l'arrivee
+        // plutot que d'attendre que le joueur la cherche.
+        PacketEvents.getAPI().getPlayerManager().sendPacket(player.getPlatformHandle(),
+                new WrapperPlayServerHeldItemChange(settings.slot()));
+
+        // Le client ne signale pas un changement de case decide par le serveur :
+        // sans cette note, on croirait qu'il tient toujours la premiere, et le
+        // premier clic droit sur la boussole passerait inapercu.
+        heldSlots.put(player.getUniqueId(), settings.slot());
     }
 
     /**

@@ -5,6 +5,7 @@ import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.ping.CommonServerPing;
 import fr.farmvivi.panelautostarter.message.AdminMessages;
+import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -71,6 +72,19 @@ public final class ServerMenu {
                 .append(AdminMessages.statusLabel(status));
 
         List<Component> lore = new ArrayList<>();
+
+        // Le MOTD retenu, et non celui du ping courant : c'est justement quand
+        // le serveur est eteint qu'il a quelque chose a dire, et le cache le
+        // conserve pour ce moment-la.
+        ServerMotd motd = server.getMotd();
+        if (motd != null && !motd.isEmpty()) {
+            Component description = motd.getDescription();
+            if (description != null) {
+                lore.add(description);
+                lore.add(Component.empty());
+            }
+        }
+
         CommonServerPing ping = server.getServerPing();
         if (status.equals(MinecraftServerStatus.ONLINE) && ping != null) {
             lore.add(Component.text(ping.getOnlinePlayers() + " joueur"
