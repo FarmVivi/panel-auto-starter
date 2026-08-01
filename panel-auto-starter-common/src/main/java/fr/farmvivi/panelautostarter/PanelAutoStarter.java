@@ -4,6 +4,8 @@ import fr.farmvivi.panelautostarter.access.AccessSettings;
 import fr.farmvivi.panelautostarter.access.ServerAccess;
 import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.command.AdminCommand;
+import fr.farmvivi.panelautostarter.command.LobbyCommand;
+import fr.farmvivi.panelautostarter.command.LobbyCommandSettings;
 import fr.farmvivi.panelautostarter.command.ServerMenuCommand;
 import fr.farmvivi.panelautostarter.menu.ChatMenuRenderer;
 import fr.farmvivi.panelautostarter.menu.PacketEventsSupport;
@@ -165,6 +167,11 @@ public final class PanelAutoStarter {
             if (menuSettings.enabled()) {
                 this.getPlugin().registerCommand(
                         new ServerMenuCommand(this, menuSettings.command()));
+            }
+
+            LobbyCommandSettings lobbySettings = LobbyCommandSettings.from(config);
+            if (lobbySettings.enabled()) {
+                this.getPlugin().registerCommand(new LobbyCommand(this, lobbySettings));
             }
 
             // Barre d'action des joueurs en attente

@@ -257,7 +257,9 @@ menu:
   server-command: server  # the proxy command a click runs
 ```
 
-`/servers` lists the managed servers with their state and player count, one clickable line each; `/pas menu` does the same for administration, with start, stop and whitelist buttons.
+`/servers` lists the managed servers with their state, remembered MOTD and player count, one clickable line each; `/pas menu` does the same for administration, with start, stop and whitelist buttons. `/lobby` (aliases and name configurable under `queue.back-command`) sends a player back to the waiting server — and **leaves the queue on the way**, since going back is the natural way to give up on a server that is taking its time.
+
+Whitelists are edited from the menu by picking from a list — online players to add, listed players to remove — rather than typing a name. A typo in a whitelist does not show: you enrol a name that does not exist and believe it settled until the person complains. Someone who is offline can still be added by command, which also accepts a UUID.
 
 **Every menu action is a command**, never a callback. That is what lets a chat renderer and an inventory renderer coexist — a chat click can only carry a command — and it means a menu can do nothing its user could not have typed, so every action goes through the same checks.
 

@@ -88,6 +88,42 @@ public final class Messages {
                 .append(detail(Component.text("Réessayez dans un instant")));
     }
 
+    // ===================== Retour au serveur d'attente =====================
+
+    /**
+     * Annonce du retour au serveur d'attente.
+     *
+     * @param lobbyDisplayName le nom affiché du serveur d'attente
+     * @return le message
+     */
+    public static Component returningToLobby(String lobbyDisplayName) {
+        return headline(Component.text("Retour vers ", NamedTextColor.GREEN)
+                .append(server(lobbyDisplayName)));
+    }
+
+    /**
+     * Réponse au joueur qui demande à revenir là où il se trouve déjà.
+     *
+     * @param lobbyDisplayName le nom affiché du serveur d'attente
+     * @return le message
+     */
+    public static Component alreadyOnLobby(String lobbyDisplayName) {
+        return headline(Component.text("Vous êtes déjà sur ", NamedTextColor.GRAY)
+                .append(server(lobbyDisplayName)));
+    }
+
+    /**
+     * Le serveur d'attente est introuvable : la configuration le nomme mal, ou
+     * le proxy ne le déclare pas.
+     *
+     * @return le message
+     */
+    public static Component lobbyUnavailable() {
+        return headline(Component.text("Le serveur d'attente est introuvable", NamedTextColor.RED))
+                .appendNewline()
+                .append(detail(Component.text("Signalez-le à un administrateur")));
+    }
+
     // ===================== Accès refusé =====================
 
     /**

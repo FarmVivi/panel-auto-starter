@@ -257,6 +257,21 @@ queue:
   # Serveur d'attente où patientent les joueurs pendant le démarrage
   server: lobby
 
+  # Commande ramenant le joueur au serveur d'attente.
+  #
+  # Ouverte à tous, sans permission : le serveur d'attente est l'endroit où le
+  # proxy dépose déjà tout le monde, y revenir n'accorde rien.
+  #
+  # Elle fait QUITTER LA FILE au passage. Revenir au serveur d'attente est la
+  # façon naturelle de renoncer à un serveur qui met du temps à démarrer ; y
+  # rester inscrit téléporterait le joueur alors qu'il vient de dire, par son
+  # geste, qu'il ne l'attendait plus.
+  back-command:
+    enabled: true
+    name: lobby
+    aliases:
+      - hub
+
   # Renvoyer vers le serveur d'attente un joueur éjecté d'un serveur géré,
   # plutôt que de le laisser être déconnecté.
   #
