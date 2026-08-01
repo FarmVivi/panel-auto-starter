@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
 import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemLore;
+import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemProfile;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.item.type.ItemType;
 import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
@@ -19,6 +20,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSe
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
 import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
+import fr.farmvivi.panelautostarter.common.PlayerSkin;
 import fr.farmvivi.panelautostarter.menu.Menu;
 import fr.farmvivi.panelautostarter.menu.MenuItem;
 import fr.farmvivi.panelautostarter.menu.MenuRenderer;
@@ -220,6 +222,17 @@ public final class ChestMenuRenderer implements MenuRenderer {
         }
 
         ItemStack.Builder builder = ItemStack.builder().type(type).amount(1);
+
+        // L'effigie du joueur, quand le proxy la connait. La signature
+        // accompagne la valeur : sans elle, un client en ligne refuse la
+        // texture et retombe sur une tete generique.
+        PlayerSkin skin = item.skin();
+        if (skin != null && skin.value() != null) {
+            builder.component(ComponentTypes.PROFILE, new ItemProfile(
+                    skin.username(), skin.uuid(),
+                    List.of(new ItemProfile.Property("textures", skin.value(),
+                            skin.signature()))));
+        }
 
         // Sans cela le client applique son propre style aux noms d'objets :
         // italique et violet, ce qui n'est pas ce qu'on a ecrit.

@@ -1,5 +1,6 @@
 package fr.farmvivi.panelautostarter.menu;
 
+import fr.farmvivi.panelautostarter.common.PlayerSkin;
 import net.kyori.adventure.text.Component;
 
 import java.util.List;
@@ -26,10 +27,27 @@ import java.util.List;
  * @param enabled false pour une entrée grisée, qui s'affiche sans agir
  */
 public record MenuItem(String icon, Component label, List<Component> lore, String command,
-                       boolean enabled) {
+                       boolean enabled, PlayerSkin skin) {
 
     public MenuItem {
         lore = List.copyOf(lore);
+    }
+
+    /**
+     * Entrée représentant un joueur, à son effigie.
+     * <p>
+     * L'apparence peut être nulle : un joueur absent du proxy n'en a pas, et
+     * l'entrée retombe alors sur une tête générique plutôt que de disparaître.
+     *
+     * @param skin    l'apparence du joueur, éventuellement null
+     * @param label   le texte
+     * @param lore    le détail
+     * @param command la commande exécutée au clic
+     * @return l'entrée
+     */
+    public static MenuItem head(PlayerSkin skin, Component label, List<Component> lore,
+                                String command) {
+        return new MenuItem("minecraft:player_head", label, lore, command, true, skin);
     }
 
     /**
@@ -42,7 +60,7 @@ public record MenuItem(String icon, Component label, List<Component> lore, Strin
      * @return l'entrée
      */
     public static MenuItem of(String icon, Component label, List<Component> lore, String command) {
-        return new MenuItem(icon, label, lore, command, true);
+        return new MenuItem(icon, label, lore, command, true, null);
     }
 
     /**
@@ -54,7 +72,7 @@ public record MenuItem(String icon, Component label, List<Component> lore, Strin
      * @return l'entrée
      */
     public static MenuItem info(String icon, Component label, List<Component> lore) {
-        return new MenuItem(icon, label, lore, null, false);
+        return new MenuItem(icon, label, lore, null, false, null);
     }
 
     /**

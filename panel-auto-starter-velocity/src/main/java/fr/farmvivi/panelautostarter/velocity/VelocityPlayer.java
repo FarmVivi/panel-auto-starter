@@ -49,6 +49,22 @@ public class VelocityPlayer implements CommonPlayer {
         return player;
     }
 
+    /**
+     * Velocity conserve les propriétés du profil qu'il a authentifié : la
+     * texture est déjà là, signature comprise.
+     */
+    @Override
+    public fr.farmvivi.panelautostarter.common.PlayerSkin getSkin() {
+        for (com.velocitypowered.api.util.GameProfile.Property property
+                : player.getGameProfileProperties()) {
+            if ("textures".equals(property.getName())) {
+                return new fr.farmvivi.panelautostarter.common.PlayerSkin(player.getUsername(),
+                        player.getUniqueId(), property.getValue(), property.getSignature());
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean hasPermission(String permission) {
         return player.hasPermission(permission);

@@ -6,6 +6,7 @@ import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
+import fr.farmvivi.panelautostarter.common.PlayerSkin;
 import fr.farmvivi.panelautostarter.common.command.CommonCommandSource;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
@@ -322,17 +323,63 @@ public class MenuTest {
     public void testTheRemoveMenuListsWhoeverIsOnTheList() {
         whitelists.get("survie").add(java.util.UUID.randomUUID(), "Absent");
 
-        Menu menu = AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"), "pas");
+        Menu menu = AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"), List.of(), "pas");
 
         assertTrue(commands(menu).contains("pas whitelist survie remove Absent"));
+    }
+
+    /**
+     * L'apparence vient du proxy, qui a authentifié le joueur : aucun appel à
+     * Mojang n'est fait, la donnée est déjà en mémoire.
+     */
+    @Test
+    public void testAnOnlinePlayerIsShownWithHisOwnSkin() {
+        MockCommonPlayer vivi = new MockCommonPlayer("Vivi");
+        vivi.setSkin(new PlayerSkin("Vivi", vivi.getUniqueId(), "dGV4dHVyZQ==", "sig"));
+
+        Menu menu = AdminMenu.buildWhitelistAdd("survie", whitelists.get("survie"),
+                List.of(vivi), "pas");
+
+        assertNotNull(menu.items().get(0).skin(), "L'entree doit porter l'apparence du joueur");
+        assertEquals("dGV4dHVyZQ==", menu.items().get(0).skin().value());
+    }
+
+    /**
+     * Un inscrit absent du proxy n'a pas d'apparence connue : tête générique
+     * plutôt que pas d'entrée du tout.
+     */
+    @Test
+    public void testAnOfflineEntryFallsBackToAGenericHead() {
+        whitelists.get("survie").add(java.util.UUID.randomUUID(), "Absent");
+
+        Menu menu = AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"),
+                List.of(), "pas");
+
+        assertNull(menu.items().get(0).skin());
+        assertEquals("minecraft:player_head", menu.items().get(0).icon());
+        assertTrue(menu.items().get(0).isActionable(), "Elle reste utilisable");
+    }
+
+    /**
+     * Un inscrit connecté, lui, s'affiche à son effigie.
+     */
+    @Test
+    public void testAListedPlayerWhoIsOnlineKeepsHisSkin() {
+        MockCommonPlayer vivi = new MockCommonPlayer("Vivi");
+        vivi.setSkin(new PlayerSkin("Vivi", vivi.getUniqueId(), "dGV4dHVyZQ==", "sig"));
+        whitelists.get("survie").add(vivi.getUniqueId(), "Vivi");
+
+        Menu menu = AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"),
+                List.of(vivi), "pas");
+
+        assertNotNull(menu.items().get(0).skin());
     }
 
     @Test
     public void testBothWhitelistMenusLeadBackToTheServer() {
         assertTrue(commands(AdminMenu.buildWhitelistAdd("survie", whitelists.get("survie"),
                 List.of(), "pas")).contains("pas menu survie"));
-        assertTrue(commands(AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"),
-                "pas")).contains("pas menu survie"));
+        assertTrue(commands(AdminMenu.buildWhitelistRemove("survie", whitelists.get("survie"), List.of(), "pas")).contains("pas menu survie"));
     }
 
     @Test

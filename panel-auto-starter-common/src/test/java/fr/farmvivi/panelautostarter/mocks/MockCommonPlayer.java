@@ -43,6 +43,22 @@ public class MockCommonPlayer implements CommonPlayer {
         this.currentServer = null;
     }
 
+    private fr.farmvivi.panelautostarter.common.PlayerSkin skin;
+
+    @Override
+    public fr.farmvivi.panelautostarter.common.PlayerSkin getSkin() {
+        return skin;
+    }
+
+    /**
+     * Donne une apparence au joueur simulé.
+     *
+     * @param skin l'apparence
+     */
+    public void setSkin(fr.farmvivi.panelautostarter.common.PlayerSkin skin) {
+        this.skin = skin;
+    }
+
     @Override
     public Object getPlatformHandle() {
         // Pas de proxy derriere un joueur simule : la valeur ne sert qu'aux

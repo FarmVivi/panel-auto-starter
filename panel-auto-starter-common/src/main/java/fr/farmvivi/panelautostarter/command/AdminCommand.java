@@ -95,7 +95,8 @@ public final class AdminCommand implements CommonCommand {
             Menu menu = switch (page) {
                 case "add" -> AdminMenu.buildWhitelistAdd(name, whitelist,
                         List.of(plugin.getProxy().getPlayers()), "pas");
-                case "remove" -> AdminMenu.buildWhitelistRemove(name, whitelist, "pas");
+                case "remove" -> AdminMenu.buildWhitelistRemove(name, whitelist,
+                        List.of(plugin.getProxy().getPlayers()), "pas");
                 default -> AdminMenu.buildForServer(server, whitelist, "pas");
             };
             plugin.getMenuService().open(player, menu);

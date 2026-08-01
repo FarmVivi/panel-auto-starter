@@ -156,7 +156,7 @@ public final class AdminMenu {
             if (whitelist.contains(player.getUniqueId())) {
                 continue;
             }
-            items.add(MenuItem.of("minecraft:player_head",
+            items.add(MenuItem.head(player.getSkin(),
                     Component.text(player.getUsername(), NamedTextColor.WHITE),
                     List.of(Component.text("Inscrire sur " + serverName, NamedTextColor.GRAY)),
                     label + " whitelist " + serverName + " add " + player.getUsername()));
@@ -181,18 +181,30 @@ public final class AdminMenu {
      *
      * @param serverName le serveur
      * @param whitelist  sa liste blanche
+     * @param online     les joueurs connectés, pour leur apparence
      * @param label      le nom de la commande d'administration
      * @return le menu
      */
-    public static Menu buildWhitelistRemove(String serverName, Whitelist whitelist, String label) {
+    public static Menu buildWhitelistRemove(String serverName, Whitelist whitelist,
+                                            Collection<CommonPlayer> online, String label) {
         List<MenuItem> items = new ArrayList<>();
+
+        // Les joueurs presents, indexes pour retrouver leur apparence. Ceux qui
+        // sont absents n'en ont pas de connue.
+        Map<UUID, CommonPlayer> onlineByUuid = new java.util.HashMap<>();
+        for (CommonPlayer player : online) {
+            onlineByUuid.put(player.getUniqueId(), player);
+        }
 
         for (Map.Entry<UUID, String> entry : whitelist.getPlayers().entrySet()) {
             // Le pseudo enregistre suffit a la commande de retrait, et se lit
             // mieux qu'un identifiant ; celui-ci prend le relais s'il manque.
             String target = entry.getValue() != null && !entry.getValue().isBlank()
                     ? entry.getValue() : entry.getKey().toString();
-            items.add(MenuItem.of("minecraft:player_head",
+            // Un inscrit absent du proxy n'a pas d'apparence connue : tete
+            // generique plutot que rien.
+            CommonPlayer present = onlineByUuid.get(entry.getKey());
+            items.add(MenuItem.head(present == null ? null : present.getSkin(),
                     Component.text(target, NamedTextColor.WHITE),
                     List.of(Component.text("Retirer de " + serverName, NamedTextColor.RED)),
                     label + " whitelist " + serverName + " remove " + target));

@@ -62,6 +62,20 @@ public interface CommonPlayer {
     Object getPlatformHandle();
 
     /**
+     * Retourne l'apparence du joueur, si la plateforme la donne.
+     * <p>
+     * L'implémentation par défaut n'en retourne aucune : BungeeCord n'expose pas
+     * le profil de connexion dans son API publique, et l'atteindre supposerait
+     * d'entrer par réflexion dans ses classes internes — la fragilité même que
+     * cette abstraction existe pour éviter. Une tête générique s'affiche alors.
+     *
+     * @return l'apparence, ou null si elle est inconnue
+     */
+    default PlayerSkin getSkin() {
+        return null;
+    }
+
+    /**
      * Sends a message to the player.
      *
      * @param message the message to send
