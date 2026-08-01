@@ -21,6 +21,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWi
 import fr.farmvivi.panelautostarter.LoggerProxy;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.PlayerSkin;
+import fr.farmvivi.panelautostarter.i18n.Translations;
 import fr.farmvivi.panelautostarter.menu.Menu;
 import fr.farmvivi.panelautostarter.menu.MenuItem;
 import fr.farmvivi.panelautostarter.menu.MenuRenderer;
@@ -30,6 +31,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +56,13 @@ import java.util.function.Function;
  * Ce rendu est facultatif. Il n'est instancié que si PacketEvents est présent,
  * et se déclare indisponible pour les clients trop anciens — auquel cas le
  * menu s'affiche en chat plutôt que de ne pas s'ouvrir.
+ * <p>
+ * <strong>Tout composant qui sort d'ici doit être traduit sur place.</strong>
+ * Ailleurs, la traduction a lieu dans {@code CommonPlayer} au moment de
+ * l'envoi ; ici les composants partent en paquets, sans jamais passer par lui.
+ * L'oublier ne casse rien de visible au développement — les tests ne peuvent
+ * pas atteindre cette classe, PacketEvents n'étant pas initialisé — mais
+ * affiche des identifiants bruts au joueur.
  */
 public final class ChestMenuRenderer implements MenuRenderer {
 
@@ -146,15 +155,16 @@ public final class ChestMenuRenderer implements MenuRenderer {
             actions.add(null);
         }
 
-        placeContent(items, contents, actions, contentRows);
+        placeContent(items, contents, actions, contentRows, viewer.getLocale());
 
         int closeSlot = size - COLUMNS + COLUMNS / 2;
-        contents.set(closeSlot, closeButton());
+        contents.set(closeSlot, closeButton(viewer.getLocale()));
 
         Object platform = viewer.getPlatformHandle();
         try {
             PacketEvents.getAPI().getPlayerManager().sendPacket(platform,
-                    new WrapperPlayServerOpenWindow(WINDOW_ID, rows - 1, menu.title()));
+                    new WrapperPlayServerOpenWindow(WINDOW_ID, rows - 1,
+                            Translations.render(menu.title(), viewer.getLocale())));
             PacketEvents.getAPI().getPlayerManager().sendPacket(platform,
                     new WrapperPlayServerWindowItems(WINDOW_ID, 0, contents, ItemStack.EMPTY));
             openViews.put(viewer.getUniqueId(), new OpenView(actions, contents, closeSlot));
@@ -175,7 +185,7 @@ public final class ChestMenuRenderer implements MenuRenderer {
      * gauche d'un coffre vide se lit comme un oubli, au milieu comme un choix.
      */
     private void placeContent(List<MenuItem> items, List<ItemStack> contents,
-                              List<MenuItem> actions, int contentRows) {
+                              List<MenuItem> actions, int contentRows, Locale locale) {
         int index = 0;
         for (int row = 0; row < contentRows && index < items.size(); row++) {
             int remaining = items.size() - index;
@@ -185,7 +195,7 @@ public final class ChestMenuRenderer implements MenuRenderer {
             for (int column = 0; column < onThisRow; column++) {
                 MenuItem item = items.get(index++);
                 int slot = (row + 1) * COLUMNS + 1 + leftPadding + column;
-                contents.set(slot, toItemStack(item));
+                contents.set(slot, toItemStack(item, locale));
                 actions.set(slot, item);
             }
         }
@@ -203,17 +213,18 @@ public final class ChestMenuRenderer implements MenuRenderer {
                 .build();
     }
 
-    private ItemStack closeButton() {
+    private ItemStack closeButton(Locale locale) {
         return ItemStack.builder()
                 .type(ItemTypes.BARRIER)
                 .amount(1)
-                .component(ComponentTypes.CUSTOM_NAME,
-                        Component.translatable("panelautostarter.menu.close", NamedTextColor.RED)
-                                .decoration(TextDecoration.ITALIC, false))
+                .component(ComponentTypes.CUSTOM_NAME, Translations.render(
+                                Component.translatable("panelautostarter.menu.close",
+                                        NamedTextColor.RED), locale)
+                        .decoration(TextDecoration.ITALIC, false))
                 .build();
     }
 
-    private ItemStack toItemStack(MenuItem item) {
+    private ItemStack toItemStack(MenuItem item, Locale locale) {
         ItemType type = ItemTypes.getByName(item.icon());
         if (type == null) {
             // Un identifiant d'objet inconnu vient de la configuration ou d'une
@@ -236,19 +247,21 @@ public final class ChestMenuRenderer implements MenuRenderer {
 
         // Sans cela le client applique son propre style aux noms d'objets :
         // italique et violet, ce qui n'est pas ce qu'on a ecrit.
-        builder.component(ComponentTypes.CUSTOM_NAME, item.label()
-                .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        builder.component(ComponentTypes.CUSTOM_NAME,
+                Translations.render(item.label(), locale)
+                        .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
 
         List<Component> lore = new ArrayList<>(item.lore());
         if (item.isActionable()) {
-            lore.add(Component.translatable("panelautostarter.menu.click", NamedTextColor.DARK_GRAY)
+            lore.add(Translations.render(Component.translatable("panelautostarter.menu.click",
+                            NamedTextColor.DARK_GRAY), locale)
                     .decoration(TextDecoration.ITALIC, false));
         }
         if (!lore.isEmpty()) {
             List<Component> styled = new ArrayList<>(lore.size());
             for (Component line : lore) {
-                styled.add(line.decorationIfAbsent(TextDecoration.ITALIC,
-                        TextDecoration.State.FALSE));
+                styled.add(Translations.render(line, locale)
+                        .decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
             }
             builder.component(ComponentTypes.LORE, new ItemLore(styled));
         }

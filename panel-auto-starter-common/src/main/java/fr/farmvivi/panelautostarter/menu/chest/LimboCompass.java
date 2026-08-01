@@ -14,6 +14,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientHe
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerHeldItemChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
+import fr.farmvivi.panelautostarter.i18n.Translations;
 import fr.farmvivi.panelautostarter.menu.HotbarItem;
 import fr.farmvivi.panelautostarter.menu.MenuSettings;
 import net.kyori.adventure.text.Component;
@@ -100,8 +101,12 @@ public final class LimboCompass implements HotbarItem {
                 .component(ComponentTypes.CUSTOM_NAME,
                         Component.text(settings.name(), NamedTextColor.AQUA)
                                 .decoration(TextDecoration.ITALIC, false))
+                // Traduit ici : l'objet part en paquet, il ne passe pas par
+                // CommonPlayer et personne d'autre ne le rendra.
                 .component(ComponentTypes.LORE, new ItemLore(List.of(
-                        Component.translatable("panelautostarter.menu.compass.hint", NamedTextColor.GRAY)
+                        Translations.render(Component.translatable(
+                                "panelautostarter.menu.compass.hint", NamedTextColor.GRAY),
+                                player.getLocale())
                                 .decoration(TextDecoration.ITALIC, false))))
                 .build();
 

@@ -122,10 +122,18 @@ colours are design and identical in every language — and each sentence is one
 key with `{0}` arguments, never fragments joined at runtime: word order differs
 between languages.
 
-Two traps, both already paid for. `MessageFormat` eats single quotes unless
-doubled, which only shows in French where they abound. And `{0,choice,…}` does
+Three traps, all already paid for. `MessageFormat` eats single quotes unless
+doubled, which only shows in French where they abound. `{0,choice,…}` does
 **not** work here: Adventure passes arguments as components, not numbers, so
 phrase counts as `Label: {0}` rather than relying on plural forms.
+
+And the one that shipped broken: **anything that builds a packet bypasses the
+send path entirely.** `menu/chest` hands components to PacketEvents — window
+titles, item names, lore — where no `CommonPlayer` method ever runs, so nothing
+renders them and players read raw keys. Every component leaving that package
+must be passed through `Translations.render` with the viewer's locale. No test
+guards this: PacketEvents is not initialised under test, so the whole renderer
+is unreachable there. Read the code.
 
 `TranslationsTest` guards the rest: every key used in the sources must exist,
 and every bundle must carry the same keys with the same placeholders.
