@@ -84,6 +84,20 @@ public class PendingNotifications {
      * @param player le joueur
      * @return le nombre de retours délivrés
      */
+    /**
+     * Indique si un joueur a quelque chose en attente.
+     * <p>
+     * Sert à ne pas superposer un message d'accueil à une explication qui
+     * compte davantage — le joueur ramené d'un serveur qui vient de s'arrêter
+     * doit lire pourquoi, pas un « bienvenue ».
+     *
+     * @param player le joueur
+     * @return true si quelque chose l'attend
+     */
+    public boolean hasPending(CommonPlayer player) {
+        return player != null && pending.containsKey(player.getUniqueId());
+    }
+
     public int flush(CommonPlayer player) {
         if (player == null) {
             return 0;

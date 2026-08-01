@@ -257,6 +257,32 @@ queue:
   # Serveur d'attente où patientent les joueurs pendant le démarrage
   server: lobby
 
+  # Titre d'accueil, affiché au joueur qui arrive sur le serveur d'attente
+  # sans attendre de serveur en particulier.
+  #
+  # DÉSACTIVÉ par défaut : le texte proposé ci-dessous est celui du plugin, pas
+  # le vôtre. L'afficher d'emblée ferait surgir un « Bienvenue » chez tous les
+  # joueurs à la première mise à jour, sur des réseaux qui ont leur propre
+  # accueil — ou n'en veulent pas, ce qui est aussi un choix.
+  #
+  # Il s'efface de lui-même dans deux cas : un joueur en file voit déjà le
+  # titre de mise en file, et un joueur ramené d'un serveur qui vient de
+  # s'arrêter doit lire pourquoi plutôt qu'un « bienvenue ».
+  #
+  # Codes couleur « & » acceptés. Une chaîne vide est respectée : c'est la
+  # façon d'afficher un titre sans sous-titre, ou l'inverse.
+  welcome-title:
+    enabled: false
+    title: "&b&lBienvenue"
+    subtitle: "&7Choisissez un serveur"
+    fade-in: 300
+    stay: 3000
+    fade-out: 500
+    sound:
+      name: block.note_block.chime
+      volume: 0.7
+      pitch: 1.2
+
   # Commande ramenant le joueur au serveur d'attente.
   #
   # Ouverte à tous, sans permission : le serveur d'attente est l'endroit où le

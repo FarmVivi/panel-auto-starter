@@ -151,7 +151,7 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new ServerConnectEventListener(this));
             this.getPlugin().addEventListener(new ProxyPingEventListener(this));
             this.getPlugin().addEventListener(new PlayerDisconnectEventListener(this));
-            this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingNotifications));
+            this.getPlugin().addEventListener(new ServerConnectedEventListener(pendingNotifications, this));
             this.getPlugin().addEventListener(new PlayerKickedEventListener(this));
             this.getLogger().info("Event listeners registered.");
 

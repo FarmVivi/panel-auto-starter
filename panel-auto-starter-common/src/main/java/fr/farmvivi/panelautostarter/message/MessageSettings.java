@@ -1,5 +1,7 @@
 package fr.farmvivi.panelautostarter.message;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.config.Configuration;
 
 import java.time.Duration;
@@ -65,6 +67,48 @@ public final class MessageSettings {
     public record ActionBarSettings(boolean enabled, Duration interval, boolean showPosition) {
     }
 
+    /**
+     * Titre d'accueil sur le serveur d'attente.
+     * <p>
+     * Le texte est configurable, contrairement aux autres titres du plugin : il
+     * n'énonce pas un fait technique mais accueille chez soi, ce qui regarde
+     * l'administrateur et non le plugin.
+     *
+     * @param enabled  affiche le titre
+     * @param title    le titre, codes couleur {@code &} acceptés
+     * @param subtitle le sous-titre
+     * @param fadeIn   durée d'apparition
+     * @param stay     durée d'affichage plein
+     * @param fadeOut  durée de disparition
+     * @param sound    son l'accompagnant
+     */
+    public record WelcomeSettings(boolean enabled, Component title, Component subtitle,
+                                  Duration fadeIn, Duration stay, Duration fadeOut,
+                                  SoundSpec sound) {
+    }
+
+    /**
+     * Désactivé par défaut à dessein : le texte proposé est le nôtre, pas celui
+     * de l'administrateur. L'afficher d'emblée ferait surgir un « Bienvenue »
+     * français chez tout le monde à la première mise à jour, sur des réseaux qui
+     * ont leur propre accueil — ou pas d'accueil du tout, ce qui est aussi un
+     * choix. Il s'active en connaissance de cause.
+     */
+    private static final WelcomeSettings DEFAULT_WELCOME = new WelcomeSettings(
+            false,
+            legacy("&b&lBienvenue"),
+            legacy("&7Choisissez un serveur"),
+            Duration.ofMillis(300), Duration.ofMillis(3000), Duration.ofMillis(500),
+            new SoundSpec("block.note_block.chime", 0.7f, 1.2f));
+
+    /**
+     * Lit un texte aux codes couleur {@code &}, forme que les administrateurs
+     * de serveurs connaissent déjà.
+     */
+    private static Component legacy(String text) {
+        return LegacyComponentSerializer.legacyAmpersand().deserialize(text == null ? "" : text);
+    }
+
     private static final ActionBarSettings DEFAULT_ACTION_BAR = new ActionBarSettings(
             true, Duration.ofSeconds(1), true);
 
@@ -84,13 +128,16 @@ public final class MessageSettings {
     private final CountdownSettings countdown;
     private final KickFeedbackSettings kickFeedback;
     private final ActionBarSettings actionBar;
+    private final WelcomeSettings welcome;
 
     private MessageSettings(TitleSettings title, CountdownSettings countdown,
-                            KickFeedbackSettings kickFeedback, ActionBarSettings actionBar) {
+                            KickFeedbackSettings kickFeedback, ActionBarSettings actionBar,
+                            WelcomeSettings welcome) {
         this.title = title;
         this.countdown = countdown;
         this.kickFeedback = kickFeedback;
         this.actionBar = actionBar;
+        this.welcome = welcome;
     }
 
     /**
@@ -100,7 +147,7 @@ public final class MessageSettings {
      */
     public static MessageSettings defaults() {
         return new MessageSettings(DEFAULT_TITLE, DEFAULT_COUNTDOWN, DEFAULT_KICK_FEEDBACK,
-                DEFAULT_ACTION_BAR);
+                DEFAULT_ACTION_BAR, DEFAULT_WELCOME);
     }
 
     /**
@@ -111,7 +158,8 @@ public final class MessageSettings {
      * @return les réglages correspondants
      */
     public static MessageSettings of(TitleSettings title, CountdownSettings countdown) {
-        return new MessageSettings(title, countdown, DEFAULT_KICK_FEEDBACK, DEFAULT_ACTION_BAR);
+        return new MessageSettings(title, countdown, DEFAULT_KICK_FEEDBACK, DEFAULT_ACTION_BAR,
+                DEFAULT_WELCOME);
     }
 
     /**
@@ -124,7 +172,8 @@ public final class MessageSettings {
      */
     public static MessageSettings of(TitleSettings title, CountdownSettings countdown,
                                      KickFeedbackSettings kickFeedback) {
-        return new MessageSettings(title, countdown, kickFeedback, DEFAULT_ACTION_BAR);
+        return new MessageSettings(title, countdown, kickFeedback, DEFAULT_ACTION_BAR,
+                DEFAULT_WELCOME);
     }
 
     /**
@@ -138,7 +187,7 @@ public final class MessageSettings {
      */
     public static MessageSettings of(TitleSettings title, CountdownSettings countdown,
                                      KickFeedbackSettings kickFeedback, ActionBarSettings actionBar) {
-        return new MessageSettings(title, countdown, kickFeedback, actionBar);
+        return new MessageSettings(title, countdown, kickFeedback, actionBar, DEFAULT_WELCOME);
     }
 
     /**
@@ -176,7 +225,29 @@ public final class MessageSettings {
                         clamp(millis(config, "queue.actionbar.interval", DEFAULT_ACTION_BAR.interval()),
                                 MIN_ACTION_BAR_INTERVAL, MAX_ACTION_BAR_INTERVAL),
                         config.getBoolean("queue.actionbar.show-position",
-                                DEFAULT_ACTION_BAR.showPosition())));
+                                DEFAULT_ACTION_BAR.showPosition())),
+                new WelcomeSettings(
+                        config.getBoolean("queue.welcome-title.enabled", DEFAULT_WELCOME.enabled()),
+                        legacyOr(config, "queue.welcome-title.title", DEFAULT_WELCOME.title()),
+                        legacyOr(config, "queue.welcome-title.subtitle", DEFAULT_WELCOME.subtitle()),
+                        millis(config, "queue.welcome-title.fade-in", DEFAULT_WELCOME.fadeIn()),
+                        millis(config, "queue.welcome-title.stay", DEFAULT_WELCOME.stay()),
+                        millis(config, "queue.welcome-title.fade-out", DEFAULT_WELCOME.fadeOut()),
+                        SoundSpec.from(config, "queue.welcome-title.sound",
+                                DEFAULT_WELCOME.sound())));
+    }
+
+    /**
+     * Lit un texte configuré, ou garde celui par défaut si la clé est absente.
+     * <p>
+     * Une chaîne <em>vide</em> est en revanche respectée : c'est la façon
+     * d'afficher un titre sans sous-titre, ou l'inverse.
+     */
+    private static Component legacyOr(Configuration config, String path, Component fallback) {
+        if (!config.contains(path)) {
+            return fallback;
+        }
+        return legacy(config.getString(path, ""));
     }
 
     private static final Duration MIN_ACTION_BAR_INTERVAL = Duration.ofMillis(250);
@@ -217,5 +288,14 @@ public final class MessageSettings {
      */
     public ActionBarSettings getActionBar() {
         return actionBar;
+    }
+
+    /**
+     * Titre d'accueil sur le serveur d'attente.
+     *
+     * @return les réglages correspondants
+     */
+    public WelcomeSettings getWelcome() {
+        return welcome;
     }
 }
