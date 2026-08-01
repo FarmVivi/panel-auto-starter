@@ -45,3 +45,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+# Rapports de crash de la JVM. Ils apparaissent la ou tourne le fork de
+# surefire — donc dans un module, pas seulement a la racine — et un « git add -A »
+# les emporte sans qu'on les voie.
+hs_err_pid*.log
+replay_pid*.log
