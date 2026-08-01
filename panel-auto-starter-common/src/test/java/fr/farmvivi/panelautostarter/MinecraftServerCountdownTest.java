@@ -8,6 +8,7 @@ import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.message.SoundSpec;
 import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
+import fr.farmvivi.panelautostarter.mocks.TestTranslations;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServerPing;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
@@ -146,7 +147,7 @@ public class MinecraftServerCountdownTest {
         assertEquals(Messages.countdownTitle(1), player.getLastTitle());
 
         runNext(1);
-        assertEquals(Messages.readyTitle(), player.getLastTitle(),
+        assertEquals(TestTranslations.render(Messages.readyTitle()), player.getLastTitle(),
                 "Le dernier tic doit annoncer le depart");
     }
 
@@ -264,7 +265,7 @@ public class MinecraftServerCountdownTest {
 
         assertEquals(MinecraftServerStatus.OFFLINE, minecraftServer.getStatus());
         assertTrue(minecraftServer.getQueue().isEmpty(), "La file doit etre videe");
-        assertEquals(Messages.teleportFailed("Survie"), player.getLastMessage(),
+        assertEquals(TestTranslations.render(Messages.teleportFailed("Survie")), player.getLastMessage(),
                 "Le joueur doit apprendre que le demarrage a echoue");
     }
 

@@ -14,6 +14,7 @@ import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServerPing;
+import fr.farmvivi.panelautostarter.mocks.TestTranslations;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import net.kyori.adventure.text.Component;
@@ -108,7 +109,10 @@ public class AdminCommandTest {
         String text() {
             StringBuilder builder = new StringBuilder();
             for (Component component : received) {
-                builder.append(PlainTextComponentSerializer.plainText().serialize(component))
+                // Rendu comme il le serait a la reception : les messages sont
+                // des composants traduisibles, pas du texte fige.
+                builder.append(PlainTextComponentSerializer.plainText()
+                                .serialize(TestTranslations.render(component)))
                         .append('\n');
             }
             return builder.toString();

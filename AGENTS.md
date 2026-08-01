@@ -114,7 +114,23 @@ selection menu is deliberately dumb and does **not** filter by permission; the
 connection event decides. Filtering there would protect nothing (the command
 stays open) while looking like protection.
 
-**9. The shipped `config.yml` must match the coded defaults.**
+**9. Player-facing text is a translatable component, never a literal.**
+Messages stay *unresolved* until handed to someone, which is the only way two
+players on one server can read two languages. Rendering happens in
+`CommonPlayer` implementations against `getLocale()`. Style stays in code —
+colours are design and identical in every language — and each sentence is one
+key with `{0}` arguments, never fragments joined at runtime: word order differs
+between languages.
+
+Two traps, both already paid for. `MessageFormat` eats single quotes unless
+doubled, which only shows in French where they abound. And `{0,choice,…}` does
+**not** work here: Adventure passes arguments as components, not numbers, so
+phrase counts as `Label: {0}` rather than relying on plural forms.
+
+`TranslationsTest` guards the rest: every key used in the sources must exist,
+and every bundle must carry the same keys with the same placeholders.
+
+**10. The shipped `config.yml` must match the coded defaults.**
 `MotdSettingsTest` loads the real resource and compares it to
 `MotdSettings.defaults()`. Without it the file would silently advertise
 behaviour the code does not implement.

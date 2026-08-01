@@ -8,6 +8,7 @@ import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import fr.farmvivi.panelautostarter.common.event.PlayerKickedEvent;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
+import fr.farmvivi.panelautostarter.mocks.TestTranslations;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import fr.farmvivi.panelautostarter.message.Messages;
 import fr.farmvivi.panelautostarter.message.SoundSpec;
@@ -189,7 +190,7 @@ public class PlayerKickedEventListenerTest {
         pendingNotifications.flush(player);
 
         assertNotNull(player.getLastMessage(), "Le chat doit etre delivre a l'arrivee");
-        assertEquals(Messages.serverStoppedTitle(), player.getLastTitle());
+        assertEquals(TestTranslations.render(Messages.serverStoppedTitle()), player.getLastTitle());
         assertTrue(player.getPlayedSounds().contains(
                         MessageSettings.defaults().getKickFeedback().sound().name()),
                 "Le son doit accompagner le retour");

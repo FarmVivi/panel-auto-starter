@@ -10,6 +10,21 @@ import java.util.UUID;
  * Mock de CommonPlayer pour les tests unitaires.
  */
 public class MockCommonPlayer implements CommonPlayer {
+
+    static {
+        // Les messages sont des composants traduisibles : sans traductions
+        // installees, les tests ne verraient que des cles.
+        TestTranslations.ensureInstalled();
+    }
+
+    /**
+     * Rend un composant comme le ferait un vrai joueur à la réception.
+     */
+    private static Component localized(Component message) {
+        return fr.farmvivi.panelautostarter.i18n.Translations.render(message,
+                TestTranslations.LOCALE);
+    }
+
     private final String username;
     private final UUID uuid;
     private final String displayName;
@@ -111,7 +126,7 @@ public class MockCommonPlayer implements CommonPlayer {
 
     @Override
     public void sendMessage(Component message) {
-        this.lastMessage = message;
+        this.lastMessage = localized(message);
     }
 
     @Override
@@ -155,8 +170,8 @@ public class MockCommonPlayer implements CommonPlayer {
     @Override
     public void showTitle(Component title, Component subtitle, java.time.Duration fadeIn,
                           java.time.Duration stay, java.time.Duration fadeOut) {
-        this.lastTitle = title;
-        this.lastSubtitle = subtitle;
+        this.lastTitle = localized(title);
+        this.lastSubtitle = localized(subtitle);
     }
 
     @Override
@@ -182,7 +197,7 @@ public class MockCommonPlayer implements CommonPlayer {
 
     @Override
     public void sendActionBar(Component message) {
-        actionBars.add(message);
+        actionBars.add(localized(message));
     }
 
     /**

@@ -10,6 +10,7 @@ import fr.farmvivi.panelautostarter.common.command.CommonCommandSource;
 import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
+import fr.farmvivi.panelautostarter.mocks.TestTranslations;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import fr.farmvivi.panelautostarter.queue.QueueCoordinator;
@@ -86,7 +87,8 @@ public class LobbyCommandTest {
     private static String plain(List<Component> received) {
         StringBuilder builder = new StringBuilder();
         for (Component component : received) {
-            builder.append(PlainTextComponentSerializer.plainText().serialize(component))
+            builder.append(PlainTextComponentSerializer.plainText()
+                    .serialize(TestTranslations.render(component)))
                     .append('\n');
         }
         return builder.toString();

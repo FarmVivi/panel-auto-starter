@@ -101,7 +101,7 @@ public final class LimboCompass implements HotbarItem {
                         Component.text(settings.name(), NamedTextColor.AQUA)
                                 .decoration(TextDecoration.ITALIC, false))
                 .component(ComponentTypes.LORE, new ItemLore(List.of(
-                        Component.text("Clic droit pour choisir un serveur", NamedTextColor.GRAY)
+                        Component.translatable("panelautostarter.menu.compass.hint", NamedTextColor.GRAY)
                                 .decoration(TextDecoration.ITALIC, false))))
                 .build();
 

@@ -33,6 +33,11 @@ public final class ServerMenu {
     private ServerMenu() {
     }
 
+    private static Component text(String key, NamedTextColor color,
+                                  net.kyori.adventure.text.ComponentLike... args) {
+        return Component.translatable("panelautostarter." + key, args).color(color);
+    }
+
     /**
      * Construit le menu.
      *
@@ -51,12 +56,12 @@ public final class ServerMenu {
 
         if (items.isEmpty()) {
             items.add(MenuItem.info("minecraft:barrier",
-                    Component.text("Aucun serveur géré", NamedTextColor.GRAY),
-                    List.of(Component.text("Rien n'est déclaré dans « servers »",
-                            NamedTextColor.DARK_GRAY))));
+                    text("menu.servers.none", NamedTextColor.GRAY),
+                    List.of(text("menu.servers.none.detail", NamedTextColor.DARK_GRAY))));
         }
 
-        return new Menu(Component.text("Serveurs", NamedTextColor.AQUA, TextDecoration.BOLD), items);
+        return new Menu(text("menu.servers.title", NamedTextColor.AQUA)
+                .decorate(TextDecoration.BOLD), items);
     }
 
     private static MenuItem item(MinecraftServer server, CommonPlayer viewer, String serverCommand) {
@@ -87,21 +92,20 @@ public final class ServerMenu {
 
         CommonServerPing ping = server.getServerPing();
         if (status.equals(MinecraftServerStatus.ONLINE) && ping != null) {
-            lore.add(Component.text(ping.getOnlinePlayers() + " joueur"
-                    + (ping.getOnlinePlayers() > 1 ? "s" : "") + " connecté"
-                    + (ping.getOnlinePlayers() > 1 ? "s" : ""), NamedTextColor.GRAY));
+            lore.add(text("menu.servers.online", NamedTextColor.GRAY,
+                    Component.text(ping.getOnlinePlayers())));
         } else if (!status.equals(MinecraftServerStatus.ONLINE)) {
-            lore.add(Component.text("Cliquez pour le démarrer", NamedTextColor.GRAY));
+            lore.add(text("menu.servers.start", NamedTextColor.GRAY));
         }
 
         int queued = server.getQueue().size();
         if (queued > 0) {
-            lore.add(Component.text(queued + " en attente", NamedTextColor.DARK_GRAY));
+            lore.add(text("menu.waiting", NamedTextColor.DARK_GRAY, Component.text(queued)));
         }
 
         if (here) {
             // Proposer de rejoindre l'endroit ou l'on est deja n'a pas de sens.
-            lore.add(Component.text("Vous y êtes", NamedTextColor.DARK_GRAY));
+            lore.add(text("menu.servers.here", NamedTextColor.DARK_GRAY));
             return MenuItem.info(icon(status), label, lore);
         }
 

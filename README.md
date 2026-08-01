@@ -247,6 +247,23 @@ A server that has never been seen online has nothing cached, so `description: ca
 | Subtle | `favicon-badge: false`, `favicon-grayscale: true` |
 | Change nothing | every field on `proxy`, `version-label: none` |
 
+### Language
+
+**Every player reads in their own language** — the one their client announces — so two players on the same server can read two different ones. Nothing to configure for that.
+
+```yaml
+language:
+  default: auto     # auto | en | fr | …
+```
+
+That setting only fixes the *fallback*: what someone whose language is not translated gets, and what the console speaks.
+
+Wording lives in `lang/`, next to `config.yml`. The shipped files are copied there on first start and never overwritten afterwards — they are yours to edit. Drop a `messages_de.properties` in and German is picked up with no further ceremony. **A missing key falls back to the shipped text**, so translating half a file is perfectly fine.
+
+Two things deliberately stay out of those files. **Colours**, because they are design and are the same in every language. And **whole sentences are one key each** rather than fragments joined at runtime: word order differs between languages, and `{0} is starting` cannot be assembled from `{0}` plus `is starting`.
+
+The messages are built as *translatable components* and resolved only when handed to someone, which is what makes per-player language possible at all. Two tests keep the files honest: every key used by the code must exist, and every language must carry the same keys with the same placeholders — a missing one silently drops information, usually a server name.
+
 ### Menus
 
 ```yaml

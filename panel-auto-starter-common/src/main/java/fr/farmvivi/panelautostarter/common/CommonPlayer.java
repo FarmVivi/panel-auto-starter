@@ -62,6 +62,18 @@ public interface CommonPlayer {
     Object getPlatformHandle();
 
     /**
+     * Retourne la langue annoncée par le client du joueur.
+     * <p>
+     * C'est elle qui décide dans quelle langue il lit ses messages : deux
+     * joueurs d'un même serveur peuvent donc en lire deux différentes.
+     *
+     * @return la langue, ou null si le client ne l'a pas encore annoncée
+     */
+    default java.util.Locale getLocale() {
+        return null;
+    }
+
+    /**
      * Retourne l'apparence du joueur, si la plateforme la donne.
      * <p>
      * L'implémentation par défaut n'en retourne aucune : BungeeCord n'expose pas

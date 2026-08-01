@@ -43,6 +43,11 @@ public final class AdminMenu {
     private AdminMenu() {
     }
 
+    private static Component text(String key, NamedTextColor color,
+                                  net.kyori.adventure.text.ComponentLike... args) {
+        return Component.translatable("panelautostarter." + key, args).color(color);
+    }
+
     /**
      * Construit le menu racine : un serveur par entrée.
      *
@@ -66,12 +71,11 @@ public final class AdminMenu {
 
         if (items.isEmpty()) {
             items.add(MenuItem.info("minecraft:barrier",
-                    Component.text("Vous n'administrez aucun serveur", NamedTextColor.GRAY),
-                    List.of()));
+                    text("menu.admin.none", NamedTextColor.GRAY), List.of()));
         }
 
-        return new Menu(Component.text("Administration", NamedTextColor.AQUA, TextDecoration.BOLD),
-                items);
+        return new Menu(text("menu.admin.title", NamedTextColor.AQUA)
+                .decorate(TextDecoration.BOLD), items);
     }
 
     /**
@@ -91,42 +95,40 @@ public final class AdminMenu {
         // serveur allume, ou l'inverse, n'aboutirait qu'a un refus.
         if (status.equals(MinecraftServerStatus.OFFLINE)) {
             items.add(MenuItem.of("minecraft:lime_dye",
-                    Component.text("Démarrer", NamedTextColor.GREEN),
-                    List.of(Component.text("Le serveur est éteint", NamedTextColor.GRAY)),
+                    text("menu.admin.start", NamedTextColor.GREEN),
+                    List.of(text("menu.admin.start.detail", NamedTextColor.GRAY)),
                     label + " start " + name));
         } else if (status.equals(MinecraftServerStatus.ONLINE)) {
             items.add(MenuItem.of("minecraft:red_dye",
-                    Component.text("Arrêter", NamedTextColor.RED),
-                    List.of(Component.text("Les joueurs présents seront ramenés",
-                            NamedTextColor.GRAY)),
+                    text("menu.admin.stop", NamedTextColor.RED),
+                    List.of(text("menu.admin.stop.detail", NamedTextColor.GRAY)),
                     label + " stop " + name));
         } else {
             items.add(MenuItem.info("minecraft:orange_dye",
-                    Component.text("Démarrage en cours", NamedTextColor.GOLD),
-                    List.of(Component.text("Patientez", NamedTextColor.GRAY))));
+                    text("menu.admin.starting", NamedTextColor.GOLD),
+                    List.of(text("menu.admin.starting.detail", NamedTextColor.GRAY))));
         }
 
         items.add(MenuItem.of("minecraft:paper",
                 whitelist.isEnabled()
-                        ? Component.text("Désactiver la liste blanche", NamedTextColor.GOLD)
-                        : Component.text("Activer la liste blanche", NamedTextColor.AQUA),
-                List.of(Component.text(whitelist.size() + " inscrit"
-                        + (whitelist.size() > 1 ? "s" : ""), NamedTextColor.DARK_GRAY)),
+                        ? text("menu.admin.whitelist.off", NamedTextColor.GOLD)
+                        : text("menu.admin.whitelist.on", NamedTextColor.AQUA),
+                List.of(text("menu.listed", NamedTextColor.DARK_GRAY,
+                        Component.text(whitelist.size()))),
                 label + " whitelist " + name + (whitelist.isEnabled() ? " off" : " on")));
 
         items.add(MenuItem.of("minecraft:player_head",
-                Component.text("Inscrire un joueur", NamedTextColor.GREEN),
-                List.of(Component.text("Parmi les joueurs connectés", NamedTextColor.DARK_GRAY)),
+                text("menu.admin.add", NamedTextColor.GREEN),
+                List.of(text("menu.admin.add.detail", NamedTextColor.DARK_GRAY)),
                 label + " menu " + name + " add"));
 
         items.add(MenuItem.of("minecraft:book",
-                Component.text("Voir et retirer", NamedTextColor.GRAY),
-                List.of(Component.text(whitelist.size() + " inscrit"
-                        + (whitelist.size() > 1 ? "s" : ""), NamedTextColor.DARK_GRAY)),
+                text("menu.admin.remove", NamedTextColor.GRAY),
+                List.of(text("menu.listed", NamedTextColor.DARK_GRAY,
+                        Component.text(whitelist.size()))),
                 label + " menu " + name + " remove"));
 
-        items.add(MenuItem.of("minecraft:arrow",
-                Component.text("Retour", NamedTextColor.GRAY),
+        items.add(MenuItem.of("minecraft:arrow", text("menu.back", NamedTextColor.GRAY),
                 List.of(), label + " menu"));
 
         return new Menu(Component.text(name, NamedTextColor.AQUA, TextDecoration.BOLD), items);
@@ -158,22 +160,22 @@ public final class AdminMenu {
             }
             items.add(MenuItem.head(player.getSkin(),
                     Component.text(player.getUsername(), NamedTextColor.WHITE),
-                    List.of(Component.text("Inscrire sur " + serverName, NamedTextColor.GRAY)),
+                    List.of(text("menu.admin.add.on", NamedTextColor.GRAY,
+                            Component.text(serverName))),
                     label + " whitelist " + serverName + " add " + player.getUsername()));
         }
 
         if (items.isEmpty()) {
             items.add(MenuItem.info("minecraft:barrier",
-                    Component.text("Personne à inscrire", NamedTextColor.GRAY),
-                    List.of(Component.text("Tous les joueurs connectés y figurent déjà",
-                            NamedTextColor.DARK_GRAY))));
+                    text("menu.admin.add.none", NamedTextColor.GRAY),
+                    List.of(text("menu.admin.add.none.detail", NamedTextColor.DARK_GRAY))));
         }
 
-        items.add(MenuItem.of("minecraft:arrow", Component.text("Retour", NamedTextColor.GRAY),
+        items.add(MenuItem.of("minecraft:arrow", text("menu.back", NamedTextColor.GRAY),
                 List.of(), label + " menu " + serverName));
 
-        return new Menu(Component.text("Inscrire — " + serverName, NamedTextColor.AQUA,
-                TextDecoration.BOLD), items);
+        return new Menu(text("menu.admin.add.title", NamedTextColor.AQUA,
+                Component.text(serverName)).decorate(TextDecoration.BOLD), items);
     }
 
     /**
@@ -206,20 +208,21 @@ public final class AdminMenu {
             CommonPlayer present = onlineByUuid.get(entry.getKey());
             items.add(MenuItem.head(present == null ? null : present.getSkin(),
                     Component.text(target, NamedTextColor.WHITE),
-                    List.of(Component.text("Retirer de " + serverName, NamedTextColor.RED)),
+                    List.of(text("menu.admin.remove.from", NamedTextColor.RED,
+                            Component.text(serverName))),
                     label + " whitelist " + serverName + " remove " + target));
         }
 
         if (items.isEmpty()) {
             items.add(MenuItem.info("minecraft:barrier",
-                    Component.text("Personne n'y figure", NamedTextColor.GRAY), List.of()));
+                    text("menu.admin.remove.none", NamedTextColor.GRAY), List.of()));
         }
 
-        items.add(MenuItem.of("minecraft:arrow", Component.text("Retour", NamedTextColor.GRAY),
+        items.add(MenuItem.of("minecraft:arrow", text("menu.back", NamedTextColor.GRAY),
                 List.of(), label + " menu " + serverName));
 
-        return new Menu(Component.text("Liste blanche — " + serverName, NamedTextColor.AQUA,
-                TextDecoration.BOLD), items);
+        return new Menu(text("menu.admin.remove.title", NamedTextColor.AQUA,
+                Component.text(serverName)).decorate(TextDecoration.BOLD), items);
     }
 
     private static MenuItem serverEntry(MinecraftServer server, Whitelist whitelist, String label) {
@@ -227,15 +230,17 @@ public final class AdminMenu {
         MinecraftServerStatus status = server.getStatus();
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("État : ", NamedTextColor.GRAY)
+        lore.add(text("menu.admin.state", NamedTextColor.GRAY)
                 .append(AdminMessages.statusLabel(status)));
         if (!server.getQueue().isEmpty()) {
-            lore.add(Component.text(server.getQueue().size() + " en attente", NamedTextColor.GRAY));
+            lore.add(text("menu.waiting", NamedTextColor.GRAY,
+                    Component.text(server.getQueue().size())));
         }
-        lore.add(Component.text("Liste blanche : ", NamedTextColor.GRAY)
+        lore.add(text("menu.admin.whitelist", NamedTextColor.GRAY)
                 .append(whitelist.isEnabled()
-                        ? Component.text("active (" + whitelist.size() + ")", NamedTextColor.GREEN)
-                        : Component.text("inactive", NamedTextColor.DARK_GRAY)));
+                        ? text("menu.admin.whitelist.active", NamedTextColor.GREEN,
+                        Component.text(whitelist.size()))
+                        : text("menu.admin.whitelist.inactive", NamedTextColor.DARK_GRAY)));
 
         return MenuItem.of(icon(status), AdminMessages.statusDot(status)
                         .append(Component.text(" "))

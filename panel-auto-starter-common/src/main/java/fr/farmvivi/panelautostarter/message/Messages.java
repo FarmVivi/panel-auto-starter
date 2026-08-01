@@ -1,7 +1,9 @@
 package fr.farmvivi.panelautostarter.message;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 /**
@@ -12,8 +14,23 @@ import net.kyori.adventure.text.format.TextDecoration;
  * annonce ce qui se passe, une ligne secondaire indentée qui précise. Le préfixe
  * et l'indentation alignent les deux, de sorte que plusieurs messages
  * successifs dans le chat se lisent comme un bloc plutôt que comme du bruit.
+ * <p>
+ * <strong>Le style vit ici, le texte dans les fichiers de langue.</strong> Une
+ * couleur relève du design et vaut pour toutes les langues ; une phrase
+ * appartient à la sienne. Les messages sont donc construits comme des
+ * composants <em>traduisibles</em>, non résolus : ils ne prennent leur forme
+ * définitive qu'au moment d'être remis à quelqu'un, dans la langue de
+ * celui-ci.
+ * <p>
+ * Chaque phrase est une clé entière, jamais des fragments recollés : l'ordre
+ * des mots change d'une langue à l'autre, et « {0} démarre » ne se traduit pas
+ * en assemblant « {0} » puis « démarre ».
  */
 public final class Messages {
+
+    /** Préfixe commun des clés, qui distingue les nôtres de celles du jeu. */
+    private static final String KEY = "panelautostarter.";
+
     /**
      * Chevron discret ouvrant chaque message, pour distinguer le plugin du
      * reste du chat sans imposer un préfixe bavard.
@@ -40,6 +57,10 @@ public final class Messages {
         return INDENT.append(content.colorIfAbsent(NamedTextColor.GRAY));
     }
 
+    private static Component text(String key, TextColor color, ComponentLike... args) {
+        return Component.translatable(KEY + key, args).color(color);
+    }
+
     // ===================== Chat =====================
 
     /**
@@ -51,15 +72,15 @@ public final class Messages {
      * @return le message
      */
     public static Component joinedQueue(String serverDisplayName, int queuePosition, int queueSize) {
-        Component headline = headline(server(serverDisplayName)
-                .append(Component.text(" démarre", NamedTextColor.GOLD))
-                .append(Component.text("...", NamedTextColor.DARK_GRAY)));
+        Component headline = headline(text("queue.starting", NamedTextColor.GOLD,
+                server(serverDisplayName)));
 
+        // La place n'est annoncee qu'a partir de deux joueurs : dire « 1/1 » a
+        // quelqu'un qui attend seul n'apprend rien.
         Component detail = queueSize > 1
-                ? detail(Component.text("Vous êtes ")
-                .append(Component.text(queuePosition + "/" + queueSize, NamedTextColor.WHITE))
-                .append(Component.text(" dans la file d'attente")))
-                : detail(Component.text("Vous serez téléporté dès qu'il est prêt"));
+                ? detail(text("queue.position", NamedTextColor.GRAY,
+                Component.text(queuePosition + "/" + queueSize, NamedTextColor.WHITE)))
+                : detail(text("queue.soon", NamedTextColor.GRAY));
 
         return headline.appendNewline().append(detail);
     }
@@ -71,8 +92,8 @@ public final class Messages {
      * @return le message
      */
     public static Component teleporting(String serverDisplayName) {
-        return headline(Component.text("Téléportation vers ", NamedTextColor.GREEN)
-                .append(server(serverDisplayName)));
+        return headline(text("queue.teleporting", NamedTextColor.GREEN,
+                server(serverDisplayName)));
     }
 
     /**
@@ -82,10 +103,9 @@ public final class Messages {
      * @return le message
      */
     public static Component teleportFailed(String serverDisplayName) {
-        return headline(server(serverDisplayName)
-                .append(Component.text(" n'a pas pu démarrer", NamedTextColor.RED)))
+        return headline(text("queue.failed", NamedTextColor.RED, server(serverDisplayName)))
                 .appendNewline()
-                .append(detail(Component.text("Réessayez dans un instant")));
+                .append(detail(text("queue.failed.detail", NamedTextColor.GRAY)));
     }
 
     // ===================== Retour au serveur d'attente =====================
@@ -97,8 +117,7 @@ public final class Messages {
      * @return le message
      */
     public static Component returningToLobby(String lobbyDisplayName) {
-        return headline(Component.text("Retour vers ", NamedTextColor.GREEN)
-                .append(server(lobbyDisplayName)));
+        return headline(text("lobby.returning", NamedTextColor.GREEN, server(lobbyDisplayName)));
     }
 
     /**
@@ -108,8 +127,7 @@ public final class Messages {
      * @return le message
      */
     public static Component alreadyOnLobby(String lobbyDisplayName) {
-        return headline(Component.text("Vous êtes déjà sur ", NamedTextColor.GRAY)
-                .append(server(lobbyDisplayName)));
+        return headline(text("lobby.already", NamedTextColor.GRAY, server(lobbyDisplayName)));
     }
 
     /**
@@ -119,9 +137,9 @@ public final class Messages {
      * @return le message
      */
     public static Component lobbyUnavailable() {
-        return headline(Component.text("Le serveur d'attente est introuvable", NamedTextColor.RED))
+        return headline(text("lobby.unavailable", NamedTextColor.RED))
                 .appendNewline()
-                .append(detail(Component.text("Signalez-le à un administrateur")));
+                .append(detail(text("lobby.unavailable.detail", NamedTextColor.GRAY)));
     }
 
     // ===================== Accès refusé =====================
@@ -133,10 +151,9 @@ public final class Messages {
      * @return le message
      */
     public static Component accessDenied(String serverDisplayName) {
-        return headline(Component.text("Accès refusé à ", NamedTextColor.RED)
-                .append(server(serverDisplayName)))
+        return headline(text("access.denied", NamedTextColor.RED, server(serverDisplayName)))
                 .appendNewline()
-                .append(detail(Component.text("Vous n'avez pas la permission d'y entrer")));
+                .append(detail(text("access.denied.detail", NamedTextColor.GRAY)));
     }
 
     /**
@@ -151,10 +168,9 @@ public final class Messages {
      * @return le message
      */
     public static Component notWhitelisted(String serverDisplayName) {
-        return headline(server(serverDisplayName)
-                .append(Component.text(" est sur liste blanche", NamedTextColor.RED)))
+        return headline(text("access.whitelist", NamedTextColor.RED, server(serverDisplayName)))
                 .appendNewline()
-                .append(detail(Component.text("Demandez à un administrateur de vous y ajouter")));
+                .append(detail(text("access.whitelist.detail", NamedTextColor.GRAY)));
     }
 
     // ===================== Barre d'action =====================
@@ -196,8 +212,8 @@ public final class Messages {
                 .append(server(serverDisplayName));
 
         line = line.append(SEPARATOR).append(starting
-                ? Component.text("démarrage", NamedTextColor.GOLD)
-                : Component.text("prêt", NamedTextColor.GREEN));
+                ? text("actionbar.starting", NamedTextColor.GOLD)
+                : text("actionbar.ready", NamedTextColor.GREEN));
 
         // Annoncer « 1/1 » à quelqu'un qui attend seul n'apprend rien et occupe
         // de la place pour rien.
@@ -218,7 +234,7 @@ public final class Messages {
      * @return le titre
      */
     public static Component startingTitle() {
-        return Component.text("Démarrage", NamedTextColor.GOLD, TextDecoration.BOLD);
+        return text("title.starting", NamedTextColor.GOLD).decorate(TextDecoration.BOLD);
     }
 
     /**
@@ -228,15 +244,15 @@ public final class Messages {
      * @return le sous-titre
      */
     public static Component startingSubtitle(String serverDisplayName) {
-        return server(serverDisplayName)
-                .append(Component.text(" se prépare", NamedTextColor.GRAY));
+        return text("title.starting.subtitle", NamedTextColor.GRAY, server(serverDisplayName));
     }
 
     /**
      * Titre d'un tic du compte à rebours.
      * <p>
      * La couleur passe du rouge au vert à mesure que l'échéance approche, ce qui
-     * rend le décompte lisible d'un coup d'œil sans lire le chiffre.
+     * rend le décompte lisible d'un coup d'œil sans lire le chiffre. Un chiffre
+     * ne se traduisant pas, il n'y a ici aucune clé.
      *
      * @param secondsLeft le nombre de secondes restantes
      * @return le titre
@@ -257,8 +273,7 @@ public final class Messages {
      * @return le sous-titre
      */
     public static Component countdownSubtitle(String serverDisplayName) {
-        return Component.text("Téléportation vers ", NamedTextColor.GRAY)
-                .append(server(serverDisplayName));
+        return text("title.countdown.subtitle", NamedTextColor.GRAY, server(serverDisplayName));
     }
 
     /**
@@ -267,7 +282,7 @@ public final class Messages {
      * @return le titre
      */
     public static Component readyTitle() {
-        return Component.text("C'est parti !", NamedTextColor.GREEN, TextDecoration.BOLD);
+        return text("title.ready", NamedTextColor.GREEN).decorate(TextDecoration.BOLD);
     }
 
     // ===================== Serveur arrêté sous les pieds du joueur =====================
@@ -276,16 +291,15 @@ public final class Messages {
      * Chat adressé au joueur ramené au serveur d'attente parce que le sien
      * s'est arrêté.
      *
-     * @param serverDisplayName  le nom affiché du serveur disparu
-     * @param queueDisplayName   le nom affiché du serveur d'attente
+     * @param serverDisplayName le nom affiché du serveur disparu
+     * @param queueDisplayName  le nom affiché du serveur d'attente
      * @return le message
      */
     public static Component sentBackToQueue(String serverDisplayName, String queueDisplayName) {
-        return headline(server(serverDisplayName)
-                .append(Component.text(" s'est arrêté", NamedTextColor.RED)))
+        return headline(text("kicked.headline", NamedTextColor.RED, server(serverDisplayName)))
                 .appendNewline()
-                .append(detail(Component.text("Vous avez été ramené sur ")
-                        .append(server(queueDisplayName))));
+                .append(detail(text("kicked.detail", NamedTextColor.GRAY,
+                        server(queueDisplayName))));
     }
 
     /**
@@ -294,7 +308,7 @@ public final class Messages {
      * @return le titre
      */
     public static Component serverStoppedTitle() {
-        return Component.text("Serveur arrêté", NamedTextColor.RED, TextDecoration.BOLD);
+        return text("kicked.title", NamedTextColor.RED).decorate(TextDecoration.BOLD);
     }
 
     /**
@@ -304,7 +318,6 @@ public final class Messages {
      * @return le sous-titre
      */
     public static Component serverStoppedSubtitle(String serverDisplayName) {
-        return server(serverDisplayName)
-                .append(Component.text(" n'est plus disponible", NamedTextColor.GRAY));
+        return text("kicked.subtitle", NamedTextColor.GRAY, server(serverDisplayName));
     }
 }

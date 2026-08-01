@@ -49,6 +49,23 @@ public class VelocityPlayer implements CommonPlayer {
         return player;
     }
 
+    @Override
+    public java.util.Locale getLocale() {
+        return player.getEffectiveLocale();
+    }
+
+    /**
+     * Traduit avant d'envoyer.
+     * <p>
+     * Velocity sait le faire lui-même, mais le faire ici rend le comportement
+     * identique sur les deux proxys — BungeeCord, lui, ignore Adventure — et
+     * ne dépend pas de la façon dont Velocity choisit la langue. Sur un
+     * composant déjà traduit, l'opération est sans effet.
+     */
+    private Component localized(Component message) {
+        return fr.farmvivi.panelautostarter.i18n.Translations.render(message, getLocale());
+    }
+
     /**
      * Velocity conserve les propriétés du profil qu'il a authentifié : la
      * texture est déjà là, signature comprise.
@@ -77,17 +94,18 @@ public class VelocityPlayer implements CommonPlayer {
 
     @Override
     public void sendMessage(Component message) {
-        player.sendMessage(message);
+        player.sendMessage(localized(message));
     }
 
     @Override
     public void sendActionBar(Component message) {
-        player.sendActionBar(message);
+        player.sendActionBar(localized(message));
     }
 
     @Override
     public void showTitle(Component title, Component subtitle, Duration fadeIn, Duration stay, Duration fadeOut) {
-        player.showTitle(Title.title(title, subtitle, Title.Times.times(fadeIn, stay, fadeOut)));
+        player.showTitle(Title.title(localized(title), localized(subtitle),
+                Title.Times.times(fadeIn, stay, fadeOut)));
     }
 
     @Override

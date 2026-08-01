@@ -3,7 +3,9 @@ package fr.farmvivi.panelautostarter.message;
 import fr.farmvivi.panelautostarter.MinecraftServer;
 import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.Map;
@@ -15,11 +17,17 @@ import java.util.UUID;
  * Séparés de {@link Messages}, qui s'adresse aux joueurs : les deux publics
  * n'attendent pas la même chose. Un joueur veut savoir ce qui lui arrive, un
  * administrateur veut lire un état d'un coup d'œil.
+ * <p>
+ * Traduits de la même façon, et pour la même raison : un administrateur n'est
+ * pas plus tenu de lire le français qu'un joueur.
  */
 public final class AdminMessages {
 
+    private static final String KEY = "panelautostarter.admin.";
+
     private static final Component PREFIX = Component.text("» ", NamedTextColor.DARK_GRAY);
     private static final Component INDENT = Component.text("  ");
+    private static final Component SEPARATOR = Component.text(" · ", NamedTextColor.DARK_GRAY);
 
     private AdminMessages() {
     }
@@ -36,8 +44,13 @@ public final class AdminMessages {
         return Component.text(name, NamedTextColor.YELLOW);
     }
 
+    private static Component text(String key, TextColor color, ComponentLike... args) {
+        return Component.translatable(KEY + key, args).color(color);
+    }
+
     /**
-     * Pastille d'état, lisible sans lire le mot qui la suit.
+     * Pastille d'état, lisible sans lire le mot qui la suit. Un symbole ne se
+     * traduit pas.
      *
      * @param status l'état du serveur
      * @return la pastille colorée
@@ -58,9 +71,9 @@ public final class AdminMessages {
      */
     public static Component statusLabel(MinecraftServerStatus status) {
         return switch (status) {
-            case ONLINE -> Component.text("en ligne", NamedTextColor.GREEN);
-            case STARTING -> Component.text("démarrage", NamedTextColor.GOLD);
-            default -> Component.text("éteint", NamedTextColor.GRAY);
+            case ONLINE -> text("state.online", NamedTextColor.GREEN);
+            case STARTING -> text("state.starting", NamedTextColor.GOLD);
+            default -> text("state.offline", NamedTextColor.GRAY);
         };
     }
 
@@ -71,7 +84,8 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component statusHeader(int count) {
-        return headline(Component.text("Serveurs gérés", NamedTextColor.AQUA, TextDecoration.BOLD)
+        return headline(text("status.header", NamedTextColor.AQUA)
+                .decorate(TextDecoration.BOLD)
                 .append(Component.text(" (" + count + ")", NamedTextColor.DARK_GRAY)));
     }
 
@@ -94,13 +108,13 @@ public final class AdminMessages {
 
         int queued = server.getQueue().size();
         if (queued > 0) {
-            line = line.append(Component.text(" · ", NamedTextColor.DARK_GRAY))
-                    .append(Component.text(queued + " en file", NamedTextColor.GRAY));
+            line = line.append(SEPARATOR).append(text("status.queued", NamedTextColor.GRAY,
+                    Component.text(queued)));
         }
 
         if (whitelistOn) {
-            line = line.append(Component.text(" · ", NamedTextColor.DARK_GRAY))
-                    .append(Component.text("liste blanche " + whitelistSize, NamedTextColor.AQUA));
+            line = line.append(SEPARATOR).append(text("status.whitelist", NamedTextColor.AQUA,
+                    Component.text(whitelistSize)));
         }
 
         return line;
@@ -113,7 +127,7 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component starting(String serverName) {
-        return headline(Component.text("Démarrage de ", NamedTextColor.GOLD).append(server(serverName)));
+        return headline(text("starting", NamedTextColor.GOLD, server(serverName)));
     }
 
     /**
@@ -123,19 +137,32 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component stopping(String serverName) {
-        return headline(Component.text("Arrêt de ", NamedTextColor.GOLD).append(server(serverName)));
+        return headline(text("stopping", NamedTextColor.GOLD, server(serverName)));
     }
 
     /**
      * Refus opposé à une action sans objet, l'état visé étant déjà atteint.
+     * <p>
+     * L'état est passé comme composant traduisible plutôt que comme mot :
+     * l'insérer tel quel obligerait chaque langue à s'accommoder de la
+     * grammaire de la nôtre.
      *
      * @param serverName le nom du serveur
      * @param state      l'état déjà atteint
      * @return le message
      */
-    public static Component alreadyInState(String serverName, String state) {
-        return headline(server(serverName)
-                .append(Component.text(" est déjà " + state, NamedTextColor.GRAY)));
+    public static Component alreadyInState(String serverName, Component state) {
+        return headline(text("already", NamedTextColor.GRAY, server(serverName), state));
+    }
+
+    /**
+     * Libellé d'un état déjà atteint, pour {@link #alreadyInState}.
+     *
+     * @param status l'état
+     * @return le libellé
+     */
+    public static Component stateWord(MinecraftServerStatus status) {
+        return statusLabel(status);
     }
 
     /**
@@ -147,17 +174,15 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component whitelistToggled(String serverName, boolean enabled, int size) {
-        Component headline = headline(Component.text("Liste blanche de ", NamedTextColor.AQUA)
-                .append(server(serverName))
-                .append(enabled
-                        ? Component.text(" activée", NamedTextColor.GREEN)
-                        : Component.text(" désactivée", NamedTextColor.GRAY)));
+        Component headline = headline(enabled
+                ? text("whitelist.enabled", NamedTextColor.GREEN, server(serverName))
+                : text("whitelist.disabled", NamedTextColor.GRAY, server(serverName)));
 
         // Une liste vide que l'on vient d'activer ferme le serveur a tout le
         // monde : le dire tout de suite evite un quart d'heure de perplexite.
         if (enabled && size == 0) {
-            return headline.appendNewline().append(detail(Component
-                    .text("Elle est vide : plus personne ne peut entrer", NamedTextColor.RED)));
+            return headline.appendNewline()
+                    .append(detail(text("whitelist.empty", NamedTextColor.RED)));
         }
         return headline;
     }
@@ -171,14 +196,10 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component whitelistAdded(String username, String serverName, boolean alreadyOn) {
-        if (alreadyOn) {
-            return headline(Component.text(username, NamedTextColor.WHITE)
-                    .append(Component.text(" figurait déjà sur la liste de ", NamedTextColor.GRAY))
-                    .append(server(serverName)));
-        }
-        return headline(Component.text(username, NamedTextColor.WHITE)
-                .append(Component.text(" ajouté à la liste de ", NamedTextColor.GREEN))
-                .append(server(serverName)));
+        Component player = Component.text(username, NamedTextColor.WHITE);
+        return headline(alreadyOn
+                ? text("whitelist.already", NamedTextColor.GRAY, player, server(serverName))
+                : text("whitelist.added", NamedTextColor.GREEN, player, server(serverName)));
     }
 
     /**
@@ -190,14 +211,10 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component whitelistRemoved(String username, String serverName, boolean wasOn) {
-        if (!wasOn) {
-            return headline(Component.text(username, NamedTextColor.WHITE)
-                    .append(Component.text(" ne figurait pas sur la liste de ", NamedTextColor.GRAY))
-                    .append(server(serverName)));
-        }
-        return headline(Component.text(username, NamedTextColor.WHITE)
-                .append(Component.text(" retiré de la liste de ", NamedTextColor.GOLD))
-                .append(server(serverName)));
+        Component player = Component.text(username, NamedTextColor.WHITE);
+        return headline(wasOn
+                ? text("whitelist.removed", NamedTextColor.GOLD, player, server(serverName))
+                : text("whitelist.absent", NamedTextColor.GRAY, player, server(serverName)));
     }
 
     /**
@@ -210,13 +227,15 @@ public final class AdminMessages {
      */
     public static Component whitelistContents(String serverName, boolean enabled,
                                               Map<UUID, String> players) {
-        Component message = headline(Component.text("Liste blanche de ", NamedTextColor.AQUA)
-                .append(server(serverName))
-                .append(Component.text(enabled ? " (active)" : " (inactive)",
-                        enabled ? NamedTextColor.GREEN : NamedTextColor.DARK_GRAY)));
+        Component message = headline(text("whitelist.header", NamedTextColor.AQUA,
+                server(serverName))
+                .append(enabled
+                        ? text("whitelist.active", NamedTextColor.GREEN)
+                        : text("whitelist.inactive", NamedTextColor.DARK_GRAY)));
 
         if (players.isEmpty()) {
-            return message.appendNewline().append(detail(Component.text("Personne n'y figure")));
+            return message.appendNewline()
+                    .append(detail(text("whitelist.nobody", NamedTextColor.GRAY)));
         }
 
         for (Map.Entry<UUID, String> entry : players.entrySet()) {
@@ -233,10 +252,10 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component unknownServer(String name) {
-        return headline(Component.text("Serveur inconnu : ", NamedTextColor.RED)
-                .append(Component.text(name, NamedTextColor.WHITE)))
+        return headline(text("unknown.server", NamedTextColor.RED,
+                Component.text(name, NamedTextColor.WHITE)))
                 .appendNewline()
-                .append(detail(Component.text("Seuls les serveurs déclarés dans « servers » sont gérés")));
+                .append(detail(text("unknown.server.detail", NamedTextColor.GRAY)));
     }
 
     /**
@@ -246,11 +265,10 @@ public final class AdminMessages {
      * @return le message
      */
     public static Component unknownPlayer(String name) {
-        return headline(Component.text("Joueur introuvable : ", NamedTextColor.RED)
-                .append(Component.text(name, NamedTextColor.WHITE)))
+        return headline(text("unknown.player", NamedTextColor.RED,
+                Component.text(name, NamedTextColor.WHITE)))
                 .appendNewline()
-                .append(detail(Component.text("Indiquez un joueur connecté, un joueur déjà inscrit, "
-                        + "ou son identifiant")));
+                .append(detail(text("unknown.player.detail", NamedTextColor.GRAY)));
     }
 
     /**
@@ -259,9 +277,18 @@ public final class AdminMessages {
      * @param serverName le nom du serveur
      * @return le message
      */
-    public static Component notAdministrator(String serverName) {
-        return headline(Component.text("Vous n'administrez pas ", NamedTextColor.RED)
-                .append(server(serverName)));
+    public static Component notAdministrator(Component serverName) {
+        return headline(text("denied", NamedTextColor.RED, serverName));
+    }
+
+    /**
+     * Désignation du réseau entier, pour un refus qui ne vise aucun serveur en
+     * particulier.
+     *
+     * @return le libellé
+     */
+    public static Component thisNetwork() {
+        return text("network", NamedTextColor.RED);
     }
 
     /**
@@ -273,19 +300,23 @@ public final class AdminMessages {
     public static Component usage(String label) {
         Component message = headline(Component.text("PanelAutoStarter", NamedTextColor.AQUA,
                 TextDecoration.BOLD));
+
+        // La syntaxe reste en clair — un nom de sous-commande ne se traduit pas,
+        // il se tape — seule son explication est traduite.
         String[][] lines = {
-                {"menu", "ouvre le menu d'administration"},
-                {"status [serveur]", "état des serveurs gérés"},
-                {"start <serveur>", "démarre un serveur"},
-                {"stop <serveur>", "arrête un serveur"},
-                {"whitelist <serveur>", "affiche la liste blanche"},
-                {"whitelist <serveur> on|off", "l'active ou la désactive"},
-                {"whitelist <serveur> add|remove <joueur>", "y inscrit ou en retire"},
+                {"menu", "usage.menu"},
+                {"status [<server>]", "usage.status"},
+                {"start <server>", "usage.start"},
+                {"stop <server>", "usage.stop"},
+                {"whitelist <server>", "usage.whitelist"},
+                {"whitelist <server> on|off", "usage.whitelist.toggle"},
+                {"whitelist <server> add|remove <player>", "usage.whitelist.edit"},
         };
         for (String[] line : lines) {
             message = message.appendNewline().append(INDENT
                     .append(Component.text("/" + label + " " + line[0], NamedTextColor.WHITE))
-                    .append(Component.text(" — " + line[1], NamedTextColor.DARK_GRAY)));
+                    .append(Component.text(" — ", NamedTextColor.DARK_GRAY))
+                    .append(text(line[1], NamedTextColor.DARK_GRAY)));
         }
         return message;
     }

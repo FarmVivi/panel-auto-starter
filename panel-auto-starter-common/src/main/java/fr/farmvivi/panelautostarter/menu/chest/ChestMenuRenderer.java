@@ -208,7 +208,7 @@ public final class ChestMenuRenderer implements MenuRenderer {
                 .type(ItemTypes.BARRIER)
                 .amount(1)
                 .component(ComponentTypes.CUSTOM_NAME,
-                        Component.text("Fermer", NamedTextColor.RED)
+                        Component.translatable("panelautostarter.menu.close", NamedTextColor.RED)
                                 .decoration(TextDecoration.ITALIC, false))
                 .build();
     }
@@ -241,7 +241,7 @@ public final class ChestMenuRenderer implements MenuRenderer {
 
         List<Component> lore = new ArrayList<>(item.lore());
         if (item.isActionable()) {
-            lore.add(Component.text("Cliquez pour choisir", NamedTextColor.DARK_GRAY)
+            lore.add(Component.translatable("panelautostarter.menu.click", NamedTextColor.DARK_GRAY)
                     .decoration(TextDecoration.ITALIC, false));
         }
         if (!lore.isEmpty()) {

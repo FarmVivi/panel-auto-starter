@@ -8,6 +8,31 @@ panel:
   # Token d'API *client* (compte utilisateur), pas un token d'API application
   token: abc
 
+# Langue.
+#
+# Chaque joueur lit dans SA langue, celle que son client annonce : deux joueurs
+# d'un même serveur peuvent donc en lire deux différentes. Rien à régler pour
+# cela.
+#
+# Ce réglage ne fixe que la langue de repli — celle servie à qui n'en a pas de
+# traduite, et celle de la console.
+#
+#   auto  — suit la langue du système
+#   en, fr, de…  — une langue précise
+language:
+  default: auto
+
+# Les textes vivent dans lang/, à côté de ce fichier. Les fichiers fournis y
+# sont recopiés au premier démarrage : modifiez-les, ils ne seront jamais
+# écrasés.
+#
+# Pour ajouter une langue, déposez un « messages_de.properties » : il est pris
+# sans autre formalité. Une clé absente retombe sur le texte d'origine, donc
+# traduire à moitié ne pose aucun problème.
+#
+# Les couleurs ne sont pas dans ces fichiers : elles relèvent du design et
+# valent pour toutes les langues.
+
 # Menus.
 #
 # Le menu de sélection est VOLONTAIREMENT bête : il liste les serveurs et

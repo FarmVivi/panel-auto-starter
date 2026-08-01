@@ -4,6 +4,7 @@ import fr.farmvivi.panelautostarter.access.AccessSettings;
 import fr.farmvivi.panelautostarter.access.ServerAccess;
 import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.command.AdminCommand;
+import fr.farmvivi.panelautostarter.i18n.Translations;
 import fr.farmvivi.panelautostarter.command.LobbyCommand;
 import fr.farmvivi.panelautostarter.command.LobbyCommandSettings;
 import fr.farmvivi.panelautostarter.command.ServerMenuCommand;
@@ -122,6 +123,10 @@ public final class PanelAutoStarter {
             for (String warning : this.motdSettings.getWarnings()) {
                 this.getLogger().warning(warning);
             }
+
+            // Translations, before anything that produces text
+            Translations.install(this.plugin.getDataFolder(), resolveDefaultLocale(),
+                    message -> this.getLogger().warning(message));
 
             // Player feedback: titles and countdown sounds
             this.messageSettings = MessageSettings.from(config);
@@ -255,6 +260,28 @@ public final class PanelAutoStarter {
      * absente lèverait un {@code NoClassDefFoundError}. Tant que le corps de
      * cette méthode n'est pas exécuté, elle n'est pas chargée.
      */
+    /**
+     * Langue servie à qui n'en a pas de traduite, et à la console.
+     * <p>
+     * {@code auto} suit la langue du système, ce qui donne à un administrateur
+     * francophone une console en français sans qu'il ait rien à régler.
+     *
+     * @return la langue de repli
+     */
+    private java.util.Locale resolveDefaultLocale() {
+        String configured = config.getString("language.default", "auto");
+        if (configured == null || configured.isBlank() || configured.equalsIgnoreCase("auto")) {
+            return java.util.Locale.getDefault();
+        }
+        java.util.Locale locale = java.util.Locale.forLanguageTag(configured.trim().replace('_', '-'));
+        if (locale.getLanguage().isEmpty()) {
+            this.getLogger().warning("language.default : « " + configured
+                    + " » n'est pas une langue reconnue, la langue du systeme est utilisee.");
+            return java.util.Locale.getDefault();
+        }
+        return locale;
+    }
+
     private void registerChestRendererIfAvailable() {
         if (!PacketEventsSupport.isPresent()) {
             this.getLogger().info("PacketEvents absent : les menus s'afficheront en chat.");

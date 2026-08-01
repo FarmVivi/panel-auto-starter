@@ -12,6 +12,7 @@ import fr.farmvivi.panelautostarter.message.MessageSettings;
 import fr.farmvivi.panelautostarter.mocks.MockCommonPlayer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServer;
 import fr.farmvivi.panelautostarter.mocks.MockCommonServerPing;
+import fr.farmvivi.panelautostarter.mocks.TestTranslations;
 import fr.farmvivi.panelautostarter.motd.ServerMotd;
 import fr.farmvivi.panelautostarter.panel.PanelServer;
 import net.kyori.adventure.text.Component;
@@ -115,7 +116,10 @@ public class MenuTest {
     }
 
     private static String plain(Component component) {
-        return PlainTextComponentSerializer.plainText().serialize(component);
+        // Les libelles de menu sont traduisibles : les lire suppose de les
+        // rendre, comme le fera le joueur.
+        return PlainTextComponentSerializer.plainText()
+                .serialize(TestTranslations.render(component));
     }
 
     // ===================== Menu de selection =====================

@@ -32,6 +32,19 @@ public class BungeePlayer implements CommonPlayer {
     }
 
     @Override
+    public java.util.Locale getLocale() {
+        return player.getLocale();
+    }
+
+    /**
+     * Traduit avant d'envoyer : BungeeCord ignore Adventure, personne d'autre
+     * ne le fera.
+     */
+    private Component localized(Component message) {
+        return fr.farmvivi.panelautostarter.i18n.Translations.render(message, getLocale());
+    }
+
+    @Override
     public boolean hasPermission(String permission) {
         return player.hasPermission(permission);
     }
@@ -43,7 +56,7 @@ public class BungeePlayer implements CommonPlayer {
 
     @Override
     public void sendMessage(Component message) {
-        player.sendMessage(toRichBungee(message));
+        player.sendMessage(toRichBungee(localized(message)));
     }
 
     /**
@@ -77,7 +90,7 @@ public class BungeePlayer implements CommonPlayer {
      */
     @Override
     public void sendActionBar(Component message) {
-        player.sendMessage(ChatMessageType.ACTION_BAR, toBungee(message));
+        player.sendMessage(ChatMessageType.ACTION_BAR, toBungee(localized(message)));
     }
 
     @Override
@@ -85,8 +98,8 @@ public class BungeePlayer implements CommonPlayer {
         // BungeeCord raisonne en ticks de 20 par seconde, la ou Adventure
         // raisonne en durees.
         ProxyServer.getInstance().createTitle()
-                .title(toBungee(title))
-                .subTitle(toBungee(subtitle))
+                .title(toBungee(localized(title)))
+                .subTitle(toBungee(localized(subtitle)))
                 .fadeIn(toTicks(fadeIn))
                 .stay(toTicks(stay))
                 .fadeOut(toTicks(fadeOut))

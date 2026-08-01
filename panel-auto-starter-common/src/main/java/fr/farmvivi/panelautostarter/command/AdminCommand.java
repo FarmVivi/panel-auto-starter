@@ -49,7 +49,7 @@ public final class AdminCommand implements CommonCommand {
     @Override
     public void execute(CommonCommandSource source, String[] args) {
         if (!AdminAccess.canAdministerAnything(source, managedServerNames())) {
-            source.sendMessage(AdminMessages.notAdministrator("ce réseau"));
+            source.sendMessage(AdminMessages.notAdministrator(AdminMessages.thisNetwork()));
             return;
         }
 
@@ -149,14 +149,15 @@ public final class AdminCommand implements CommonCommand {
         if (start) {
             if (!status.equals(MinecraftServerStatus.OFFLINE)) {
                 source.sendMessage(AdminMessages.alreadyInState(name,
-                        status.equals(MinecraftServerStatus.ONLINE) ? "en ligne" : "en démarrage"));
+                        AdminMessages.stateWord(status)));
                 return;
             }
             server.start();
             source.sendMessage(AdminMessages.starting(name));
         } else {
             if (!status.equals(MinecraftServerStatus.ONLINE)) {
-                source.sendMessage(AdminMessages.alreadyInState(name, "arrêté"));
+                source.sendMessage(AdminMessages.alreadyInState(name,
+                        AdminMessages.stateWord(MinecraftServerStatus.OFFLINE)));
                 return;
             }
             server.stop();
@@ -241,7 +242,9 @@ public final class AdminCommand implements CommonCommand {
         for (MinecraftServer server : plugin.getServers().values()) {
             if (server.getServer().getName().equalsIgnoreCase(name)) {
                 if (!AdminAccess.canAdminister(source, server.getServer().getName())) {
-                    source.sendMessage(AdminMessages.notAdministrator(server.getServer().getName()));
+                    source.sendMessage(AdminMessages.notAdministrator(
+                            net.kyori.adventure.text.Component.text(server.getServer().getName(),
+                                    net.kyori.adventure.text.format.NamedTextColor.YELLOW)));
                     return null;
                 }
                 return server;
