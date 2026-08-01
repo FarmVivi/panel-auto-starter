@@ -145,9 +145,13 @@ behaviour the code does not implement.
 
 ## Conventions
 
-**Language.** Code comments, Javadoc and player-facing messages are in
-**French**. The README, release notes and this file are in **English**. Keep it
-that way unless asked otherwise.
+**Language.** Code comments and Javadoc are in **French**. The README, release
+notes and this file are in **English**. Keep it that way unless asked otherwise.
+
+Player-facing text is no longer written in code at all: it is a translation key
+resolved from `lang/`, where English is the fallback and French ships alongside
+(invariant 9). Adding a message means adding a key to **both** bundles — a test
+enforces it.
 
 **Comments explain why, not what.** The codebase documents the reasoning behind
 non-obvious choices — why a field exists, why an alternative was rejected. Match
@@ -160,6 +164,53 @@ reasoning and what was verified. Look at recent history for the tone.
 whose failure would be silent, verify the test actually guards it by breaking
 the code on purpose and checking the test fails. Several existing tests were
 validated that way; the commit bodies say so.
+
+## Working method
+
+The discipline below was not chosen in the abstract — every line of it comes
+from something that went wrong here.
+
+**Verify a guard by breaking it.** A green suite proves nothing about a test
+you just wrote. The procedure: copy the file aside, apply a mutation that
+removes exactly the mechanism under test, run *only* the affected class, restore,
+then `diff` against the copy to prove the restore worked. State the result in
+the commit body: *"removing X kills N tests"*.
+
+Two ways this has gone wrong, both silently:
+
+- **A mutation that never applied.** A pattern that does not match leaves the
+  file untouched, the suite green, and the conclusion false. Make the patch
+  script exit non-zero when the pattern is absent, and read its output before
+  trusting the test run.
+- **A restore that never happened.** `cp a b || cp a c` runs the fallback only
+  on failure; a Python script that `sys.exit`s before writing leaves the mutation
+  in place. Always `diff` after restoring, and say so.
+
+**A mutation that kills nothing is a finding, not a failure.** It once revealed
+that `canAdminister` was never called — the per-server rights path was dead code
+that no test could reach. Investigate before adjusting the mutation.
+
+**Line endings are mixed.** Tracked files are CRLF; the Edit and Write tools
+produce LF. Python patterns written with `\n` fail on old files and patterns
+with `\r\n` fail on new ones — this has cost several wasted cycles. Prefer the
+Edit tool, or match with `\r?\n`.
+
+**Audit by sweeping, not by recalling.** Both incomplete internationalisation
+passes came from checking the paths that came to mind instead of grepping the
+whole tree. When a change is cross-cutting, enumerate every occurrence first and
+work the list.
+
+**Some code cannot be tested here.** `menu/chest` needs PacketEvents, which is
+never initialised under test, so the whole renderer is unreachable. It shipped
+broken once with the suite green. Where that is true, write the constraint into
+the class Javadoc *and* an invariant above, and say plainly in the commit that
+no test guards it.
+
+**Commits are unsigned on this project** (`-c commit.gpgsign=false`): the SSH
+signing key's passphrase cannot be supplied non-interactively.
+
+**One concern per commit.** `git add -A` after finishing two things in the same
+working tree merges them; the split afterwards is fiddly. Stage by path.
 
 ## Gotchas worth knowing
 
@@ -179,6 +230,21 @@ validated that way; the commit bodies say so.
   `.github/dependabot.yml`. Check for new versions by hand.
 - **Pelican panels older than `1.0.0-beta15`** never display the full API token,
   only its 16-character identifier, which yields a `401`. See the README.
+- **Mockito is attached as an explicit `-javaagent`**, wired through
+  `maven-dependency-plugin`'s `properties` goal. Its self-attach stopped working
+  once the classpath grew, and the JDK is removing that mechanism anyway. A
+  consequence: **the first build needs network access** to fetch that plugin,
+  even with `-o` everywhere else.
+- **`PacketEvents` is `provided` and optional.** It must never be shaded; the
+  presence check lives in `menu/PacketEventsSupport` and uses reflection so that
+  loading it cannot fail on a proxy without the library.
+- **A forked-VM crash usually means the machine is out of memory.** Surefire
+  reports it as `Corrupted channel by directly writing to native stream … '#'` —
+  that `#` is the JVM's crash-report header, not a test failure. Free memory and
+  re-run rather than hunting a phantom bug.
+- **`MessageFormat` and Adventure disagree about arguments.** Translation
+  arguments arrive as components, not numbers, so `{0,choice,…}` silently does
+  nothing. Phrase counts as `Label: {0}`.
 
 ## Releasing
 
@@ -193,4 +259,20 @@ Tags are prefixed `v`; release titles read `vX.Y.Z - Short description`. The
 `Release Build` workflow then attaches both jars automatically.
 
 Release notes are written for server owners, not for the changelog: lead with
-what changed for them, and spell out any manual migration step.
+what changed for them, and spell out any manual migration step. Say explicitly
+what does **not** change on upgrade — new behaviour that is off by default is
+reassuring only if it is stated.
+
+**Check which version is already released** before choosing the next number.
+`git describe --tags --abbrev=0` and `git log <tag>..HEAD` settle it; assuming
+from memory once nearly published a duplicate.
+
+Before tagging, confirm the four things that a green suite does not:
+
+```bash
+javap -verbose -cp panel-auto-starter-velocity/target/classes \
+  fr.farmvivi.panelautostarter.velocity.VelocityPlugin | grep major   # 65
+grep -rn "mattmalec" panel-auto-starter-common/src/main/java | grep -v /panel/pterodactyl/
+unzip -l panel-auto-starter-velocity/target/*-SNAPSHOT.jar | grep -c retrooper/packetevents  # 0
+unzip -l panel-auto-starter-velocity/target/*-SNAPSHOT.jar | grep -c lang/messages           # 2
+```
