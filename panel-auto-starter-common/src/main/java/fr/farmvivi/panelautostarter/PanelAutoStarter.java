@@ -4,6 +4,10 @@ import fr.farmvivi.panelautostarter.access.AccessSettings;
 import fr.farmvivi.panelautostarter.access.ServerAccess;
 import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.command.AdminCommand;
+import fr.farmvivi.panelautostarter.command.ServerMenuCommand;
+import fr.farmvivi.panelautostarter.menu.ChatMenuRenderer;
+import fr.farmvivi.panelautostarter.menu.MenuService;
+import fr.farmvivi.panelautostarter.menu.MenuSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
@@ -70,6 +74,7 @@ public final class PanelAutoStarter {
     private MessageSettings messageSettings;
     private WhitelistStore whitelistStore;
     private ServerAccess serverAccess;
+    private MenuService menuService;
     private final PendingNotifications pendingNotifications = new PendingNotifications();
     private final QueueCoordinator queueCoordinator = new QueueCoordinator(this);
 
@@ -144,8 +149,18 @@ public final class PanelAutoStarter {
             this.getPlugin().addEventListener(new PlayerKickedEventListener(this));
             this.getLogger().info("Event listeners registered.");
 
-            // Commande d'administration
+            // Menus : le rendu en chat ferme toujours la marche, il ne peut pas
+            // se derober et garantit qu'un menu s'ouvre toujours.
+            MenuSettings menuSettings = MenuSettings.from(config);
+            this.menuService = new MenuService(menuSettings);
+            this.menuService.register(new ChatMenuRenderer());
+
+            // Commandes
             this.getPlugin().registerCommand(new AdminCommand(this));
+            if (menuSettings.enabled()) {
+                this.getPlugin().registerCommand(
+                        new ServerMenuCommand(this, menuSettings.command()));
+            }
 
             // Barre d'action des joueurs en attente
             this.scheduleActionBar();
@@ -334,6 +349,15 @@ public final class PanelAutoStarter {
      */
     public WhitelistStore getWhitelistStore() {
         return whitelistStore;
+    }
+
+    /**
+     * Retourne le service d'affichage des menus.
+     *
+     * @return le service de menus, jamais null une fois le plugin activé
+     */
+    public MenuService getMenuService() {
+        return menuService;
     }
 
     public MotdSettings getMotdSettings() {

@@ -274,6 +274,7 @@ public final class AdminMessages {
         Component message = headline(Component.text("PanelAutoStarter", NamedTextColor.AQUA,
                 TextDecoration.BOLD));
         String[][] lines = {
+                {"menu", "ouvre le menu d'administration"},
                 {"status [serveur]", "état des serveurs gérés"},
                 {"start <serveur>", "démarre un serveur"},
                 {"stop <serveur>", "arrête un serveur"},

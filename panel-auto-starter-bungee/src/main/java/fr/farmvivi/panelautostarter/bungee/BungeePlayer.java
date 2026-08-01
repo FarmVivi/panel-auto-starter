@@ -4,7 +4,9 @@ import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.CommonServer;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.md_5.bungee.chat.ComponentSerializer;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -36,9 +38,31 @@ public class BungeePlayer implements CommonPlayer {
 
     @Override
     public void sendMessage(Component message) {
-        // Convert the Component to legacy string format (§-codes)
-        String legacyMessage = LegacyComponentSerializer.legacySection().serialize(message);
-        player.sendMessage(new TextComponent(legacyMessage));
+        player.sendMessage(toRichBungee(message));
+    }
+
+    /**
+     * Convertit un composant en préservant clics et survols.
+     * <p>
+     * La sérialisation historique en codes {@code §} les perd tous les deux :
+     * elle ne transporte que des couleurs. Les menus en seraient inertes sur
+     * BungeeCord — un texte joliment coloré sur lequel il ne se passe rien.
+     * <p>
+     * Le passage par JSON est le seul pont disponible : BungeeCord sait relire
+     * le format de chat du jeu, qu'Adventure sait écrire. En cas d'échec —
+     * format que le proxy ne reconnaîtrait pas — on retombe sur les codes
+     * {@code §} : un message appauvri vaut mieux qu'un message perdu.
+     *
+     * @param message le composant
+     * @return son équivalent BungeeCord
+     */
+    public static BaseComponent[] toRichBungee(Component message) {
+        try {
+            return ComponentSerializer.parse(GsonComponentSerializer.gson().serialize(message));
+        } catch (RuntimeException ex) {
+            return new BaseComponent[]{
+                    new TextComponent(LegacyComponentSerializer.legacySection().serialize(message))};
+        }
     }
 
     /**

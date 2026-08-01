@@ -6,9 +6,7 @@ import fr.farmvivi.panelautostarter.common.CommonProxy;
 import fr.farmvivi.panelautostarter.common.command.CommonCommand;
 import fr.farmvivi.panelautostarter.common.command.CommonCommandSource;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
@@ -50,10 +48,9 @@ public final class BungeeCommandAdapter extends Command implements TabExecutor {
 
             @Override
             public void sendMessage(Component message) {
-                // BungeeCord ne connait pas Adventure : on retombe sur les codes
-                // de couleur historiques, comme partout ailleurs dans ce module.
-                sender.sendMessage(new TextComponent(
-                        LegacyComponentSerializer.legacySection().serialize(message)));
+                // Meme pont que pour les messages aux joueurs : les reponses
+                // d'administration comportent des boutons cliquables.
+                sender.sendMessage(BungeePlayer.toRichBungee(message));
             }
 
             @Override

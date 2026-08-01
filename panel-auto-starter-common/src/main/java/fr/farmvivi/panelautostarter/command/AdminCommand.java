@@ -8,6 +8,7 @@ import fr.farmvivi.panelautostarter.access.Whitelist;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.command.CommonCommand;
 import fr.farmvivi.panelautostarter.common.command.CommonCommandSource;
+import fr.farmvivi.panelautostarter.menu.AdminMenu;
 import fr.farmvivi.panelautostarter.message.AdminMessages;
 
 import java.util.ArrayList;
@@ -61,8 +62,27 @@ public final class AdminCommand implements CommonCommand {
             case "start" -> startOrStop(source, args, true);
             case "stop" -> startOrStop(source, args, false);
             case "whitelist" -> whitelist(source, args);
+            case "menu" -> menu(source);
             default -> source.sendMessage(AdminMessages.usage("pas"));
         }
+    }
+
+    /**
+     * Ouvre le menu d'administration.
+     * <p>
+     * Le menu n'est qu'une autre présentation des sous-commandes : chacune de
+     * ses entrées exécute la commande correspondante, et passe donc par les
+     * mêmes contrôles.
+     */
+    private void menu(CommonCommandSource source) {
+        CommonPlayer player = source.asPlayer();
+        if (player == null) {
+            // La console n'a pas d'ecran : le meme contenu, en texte.
+            status(source, new String[]{"status"});
+            return;
+        }
+        plugin.getMenuService().open(player, AdminMenu.build(plugin.getServers().values(),
+                plugin.getWhitelistStore(), source, "pas"));
     }
 
     // ===================== Sous-commandes =====================
@@ -271,7 +291,7 @@ public final class AdminCommand implements CommonCommand {
         }
 
         if (args.length <= 1) {
-            return filter(List.of("status", "start", "stop", "whitelist"), last(args));
+            return filter(List.of("status", "start", "stop", "whitelist", "menu"), last(args));
         }
 
         String sub = args[0].toLowerCase(Locale.ROOT);
