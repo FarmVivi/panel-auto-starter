@@ -294,12 +294,17 @@ queue:
   # titre de mise en file, et un joueur ramené d'un serveur qui vient de
   # s'arrêter doit lire pourquoi plutôt qu'un « bienvenue ».
   #
-  # Codes couleur « & » acceptés. Une chaîne vide est respectée : c'est la
-  # façon d'afficher un titre sans sous-titre, ou l'inverse.
+  # Mise en forme en MiniMessage — le format que Velocity emploie pour son
+  # propre MOTD, dégradés et couleurs hexadécimales compris. Reprenez-y
+  # l'identité visuelle de votre réseau.
+  #
+  # Une chaîne vide est respectée : c'est la façon d'afficher un titre sans
+  # sous-titre, ou l'inverse. Une balise mal fermée s'affiche telle quelle
+  # plutôt que d'empêcher le démarrage.
   welcome-title:
     enabled: false
-    title: "&b&lBienvenue"
-    subtitle: "&7Choisissez un serveur"
+    title: "<gradient:#4cc9f0:#7b2ff7><bold>Bienvenue</bold></gradient>"
+    subtitle: "<gray>Choisissez un serveur</gray>"
     fade-in: 300
     stay: 3000
     fade-out: 500

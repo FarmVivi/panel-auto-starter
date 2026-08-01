@@ -1,7 +1,7 @@
 package fr.farmvivi.panelautostarter.message;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.md_5.bungee.config.Configuration;
 
 import java.time.Duration;
@@ -75,7 +75,7 @@ public final class MessageSettings {
      * l'administrateur et non le plugin.
      *
      * @param enabled  affiche le titre
-     * @param title    le titre, codes couleur {@code &} acceptés
+     * @param title    le titre, mise en forme MiniMessage
      * @param subtitle le sous-titre
      * @param fadeIn   durée d'apparition
      * @param stay     durée d'affichage plein
@@ -96,17 +96,33 @@ public final class MessageSettings {
      */
     private static final WelcomeSettings DEFAULT_WELCOME = new WelcomeSettings(
             false,
-            legacy("&b&lBienvenue"),
-            legacy("&7Choisissez un serveur"),
+            miniMessage("<gradient:#4cc9f0:#7b2ff7><bold>Bienvenue</bold></gradient>"),
+            miniMessage("<gray>Choisissez un serveur</gray>"),
             Duration.ofMillis(300), Duration.ofMillis(3000), Duration.ofMillis(500),
             new SoundSpec("block.note_block.chime", 0.7f, 1.2f));
 
     /**
-     * Lit un texte aux codes couleur {@code &}, forme que les administrateurs
-     * de serveurs connaissent déjà.
+     * Lit un texte en MiniMessage.
+     * <p>
+     * C'est le format que Velocity emploie pour son propre MOTD — sa
+     * configuration n'en accepte pas d'autre — donc celui que les
+     * administrateurs écrivent déjà. Contrairement aux codes {@code &}, il
+     * porte les dégradés et les couleurs hexadécimales, sans lesquels un titre
+     * ne peut pas reprendre l'identité visuelle d'un réseau.
+     * <p>
+     * Une balise mal formée ne doit pas empêcher le plugin de démarrer : le
+     * texte est alors affiché tel quel, ce qui rend la faute visible sans rien
+     * casser.
      */
-    private static Component legacy(String text) {
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(text == null ? "" : text);
+    private static Component miniMessage(String text) {
+        if (text == null || text.isEmpty()) {
+            return Component.empty();
+        }
+        try {
+            return MiniMessage.miniMessage().deserialize(text);
+        } catch (RuntimeException ex) {
+            return Component.text(text);
+        }
     }
 
     private static final ActionBarSettings DEFAULT_ACTION_BAR = new ActionBarSettings(
@@ -228,8 +244,8 @@ public final class MessageSettings {
                                 DEFAULT_ACTION_BAR.showPosition())),
                 new WelcomeSettings(
                         config.getBoolean("queue.welcome-title.enabled", DEFAULT_WELCOME.enabled()),
-                        legacyOr(config, "queue.welcome-title.title", DEFAULT_WELCOME.title()),
-                        legacyOr(config, "queue.welcome-title.subtitle", DEFAULT_WELCOME.subtitle()),
+                        miniMessageOr(config, "queue.welcome-title.title", DEFAULT_WELCOME.title()),
+                        miniMessageOr(config, "queue.welcome-title.subtitle", DEFAULT_WELCOME.subtitle()),
                         millis(config, "queue.welcome-title.fade-in", DEFAULT_WELCOME.fadeIn()),
                         millis(config, "queue.welcome-title.stay", DEFAULT_WELCOME.stay()),
                         millis(config, "queue.welcome-title.fade-out", DEFAULT_WELCOME.fadeOut()),
@@ -243,11 +259,11 @@ public final class MessageSettings {
      * Une chaîne <em>vide</em> est en revanche respectée : c'est la façon
      * d'afficher un titre sans sous-titre, ou l'inverse.
      */
-    private static Component legacyOr(Configuration config, String path, Component fallback) {
+    private static Component miniMessageOr(Configuration config, String path, Component fallback) {
         if (!config.contains(path)) {
             return fallback;
         }
-        return legacy(config.getString(path, ""));
+        return miniMessage(config.getString(path, ""));
     }
 
     private static final Duration MIN_ACTION_BAR_INTERVAL = Duration.ofMillis(250);

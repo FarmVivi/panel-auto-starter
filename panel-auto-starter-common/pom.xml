@@ -23,6 +23,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- MiniMessage : le format de mise en forme que Velocity emploie pour
+             son propre MOTD, et donc celui que les administrateurs ecrivent
+             deja. -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+        </dependency>
+
         <!-- Codes couleur historiques : la forme « &b&l » que les
              administrateurs de serveurs ecrivent deja. -->
         <dependency>

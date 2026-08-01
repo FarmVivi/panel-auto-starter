@@ -134,6 +134,11 @@
             <!-- Adventure Text Serializer Legacy -->
             <dependency>
                 <groupId>net.kyori</groupId>
+                <artifactId>adventure-text-minimessage</artifactId>
+                <version>${adventure.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.kyori</groupId>
                 <artifactId>adventure-text-serializer-legacy</artifactId>
                 <version>${adventure.version}</version>
                 <scope>compile</scope>

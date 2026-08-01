@@ -180,10 +180,10 @@ public class WelcomeTitleTest {
     // ===================== Reglages =====================
 
     @Test
-    public void testTheTextIsConfigurableWithColourCodes() {
+    public void testTheTextIsConfigurableInMiniMessage() {
         when(mockPlugin.getMessageSettings()).thenReturn(welcomeEnabled(config -> {
-            config.set("queue.welcome-title.title", "&aSalut");
-            config.set("queue.welcome-title.subtitle", "&7Amuse-toi bien");
+            config.set("queue.welcome-title.title", "<green>Salut</green>");
+            config.set("queue.welcome-title.subtitle", "<gray>Amuse-toi bien</gray>");
         }));
         MockCommonPlayer player = new MockCommonPlayer("Vivi");
 
@@ -191,6 +191,39 @@ public class WelcomeTitleTest {
 
         assertEquals("Salut", plain(player.getLastTitle()));
         assertEquals("Amuse-toi bien", plain(player.getLastSubtitle()));
+    }
+
+    /**
+     * Le dégradé est la raison d'être du choix de MiniMessage : les codes
+     * couleur historiques ne savent pas le porter, et un titre ne pourrait
+     * alors pas reprendre l'identité visuelle d'un réseau.
+     */
+    @Test
+    public void testAGradientIsUnderstood() {
+        when(mockPlugin.getMessageSettings()).thenReturn(welcomeEnabled(config ->
+                config.set("queue.welcome-title.title",
+                        "<gradient:#4cc9f0:#7b2ff7><bold>Scipio</bold></gradient>")));
+        MockCommonPlayer player = new MockCommonPlayer("Vivi");
+
+        arriveOn(player, limbo);
+
+        assertEquals("Scipio", plain(player.getLastTitle()));
+        assertFalse(player.getLastTitle().children().isEmpty(),
+                "Un degrade colore chaque caractere : le titre doit avoir ete decompose");
+    }
+
+    /**
+     * Une balise mal fermée ne doit pas empêcher le plugin de démarrer : le
+     * texte s'affiche tel quel, ce qui rend la faute visible sans rien casser.
+     */
+    @Test
+    public void testAMalformedTagDoesNotBreakAnything() {
+        when(mockPlugin.getMessageSettings()).thenReturn(welcomeEnabled(config ->
+                config.set("queue.welcome-title.title", "<gradient:pasunecouleur>Oups")));
+        MockCommonPlayer player = new MockCommonPlayer("Vivi");
+
+        assertDoesNotThrow(() -> arriveOn(player, limbo));
+        assertTrue(plain(player.getLastTitle()).contains("Oups"));
     }
 
     /**
