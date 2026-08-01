@@ -70,6 +70,11 @@ public final class Translations {
      */
     private static TranslationStore<MessageFormat> installed;
 
+    /**
+     * Langue de repli, retenue pour ce qui s'adresse à personne en particulier.
+     */
+    private static Locale fallback = Locale.getDefault();
+
     private Translations() {
     }
 
@@ -90,6 +95,7 @@ public final class Translations {
         TranslationStore.StringBased<MessageFormat> store =
                 TranslationStore.messageFormat(STORE_KEY);
         store.defaultLocale(defaultLocale);
+        fallback = defaultLocale;
 
         File langFolder = new File(dataFolder, LANG_FOLDER);
         copyBundledFiles(langFolder, warningSink);
@@ -126,6 +132,21 @@ public final class Translations {
             return null;
         }
         return GlobalTranslator.render(component, locale != null ? locale : Locale.getDefault());
+    }
+
+    /**
+     * Traduit dans la langue de repli.
+     * <p>
+     * Pour ce qui s'adresse à personne en particulier : un MOTD est composé
+     * pour une requête de liste de serveurs, qui ne dit rien de la langue de
+     * celui qui l'a émise — le client ne l'annonce qu'une fois connecté. Il n'y
+     * a donc pas de meilleure réponse que la langue configurée.
+     *
+     * @param component le composant
+     * @return le composant traduit
+     */
+    public static Component renderDefault(Component component) {
+        return render(component, fallback);
     }
 
     // ===================== Chargement =====================

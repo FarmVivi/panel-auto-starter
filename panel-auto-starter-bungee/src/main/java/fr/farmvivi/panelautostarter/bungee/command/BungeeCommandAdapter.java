@@ -50,7 +50,12 @@ public final class BungeeCommandAdapter extends Command implements TabExecutor {
             public void sendMessage(Component message) {
                 // Meme pont que pour les messages aux joueurs : les reponses
                 // d'administration comportent des boutons cliquables.
-                sender.sendMessage(BungeePlayer.toRichBungee(message));
+                // Traduit ici : la reponse ne passe pas par CommonPlayer, qui
+                // s'en charge partout ailleurs.
+                sender.sendMessage(BungeePlayer.toRichBungee(
+                        fr.farmvivi.panelautostarter.i18n.Translations.render(message,
+                                sender instanceof ProxiedPlayer player
+                                        ? player.getLocale() : null)));
             }
 
             @Override

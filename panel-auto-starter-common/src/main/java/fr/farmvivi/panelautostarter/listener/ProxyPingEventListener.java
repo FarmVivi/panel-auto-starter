@@ -5,6 +5,7 @@ import fr.farmvivi.panelautostarter.MinecraftServerStatus;
 import fr.farmvivi.panelautostarter.PanelAutoStarter;
 import fr.farmvivi.panelautostarter.common.CommonPlayer;
 import fr.farmvivi.panelautostarter.common.CommonServer;
+import fr.farmvivi.panelautostarter.i18n.Translations;
 import fr.farmvivi.panelautostarter.common.event.ProxyPingEvent;
 import fr.farmvivi.panelautostarter.common.listener.EventAdapter;
 import fr.farmvivi.panelautostarter.common.ping.CommonFavicon;
@@ -202,23 +203,36 @@ public class ProxyPingEventListener extends EventAdapter {
         }
         response.setProtocolVersion(-1);
         response.setProtocolName(status == MinecraftServerStatus.OFFLINE
-                ? Component.text("Hors-ligne").color(NamedTextColor.RED)
-                : Component.text("Démarrage...").color(NamedTextColor.GOLD));
+                ? motd("motd.label.offline", NamedTextColor.RED)
+                : motd("motd.label.starting", NamedTextColor.GOLD));
+    }
+
+    /**
+     * Texte de MOTD, traduit tout de suite dans la langue de repli.
+     * <p>
+     * Un ping de liste de serveurs ne dit rien de la langue de celui qui l'a
+     * émis — le client ne l'annonce qu'une fois connecté. Il n'y a donc pas de
+     * meilleure réponse que la langue configurée, et rien ne servirait de
+     * différer la traduction.
+     */
+    private static Component motd(String key, NamedTextColor color,
+                                  net.kyori.adventure.text.ComponentLike... args) {
+        return Translations.renderDefault(
+                Component.translatable("panelautostarter." + key, args).color(color));
     }
 
     private Component buildDescription(CommonServer commonServer, MinecraftServerStatus status) {
+        Component name = Component.text(commonServer.getDisplayName())
+                .color(NamedTextColor.YELLOW);
+
         if (status == MinecraftServerStatus.OFFLINE) {
-            return Component.text("Serveur ")
-                    .append(Component.text(commonServer.getDisplayName()).color(NamedTextColor.YELLOW))
-                    .append(Component.text(" hors-ligne").color(NamedTextColor.RED))
+            return motd("motd.offline", NamedTextColor.RED, name)
                     .appendNewline()
-                    .append(Component.text("Connectez-vous pour le démarrer !").color(NamedTextColor.GRAY));
+                    .append(motd("motd.offline.hint", NamedTextColor.GRAY));
         }
-        return Component.text("Serveur ")
-                .append(Component.text(commonServer.getDisplayName()).color(NamedTextColor.YELLOW))
-                .append(Component.text(" en démarrage...").color(NamedTextColor.GOLD))
+        return motd("motd.starting", NamedTextColor.GOLD, name)
                 .appendNewline()
-                .append(Component.text("Connectez-vous pour rejoindre la file d'attente !").color(NamedTextColor.GRAY));
+                .append(motd("motd.starting.hint", NamedTextColor.GRAY));
     }
 
     private List<Component> buildHover(MinecraftServer server, MinecraftServerStatus status) {
@@ -229,25 +243,25 @@ public class ProxyPingEventListener extends EventAdapter {
 
     private List<Component> buildOfflineHover(CommonServer commonServer) {
         List<Component> lines = new LinkedList<>();
-        lines.add(Component.text(commonServer.getDisplayName()).color(NamedTextColor.YELLOW)
-                .append(Component.text(" est hors-ligne").color(NamedTextColor.RED)));
+        lines.add(motd("motd.hover.offline", NamedTextColor.RED,
+                Component.text(commonServer.getDisplayName()).color(NamedTextColor.YELLOW)));
         lines.add(Component.text(""));
-        lines.add(Component.text("Connectez-vous pour le démarrer").color(NamedTextColor.GRAY));
+        lines.add(motd("motd.hover.offline.hint", NamedTextColor.GRAY));
         return lines;
     }
 
     private List<Component> buildStartingHover(MinecraftServer server) {
         List<Component> lines = new LinkedList<>();
-        lines.add(Component.text(server.getServer().getDisplayName()).color(NamedTextColor.YELLOW)
-                .append(Component.text(" démarre...").color(NamedTextColor.GOLD)));
+        lines.add(motd("motd.hover.starting", NamedTextColor.GOLD,
+                Component.text(server.getServer().getDisplayName()).color(NamedTextColor.YELLOW)));
         lines.add(Component.text(""));
 
         List<CommonPlayer> queue = server.getQueue();
         if (queue.isEmpty()) {
-            lines.add(Component.text("Connectez-vous pour rejoindre").color(NamedTextColor.GRAY));
-            lines.add(Component.text("la file d'attente").color(NamedTextColor.GRAY));
+            lines.add(motd("motd.hover.starting.hint", NamedTextColor.GRAY));
         } else {
-            lines.add(Component.text("File d'attente (" + queue.size() + ") :").color(NamedTextColor.GRAY));
+            lines.add(motd("motd.hover.queue", NamedTextColor.GRAY,
+                    Component.text(queue.size())));
             for (CommonPlayer player : queue) {
                 lines.add(Component.text(player.getDisplayName()).color(NamedTextColor.GRAY));
             }

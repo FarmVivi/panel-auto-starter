@@ -34,7 +34,7 @@ public final class ServerMenuCommand implements CommonCommand {
     public void execute(CommonCommandSource source, String[] args) {
         CommonPlayer player = source.asPlayer();
         if (player == null) {
-            source.sendMessage(Component.text("Cette commande s'adresse à un joueur.",
+            source.sendMessage(Component.translatable("panelautostarter.command.player-only",
                     NamedTextColor.RED));
             return;
         }
@@ -44,7 +44,7 @@ public final class ServerMenuCommand implements CommonCommand {
                 plugin.getMenuService().getSettings().serverCommand()));
 
         if (!opened) {
-            source.sendMessage(Component.text("Aucun affichage de menu n'est disponible.",
+            source.sendMessage(Component.translatable("panelautostarter.command.no-renderer",
                     NamedTextColor.RED));
         }
     }

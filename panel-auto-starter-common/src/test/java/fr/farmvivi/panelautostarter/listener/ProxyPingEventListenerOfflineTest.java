@@ -73,6 +73,10 @@ public class ProxyPingEventListenerOfflineTest {
 
     @BeforeEach
     public void setUp() {
+        // Les textes de MOTD sont rendus dans la langue de repli, qui est un
+        // etat global : la fixer ici evite un echec dependant de l'ordre
+        // d'execution des suites.
+        fr.farmvivi.panelautostarter.mocks.TestTranslations.reinstall();
         MockitoAnnotations.openMocks(this);
 
         backendServer = new MockCommonServer("streetland_survie", "Streetland Survie");
@@ -259,6 +263,18 @@ public class ProxyPingEventListenerOfflineTest {
         assertTrue(hover.contains("Connectez-vous"));
     }
 
+    /**
+     * Rend une liste de composants en texte brut.
+     */
+    private static String plainLines(java.util.List<net.kyori.adventure.text.Component> lines) {
+        StringBuilder builder = new StringBuilder();
+        for (net.kyori.adventure.text.Component line : lines) {
+            builder.append(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                    .plainText().serialize(line)).append(System.lineSeparator());
+        }
+        return builder.toString();
+    }
+
     @Test
     public void testHoverPluginListsTheQueueWhileStarting() {
         queue.add(new MockCommonPlayer("Vivi"));
@@ -266,9 +282,12 @@ public class ProxyPingEventListenerOfflineTest {
 
         CommonServerPing response = ping(defaults(), MinecraftServerStatus.STARTING);
 
-        String hover = response.getSamplePlayers().toString();
+        // Lire le texte rendu, et non la structure : un parametre devient un
+        // composant enfant, si bien que « (2) » n'est plus contigu dans un
+        // toString().
+        String hover = plainLines(response.getSamplePlayers());
         assertTrue(hover.contains("Vivi") && hover.contains("Bob"));
-        assertTrue(hover.contains("(2)"));
+        assertTrue(hover.contains("(2)"), hover);
     }
 
     @Test

@@ -50,7 +50,11 @@ public final class VelocityCommandAdapter implements SimpleCommand {
 
             @Override
             public void sendMessage(Component message) {
-                source.sendMessage(message);
+                // Traduit ici : la reponse ne passe pas par CommonPlayer, qui
+                // s'en charge partout ailleurs.
+                source.sendMessage(fr.farmvivi.panelautostarter.i18n.Translations.render(
+                        message, source instanceof Player player
+                                ? player.getEffectiveLocale() : null));
             }
 
             @Override
