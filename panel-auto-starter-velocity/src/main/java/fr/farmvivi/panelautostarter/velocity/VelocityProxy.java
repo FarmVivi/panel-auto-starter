@@ -117,6 +117,13 @@ public class VelocityProxy implements CommonProxy, EventListener {
         return null;
     }
 
+    @Override
+    public void dispatchCommand(CommonPlayer player, String command) {
+        if (player.getPlatformHandle() instanceof Player velocityPlayer) {
+            proxyServer.getCommandManager().executeAsync(velocityPlayer, command);
+        }
+    }
+
     public CommonPlayer getPlayer(Player player) {
         // Retrieve the player UUID
         UUID uuid = player.getUniqueId();

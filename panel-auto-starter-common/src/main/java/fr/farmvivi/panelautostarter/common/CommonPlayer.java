@@ -50,6 +50,18 @@ public interface CommonPlayer {
     boolean hasPermission(String permission);
 
     /**
+     * Retourne l'objet par lequel la plateforme représente ce joueur.
+     * <p>
+     * Réservé aux bibliothèques tierces qui raisonnent en objets natifs du
+     * proxy — la manipulation de paquets, notamment. Le reste du plugin doit
+     * passer par cette interface : c'est elle qui rend les deux proxys
+     * interchangeables.
+     *
+     * @return le joueur natif du proxy
+     */
+    Object getPlatformHandle();
+
+    /**
      * Sends a message to the player.
      *
      * @param message the message to send

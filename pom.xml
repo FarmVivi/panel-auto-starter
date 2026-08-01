@@ -34,6 +34,7 @@
 
         <!-- Dependency versions -->
         <adventure.version>5.2.0</adventure.version>
+        <packetevents.version>2.13.0</packetevents.version>
         <gson.version>2.14.0</gson.version>
         <!-- bungeecord-api et bungeecord-config partagent la meme ligne de version -->
         <bungeecord.version>1.21-R0.4</bungeecord.version>
@@ -45,6 +46,11 @@
     </properties>
 
     <repositories>
+        <repository>
+            <id>codemc</id>
+            <name>CodeMC</name>
+            <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
         <repository>
             <id>maven_central</id>
             <name>Maven Central</name>
@@ -66,6 +72,12 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.github.retrooper</groupId>
+                <artifactId>packetevents-api</artifactId>
+                <version>${packetevents.version}</version>
+                <scope>provided</scope>
+            </dependency>
             <!-- Internal modules -->
             <dependency>
                 <groupId>fr.farmvivi.panel-auto-starter</groupId>
@@ -303,6 +315,20 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.6</version>
+                    <configuration>
+                        <!-- Mockito est attache explicitement, plutot que de
+                             s'auto-attacher a la JVM en cours. Cette
+                             auto-attache echoue des que le chemin de classe
+                             s'allonge, et le JDK la retirera de toute facon :
+                             Mockito l'annonce dans un avertissement a chaque
+                             execution. -->
+                        <argLine>-javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.7.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>

@@ -6,6 +6,8 @@ import fr.farmvivi.panelautostarter.access.WhitelistStore;
 import fr.farmvivi.panelautostarter.command.AdminCommand;
 import fr.farmvivi.panelautostarter.command.ServerMenuCommand;
 import fr.farmvivi.panelautostarter.menu.ChatMenuRenderer;
+import fr.farmvivi.panelautostarter.menu.PacketEventsSupport;
+import fr.farmvivi.panelautostarter.menu.chest.ChestMenuRenderer;
 import fr.farmvivi.panelautostarter.menu.MenuService;
 import fr.farmvivi.panelautostarter.menu.MenuSettings;
 import fr.farmvivi.panelautostarter.common.CommonPlugin;
@@ -153,6 +155,7 @@ public final class PanelAutoStarter {
             // se derober et garantit qu'un menu s'ouvre toujours.
             MenuSettings menuSettings = MenuSettings.from(config);
             this.menuService = new MenuService(menuSettings);
+            this.registerChestRendererIfAvailable();
             this.menuService.register(new ChatMenuRenderer());
 
             // Commandes
@@ -235,6 +238,33 @@ public final class PanelAutoStarter {
      * de joueurs qui attendent, pas du nombre de serveurs déclarés, et le
      * balayage ne fait rien tant que personne n'attend.
      */
+    /**
+     * Ajoute le rendu en coffre si PacketEvents est là.
+     * <p>
+     * Isolé dans sa propre méthode à dessein : la classe du rendu référence des
+     * types de PacketEvents, et la charger sur un proxy où la bibliothèque est
+     * absente lèverait un {@code NoClassDefFoundError}. Tant que le corps de
+     * cette méthode n'est pas exécuté, elle n'est pas chargée.
+     */
+    private void registerChestRendererIfAvailable() {
+        if (!PacketEventsSupport.isPresent()) {
+            this.getLogger().info("PacketEvents absent : les menus s'afficheront en chat.");
+            return;
+        }
+        try {
+            this.menuService.register(new ChestMenuRenderer(getLogger(),
+                    uuid -> proxy.getPlayer(uuid),
+                    (player, command) -> proxy.dispatchCommand(player, command)));
+            this.getLogger().info("PacketEvents detecte : menus en coffre disponibles.");
+        } catch (Throwable ex) {
+            // Une bibliotheque en desaccord avec cette version du jeu ne doit
+            // pas empecher le plugin de demarrer : les menus s'afficheront en
+            // chat, ce qui est exactement le role du repli.
+            this.getLogger().warning("Menus en coffre indisponibles (" + ex + ") : "
+                    + "repli sur l'affichage en chat.");
+        }
+    }
+
     private void scheduleActionBar() {
         MessageSettings.ActionBarSettings actionBar = messageSettings.getActionBar();
         if (!actionBar.enabled()) {

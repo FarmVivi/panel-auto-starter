@@ -252,7 +252,7 @@ A server that has never been seen online has nothing cached, so `description: ca
 ```yaml
 menu:
   enabled: true
-  renderer: auto          # auto | chat
+  renderer: auto          # auto | chest | chat
   command: servers        # opens the server list
   server-command: server  # the proxy command a click runs
 ```
@@ -264,6 +264,10 @@ menu:
 **The selection menu is deliberately dumb.** It lists servers and forwards the request exactly as a hand-typed `/server` would, and does **not** filter by permission — the connection event decides, and it alone. Filtering there would protect nothing, since the command stays open, while looking like protection: the worst of both, because you then stop checking where it counts. Someone clicking a server they may not enter gets the same reasoned refusal they would have got from the command.
 
 The administration menu *does* filter, and that is not a contradiction: it would otherwise reflect servers its reader cannot touch, announcing infrastructure that is none of their business.
+
+**The chest renderer needs [PacketEvents](https://github.com/retrooper/packetevents) on the proxy, and is optional.** Without it the plugin starts normally and menus render in chat; the startup log says which one is in use. It also declines for clients older than 1.20.5, whose item format predates data components.
+
+It is worth knowing what that renderer actually does: the proxy opens a window the backend server knows nothing about. The client believes it is real and will send its clicks and its close to the backend, which would answer with a resynchronisation — a flickering inventory at best. Packets carrying the plugin's window id are therefore intercepted and **never forwarded**. The window id sits well above the range servers allocate, so no real container's click can be mistaken for ours.
 
 Renderers are tried richest-first and the chat one always closes the march — it depends on nothing and cannot decline, so a menu always opens. Naming a renderer explicitly is a requirement rather than a hint: asking for `chat` forbids opening anything else. Only `auto` lets the plugin choose. That fallback is what makes a packet-based renderer adoptable without risk: if it stops working — a library lagging behind the game version, a client too new — menus render in chat instead of vanishing.
 

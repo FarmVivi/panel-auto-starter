@@ -1,0 +1,264 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 394264576 bytes. Error detail: G1 virtual space
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   This process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_windows.cpp:3554), pid=32212, tid=26600
+#
+# JRE version:  (25.0.3+9) (build )
+# Java VM: OpenJDK 64-Bit Server VM (25.0.3+9-LTS, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, windows-amd64)
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dnet.bytebuddy.agent.attacher.dump= net.bytebuddy.agent.Attacher com.sun.tools.attach.VirtualMachine 27792 C:\Users\victo\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.7\byte-buddy-agent-1.17.7.jar false 
+
+Host: AMD Ryzen 7 4800HS with Radeon Graphics         , 16 cores, 23G,  Windows 11 , 64 bit Build 26100 (10.0.26100.8875)
+Time: Sat Aug  1 12:09:49 2026 elapsed time: 2.024347 seconds (0d 0h 0m 2s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x000002665067ad80):  JavaThread "Unknown thread" [_thread_in_vm, id=26600, stack(0x000000b104300000,0x000000b104400000) (1024K)]
+
+Stack: [0x000000b104300000,0x000000b104400000]
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x7aa709]  (no source info available)
+V  [jvm.dll+0x7749ed]  (no source info available)
+V  [jvm.dll+0x9f7433]  (no source info available)
+V  [jvm.dll+0x9f9a21]  (no source info available)
+V  [jvm.dll+0x9fa133]  (no source info available)
+V  [jvm.dll+0x2fd266]  (no source info available)
+V  [jvm.dll+0x7a6935]  (no source info available)
+V  [jvm.dll+0x799d87]  (no source info available)
+V  [jvm.dll+0x3f5d88]  (no source info available)
+V  [jvm.dll+0x3fdcf6]  (no source info available)
+V  [jvm.dll+0x3ea45e]  (no source info available)
+V  [jvm.dll+0x3ea718]  (no source info available)
+V  [jvm.dll+0x3c1575]  (no source info available)
+V  [jvm.dll+0x3c21fe]  (no source info available)
+V  [jvm.dll+0x9be2b4]  (no source info available)
+V  [jvm.dll+0x45a9b2]  (no source info available)
+V  [jvm.dll+0x9a20e2]  (no source info available)
+V  [jvm.dll+0x4fb801]  (no source info available)
+V  [jvm.dll+0x4fd0f1]  (no source info available)
+C  [jli.dll+0x5406]  (no source info available)
+C  [ucrtbase.dll+0x2cd30]  (no source info available)
+C  [KERNEL32.DLL+0x2e957]  (no source info available)
+C  [ntdll.dll+0xaad6c]  (no source info available)
+
+Lock stack of current Java thread (top to bottom):
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007ffb4af71008, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+Total: 0
+
+Other Threads:
+  0x00000266509fb2f0 WorkerThread "GC Thread#0"                     [id=27828, stack(0x000000b104400000,0x000000b104500000) (1024K)]
+  0x0000026650a0ead0 ConcurrentGCThread "G1 Main Marker"            [id=27916, stack(0x000000b104500000,0x000000b104600000) (1024K)]
+  0x0000026650a118e0 WorkerThread "G1 Conc#0"                       [id=5748, stack(0x000000b104600000,0x000000b104700000) (1024K)]
+
+[error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ffb4a59646a]
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00007ffb4aff9828] Heap_lock - owner thread: 0x000002665067ad80
+
+Heap address: 0x0000000689400000, size: 5996 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+UseCompressedClassPointers 1, UseCompactObjectHeaders 0
+Narrow klass pointer bits 32, Max shift 3
+Narrow klass base: 0xffffffffffffffff, Narrow klass shift: -1
+Encoding Range: [0xffffffffffffffff - 0x000000007fffffff), (2147483648 bytes)
+Klass Range:    [0x0000000000000000 - 0x0000000000000000), (0 bytes)
+Klass ID Range:  [4294967295 - 0) (1)
+No protection zone.
+
+GC Precious Log:
+ CardTable entry size: 512
+ Card Set container configuration: InlinePtr #cards 4 size 8 Array Of Cards #cards 32 size 80 Howl #buckets 8 coarsen threshold 7372 Howl Bitmap #cards 1024 size 144 coarsen threshold 921 Card regions per heap region 1 cards per card region 8192
+
+Heap:
+ garbage-first heap   total reserved 6139904K, committed 0K, used 0K [0x0000000689400000, 0x0000000800000000)
+  region size 4096K, 0 young (0K), 0 survivors (0K)
+
+Heap Regions: E=young(eden), S=young(survivor), O=old, HS=humongous(starts), HC=humongous(continues), CS=collection set, F=free, TAMS=top-at-mark-start, PB=parsable bottom
+
+Card table byte_map: [0x000002666b930000,0x000002666c4f0000] _byte_map_base: 0x00000266684e6000
+
+Marking Bits: (CMBitMap*) 0x00000266509fc890
+ Bits: [0x000002666c4f0000, 0x00000266722a0000)
+
+GC Heap Usage History (0 events):
+No events
+
+Metaspace Usage History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.010 Loaded shared library C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\java.dll
+
+Deoptimization events (0 events):
+No events
+
+Classes loaded (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Memory protections (0 events):
+No events
+
+Nmethod flushes (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+0x00007ff72de80000 - 0x00007ff72de8e000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\java.exe
+0x00007ffc1a520000 - 0x00007ffc1a786000 	C:\WINDOWS\SYSTEM32\ntdll.dll
+0x00007ffc18250000 - 0x00007ffc18319000 	C:\WINDOWS\System32\KERNEL32.DLL
+0x00007ffc17930000 - 0x00007ffc17d2e000 	C:\WINDOWS\System32\KERNELBASE.dll
+0x00007ffc177d0000 - 0x00007ffc1791c000 	C:\WINDOWS\System32\ucrtbase.dll
+0x00007ffc0cf70000 - 0x00007ffc0cf86000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\jli.dll
+0x00007ffbe88d0000 - 0x00007ffbe88ee000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\VCRUNTIME140.dll
+0x00007ffc18320000 - 0x00007ffc184e7000 	C:\WINDOWS\System32\USER32.dll
+0x00007ffc18030000 - 0x00007ffc18057000 	C:\WINDOWS\System32\win32u.dll
+0x00007ffc02c30000 - 0x00007ffc02ec2000 	C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.8894_none_3e0f749ee32e02ea\COMCTL32.dll
+0x00007ffc1a1d0000 - 0x00007ffc1a1fb000 	C:\WINDOWS\System32\GDI32.dll
+0x00007ffc18120000 - 0x00007ffc1824a000 	C:\WINDOWS\System32\gdi32full.dll
+0x00007ffc19470000 - 0x00007ffc19519000 	C:\WINDOWS\System32\msvcrt.dll
+0x00007ffc17ec0000 - 0x00007ffc17f63000 	C:\WINDOWS\System32\msvcp_win.dll
+0x00007ffc195d0000 - 0x00007ffc19602000 	C:\WINDOWS\System32\IMM32.DLL
+0x00007ffbf7190000 - 0x00007ffbf719c000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\vcruntime140_1.dll
+0x00007ffbd2ca0000 - 0x00007ffbd2d2d000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\msvcp140.dll
+0x00007ffb4a1c0000 - 0x00007ffb4b0ea000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\server\jvm.dll
+0x00007ffc198a0000 - 0x00007ffc19957000 	C:\WINDOWS\System32\ADVAPI32.dll
+0x00007ffc19330000 - 0x00007ffc193da000 	C:\WINDOWS\System32\sechost.dll
+0x00007ffc1a0b0000 - 0x00007ffc1a1c8000 	C:\WINDOWS\System32\RPCRT4.dll
+0x00007ffc18960000 - 0x00007ffc189e0000 	C:\WINDOWS\System32\WS2_32.dll
+0x00007ffc136b0000 - 0x00007ffc136e6000 	C:\WINDOWS\SYSTEM32\WINMM.dll
+0x00007ffc0ff80000 - 0x00007ffc0ff8b000 	C:\WINDOWS\SYSTEM32\VERSION.dll
+0x00007ffc175a0000 - 0x00007ffc175fe000 	C:\WINDOWS\SYSTEM32\POWRPROF.dll
+0x00007ffc17580000 - 0x00007ffc17594000 	C:\WINDOWS\SYSTEM32\UMPDC.dll
+0x00007ffc163e0000 - 0x00007ffc163fb000 	C:\WINDOWS\SYSTEM32\kernel.appcore.dll
+0x00007ffbf5f70000 - 0x00007ffbf5f7a000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\jimage.dll
+0x00007ffc14b50000 - 0x00007ffc14d92000 	C:\WINDOWS\SYSTEM32\DBGHELP.DLL
+0x00007ffc185d0000 - 0x00007ffc18953000 	C:\WINDOWS\System32\combase.dll
+0x00007ffc19610000 - 0x00007ffc196e9000 	C:\WINDOWS\System32\OLEAUT32.dll
+0x00007ffc13670000 - 0x00007ffc136ab000 	C:\WINDOWS\SYSTEM32\dbgcore.DLL
+0x00007ffc18060000 - 0x00007ffc1810c000 	C:\WINDOWS\System32\bcryptPrimitives.dll
+0x00007ffbe88b0000 - 0x00007ffbe88ce000 	C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\java.dll
+0x00007ffc189f0000 - 0x00007ffc18b89000 	C:\WINDOWS\System32\ole32.dll
+0x00007ffc18b90000 - 0x00007ffc19322000 	C:\WINDOWS\System32\SHELL32.dll
+
+JVMTI agents: none
+
+dbghelp: loaded successfully - version: 4.0.5 - missing functions: none
+symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin;C:\WINDOWS\SYSTEM32;C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.8894_none_3e0f749ee32e02ea;C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin\server
+
+VM Arguments:
+jvm_args: -Dnet.bytebuddy.agent.attacher.dump= 
+java_command: net.bytebuddy.agent.Attacher com.sun.tools.attach.VirtualMachine 27792 C:\Users\victo\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.7\byte-buddy-agent-1.17.7.jar false 
+java_class_path (initial): C:\Users\victo\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.7\byte-buddy-agent-1.17.7.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 12                                        {product} {ergonomic}
+     uint ConcGCThreads                            = 3                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 13                                        {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 4194304                                   {product} {ergonomic}
+   size_t InitialHeapSize                          = 394264576                                 {product} {ergonomic}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MarkStackSizeMax                         = 536870912                                 {product} {ergonomic}
+   size_t MaxHeapSize                              = 6287261696                                {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 4194304                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 8388608                                   {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 7667712                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122028032                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122028032                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251723776                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 6287261696                             {manageable} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+     bool UseLargePagesIndividualAllocation        = false                                  {pd product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+
+Release file:
+<release file has not been read>
+Environment Variables:
+JAVA_HOME=C:/Program Files/Eclipse Adoptium/jdk-25.0.3.9-hotspot
+PATH=C:\Users\victo\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\local\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\victo\bin;C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin;C:\Program Files\Eclipse Adoptium\jdk-25.0.3.9-hotspot\bin;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\bin;C:\Program Files\Eclipse Adoptium\jdk-11.0.30.7-hotspot\bin;C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot\bin;C:\Program Files (x86)\Common Files\Oracle\Java\java8path;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\Eclipse Adoptium\jdk-17.0.11.9-hotspot\bin;C:\windows\system32;C:\windows;C:\windows\system32\wbem;C:\windows\system32\windowspowershell\v1.0;C:\windows\system32\openssh;C:\android;C:\program files\dotnet;C:\users\victo\appdata\roaming\nvm;C:\program files\nodejs;C:\jd-gui;C:\program files\docker\docker\resources\bin;C:\programdata\dockerdesktop\version-bin;C:\program files\git\cmd;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Maven\apache-maven-3.8.6\bin;C:\Program Files\WireGuard;C:\Program Files\Firebird\Firebird_4_0;C:\Program Files\Gource\cmd;C:\ProgramData\anaconda3\condabin;C:\wamp64\bin\php\php8.2.16;C:\Program Files\VideoLAN\VLC;C:\Program Files\NVIDIA Corporation\NVIDIA app\NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\HP\HP OCR\DB_Lib;C:\Program Files\HP\Common\HPDestPlgIn;C:\Program Files (x86)\HP\Common\HPDestPlgIn;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit;C:\Program Files\NVIDIA Corporation\Nsight Compute 2026.1.0;C:\Program Files\Go\bin;C:\Program Files\PuTTY;C:\Program Files\GitHub CLI;C:\Program Files\PowerToys\DSCModules;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Users\victo\AppData\Local\Programs\Python\Python314\Scripts;C:\Users\victo\AppData\Local\Programs\Python\Python314;C:\Users\victo\AppData\Local\Programs\Python\Launcher;C:\Users\victo\AppData\Local\Programs\Jan\resources\bin;C:\Users\victo\AppData\Local\Programs\Jan;C:\Users\victo\AppData\Local\Programs\WingetUI\choco-cli\bin;C:\Users\victo\AppData\Local\UniGetUI\Chocolatey\bin;C:\Users\victo\scoop\shims;C:\Users\victo\AppData\Local\pnpm;C:\Users\victo\AppData\Local\Microsoft\WindowsApps;C:\Program Files\JetBrains\IntelliJ IDEA 2022.1.3\bin;C:\Users\victo\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\victo\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\victo\go\bin;C:\Users\victo\AppData\Local\Microsoft\WinGet\Links;C:\Users\victo\.dotnet\tools;C:\tools\flutter\bin;C:\tools\dart-sdk\bin;C:\Users\victo\AppData\Roaming\Pub\Cache\bin;C:\Users\victo\AppData\Local\Pub\Cache\bin;C:\ghcup\bin;C:\cabal\bin;C:\Program Files\JetBrains\PyCharm 2023.3.2\bin;C:\Users\victo\AppData\Roaming\Python\Python311\Scripts;C:\Program Files\JetBrains\PhpStorm 2023.3.3\bin;C:\Program Files\JetBrains\WebStorm 2024.2\bin;C:\WINDOWS\system32\config\systemprofile\go\bin;C:\Program Files\Lens\resources\cli\bin;C:\Users\victo\AppData\Local\Programs\Ollama;C:\Users\victo\AppData\Local\Microsoft\WindowsApps;C:\Program Files\HP\Common\HPDestPlgIn;C:\Program Files (x86)\HP\Common\HPDestPlgIn;C:\Users\victo\AppData\Local\Microsoft\WinGet\Packages\Maxon.CinebenchR23_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\Users\victo\.dotnet\tools;C:\Users\victo\.local\bin;C:\Users\victo\go\bin;C:\Program Files (x86)\Nmap;C:\Users\victo\go\bin;C:\Program Files\Git\usr\bin\vendor_perl;C:\Program Files\Git\usr\bin\core_perl
+USERNAME=victo
+SHELL=C:\Program Files\Git\usr\bin\bash.exe
+TERM=xterm-256color
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=AMD64 Family 23 Model 96 Stepping 1, AuthenticAMD
+TMP=C:\Users\victo\AppData\Local\Temp
+TEMP=C:\Users\victo\AppData\Local\Temp
+
+
+
+
+Compilation memory statistics disabled.
+
+Periodic native trim disabled
+
+---------------  S Y S T E M  ---------------
+
+OS:
+ Windows 11 , 64 bit Build 26100 (10.0.26100.8875)
+OS uptime: 1 days 16:06 hours
+Hyper-V role detected
+
+CPU: total 16 (initial active 16) (16 cores per cpu, 2 threads per core) family 23 model 96 stepping 1 microcode 0x8600104, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4a, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, clmul, bmi1, bmi2, adx, sha, fma, vzeroupper, clflush, clflushopt, clwb, hv, rdtscp, rdpid, f16c
+Processor Information for the first 16 processors :
+  Max Mhz: 2900, Current Mhz: 2900, Mhz Limit: 2900
+
+Memory: 4k page, system-wide physical 23981M (1703M free)
+TotalPageFile size 35981M (AvailPageFile size 275M)
+current process WorkingSet (physical memory assigned to process): 14M, peak: 14M
+current process commit charge ("private bytes"): 71M, peak: 447M
+
+vm_info: OpenJDK 64-Bit Server VM (25.0.3+9-LTS) for windows-amd64 JRE (25.0.3+9-LTS), built on 2026-04-21T00:00:00Z with MS VC++ 17.12 (VS2022)
+
+END.

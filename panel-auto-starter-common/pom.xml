@@ -14,6 +14,15 @@
     <description>Common module providing shared API and utilities for Panel Auto Starter (Pterodactyl and Pelican)</description>
 
     <dependencies>
+        <!-- PacketEvents : dependance FACULTATIVE, fournie par le plugin du meme
+             nom installe sur le proxy. Portee « provided » : elle n'est pas
+             embarquee, et le plugin doit se charger sans elle. -->
+        <dependency>
+            <groupId>com.github.retrooper</groupId>
+            <artifactId>packetevents-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Adventure API -->
         <dependency>
             <groupId>net.kyori</groupId>
@@ -93,5 +102,21 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+
+        <plugins>
+            <!-- Résout le chemin du jar Mockito, que surefire attache en agent
+                 plutôt que de le laisser s'auto-attacher à la JVM en cours. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 </project>

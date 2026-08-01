@@ -127,6 +127,13 @@ public class BungeeProxy implements CommonProxy, EventListener {
     }
 
     @Override
+    public void dispatchCommand(CommonPlayer player, String command) {
+        if (player.getPlatformHandle() instanceof ProxiedPlayer proxied) {
+            proxyServer.getPluginManager().dispatchCommand(proxied, command);
+        }
+    }
+
+    @Override
     public void runAsync(CommonPlugin owner, Runnable task) {
         if (owner instanceof BungeePlugin bungeeOwner) {
             // Run the task asynchronously

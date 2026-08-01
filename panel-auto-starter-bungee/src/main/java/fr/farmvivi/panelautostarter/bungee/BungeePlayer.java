@@ -27,6 +27,11 @@ public class BungeePlayer implements CommonPlayer {
     }
 
     @Override
+    public Object getPlatformHandle() {
+        return player;
+    }
+
+    @Override
     public boolean hasPermission(String permission) {
         return player.hasPermission(permission);
     }

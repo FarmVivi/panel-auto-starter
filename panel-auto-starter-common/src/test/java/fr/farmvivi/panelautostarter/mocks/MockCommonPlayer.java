@@ -43,6 +43,13 @@ public class MockCommonPlayer implements CommonPlayer {
         this.currentServer = null;
     }
 
+    @Override
+    public Object getPlatformHandle() {
+        // Pas de proxy derriere un joueur simule : la valeur ne sert qu'aux
+        // bibliotheques tierces, absentes des tests.
+        return this;
+    }
+
     private final java.util.Set<String> permissions = new java.util.HashSet<>();
 
     @Override

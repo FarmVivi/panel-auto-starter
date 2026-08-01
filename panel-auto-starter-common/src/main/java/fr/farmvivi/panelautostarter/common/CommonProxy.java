@@ -61,6 +61,17 @@ public interface CommonProxy {
     CommonPlayer[] getPlayers();
 
     /**
+     * Exécute une commande au nom d'un joueur.
+     * <p>
+     * Permet à un menu de n'avoir d'autre effet que celui d'une commande tapée
+     * à la main, et donc de subir les mêmes contrôles.
+     *
+     * @param player  le joueur
+     * @param command la commande, sans barre oblique
+     */
+    void dispatchCommand(CommonPlayer player, String command);
+
+    /**
      * Run a task asynchronously.
      *
      * @param owner the plugin owner

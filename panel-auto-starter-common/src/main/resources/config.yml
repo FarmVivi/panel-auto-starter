@@ -24,7 +24,13 @@ menu:
 
   # Rendu employé :
   #   auto  — le meilleur disponible, avec repli automatique
+  #   chest — inventaire de coffre, nécessite le plugin PacketEvents
   #   chat  — lignes cliquables, sans dépendance, sur les deux proxys
+  #
+  # PacketEvents est FACULTATIF : sans lui, le plugin démarre normalement et
+  # les menus s'affichent en chat. Le rendu en coffre se déclare aussi
+  # indisponible pour les clients antérieurs à 1.20.5, dont le format d'objet
+  # ne connaît pas les composants de données.
   #
   # Un rendu nommé explicitement est exigé, non suggéré : demander « chat »
   # interdit d'ouvrir autre chose. Seul « auto » laisse le choix au plugin.
