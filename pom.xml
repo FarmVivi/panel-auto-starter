@@ -39,7 +39,7 @@
         <!-- bungeecord-api et bungeecord-config partagent la meme ligne de version -->
         <bungeecord.version>1.21-R0.4</bungeecord.version>
         <pterodactyl4j.version>2.BETA_142</pterodactyl4j.version>
-        <velocity.version>4.0.0</velocity.version>
+        <velocity.version>4.1.0</velocity.version>
         <junit.version>6.1.3</junit.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <mockito.version>5.23.0</mockito.version>
