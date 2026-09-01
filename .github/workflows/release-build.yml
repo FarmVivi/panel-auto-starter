@@ -39,7 +39,7 @@ jobs:
 
       # Upload des JARs sur la release GitHub
       - name: Upload JARs to release
-        uses: softprops/action-gh-release@v3.0.2
+        uses: softprops/action-gh-release@v3.0.3
         with:
           files: |
             panel-auto-starter-bungee/target/panel-auto-starter-bungee-*.jar
