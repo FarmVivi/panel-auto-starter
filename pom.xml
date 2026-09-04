@@ -319,7 +319,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.6</version>
+                    <version>3.6.0</version>
                     <configuration>
                         <!-- Mockito est attache explicitement, plutot que de
                              s'auto-attacher a la JVM en cours. Cette
