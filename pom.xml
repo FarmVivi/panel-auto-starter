@@ -42,7 +42,7 @@
         <velocity.version>4.1.1</velocity.version>
         <junit.version>6.1.3</junit.version>
         <snakeyaml.version>2.7</snakeyaml.version>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
     </properties>
 
     <repositories>
