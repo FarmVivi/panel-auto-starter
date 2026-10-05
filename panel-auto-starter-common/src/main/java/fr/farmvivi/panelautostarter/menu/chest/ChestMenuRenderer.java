@@ -57,6 +57,14 @@ import java.util.function.Function;
  * et se déclare indisponible pour les clients trop anciens — auquel cas le
  * menu s'affiche en chat plutôt que de ne pas s'ouvrir.
  * <p>
+ * <strong>Un client plus récent que PacketEvents passe quand même ici.</strong>
+ * La bibliothèque rabat un protocole qu'elle ne connaît pas sur la dernière
+ * version qu'elle connaît : un client 26.3 vu par PacketEvents 2.13 se présente
+ * comme un client 26.2. Le menu s'ouvre donc, mais ses paquets sont encodés au
+ * format de la version d'avant — un écart silencieux, invisible au contrôle de
+ * version ci-dessous, qui ne se corrige qu'en suivant les sorties du jeu côté
+ * dépendance.
+ * <p>
  * <strong>Tout composant qui sort d'ici doit être traduit sur place.</strong>
  * Ailleurs, la traduction a lieu dans {@code CommonPlayer} au moment de
  * l'envoi ; ici les composants partent en paquets, sans jamais passer par lui.

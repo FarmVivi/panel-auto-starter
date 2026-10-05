@@ -238,6 +238,11 @@ working tree merges them; the split afterwards is fiddly. Stage by path.
 - **`PacketEvents` is `provided` and optional.** It must never be shaded; the
   presence check lives in `menu/PacketEventsSupport` and uses reflection so that
   loading it cannot fail on a proxy without the library.
+- **PacketEvents has to track game releases, and `velocity-api` with it.** An
+  unknown protocol is not rejected: PacketEvents resolves it to the newest
+  version it knows, so a client one release ahead is served chest-menu packets
+  in the previous format and `isAvailable` sees nothing wrong. Those bumps
+  (2.13 → 2.14 added 26.3, as did `velocity-api` 4.2.0) are the fix, not noise.
 - **A forked-VM crash usually means the machine is out of memory.** Surefire
   reports it as `Corrupted channel by directly writing to native stream … '#'` —
   that `#` is the JVM's crash-report header, not a test failure. Free memory and
