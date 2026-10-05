@@ -270,9 +270,17 @@ from memory once nearly published a duplicate.
 Before tagging, confirm the four things that a green suite does not:
 
 ```bash
+V=panel-auto-starter-velocity/target/panel-auto-starter-velocity-*[0-9]-SNAPSHOT.jar
 javap -verbose -cp panel-auto-starter-velocity/target/classes \
   fr.farmvivi.panelautostarter.velocity.VelocityPlugin | grep major   # 65
 grep -rn "mattmalec" panel-auto-starter-common/src/main/java | grep -v /panel/pterodactyl/
-unzip -l panel-auto-starter-velocity/target/*-SNAPSHOT.jar | grep -c retrooper/packetevents  # 0
-unzip -l panel-auto-starter-velocity/target/*-SNAPSHOT.jar | grep -c lang/messages           # 2
+unzip -l $V | grep -c retrooper/packetevents  # 0
+unzip -l $V | grep -c lang/messages           # 2
 ```
+
+**Name that jar, do not glob `*-SNAPSHOT.jar`.** After `-P release` the
+directory holds four jars — the shaded one, `original-…`, `-sources` and
+`-javadoc`. `unzip -l` refuses several archives at once, so the glob makes both
+counts print `0`: the shading check passes by never running, and the bundle
+check fails on a jar that is perfectly fine. Both have to be read on the one
+jar that ships.
