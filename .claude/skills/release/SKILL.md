@@ -153,8 +153,14 @@ Seulement après accord :
 ```bash
 git add pom.xml */pom.xml && git -c commit.gpgsign=false commit -m "chore: release X.Y.Z"  # si la version a bougé
 git push origin master
+gh run list --branch master --limit 1        # le workflow SonarQube du push
+gh run watch <id> --exit-status              # vert avant de taguer
 gh release create vX.Y.Z --target master --title "vX.Y.Z - …" --notes-file <notes.md>
 ```
+
+Attendre la CI du push avant de taguer : c'est le premier endroit où une action GitHub montée
+depuis la dernière release (`setup-java`) tourne vraiment. Un tag sur un commit rouge se
+rattrape mal.
 
 ### 7. Contrôler après publication
 
@@ -168,8 +174,18 @@ gh release view vX.Y.Z --json assets -q '.assets[] | .name + " " + (.size|tostri
 
 Attendu : exactement `panel-auto-starter-bungee-X.Y.Z.jar` et
 `panel-auto-starter-velocity-X.Y.Z.jar`, sans `-SNAPSHOT`, de tailles proches de celles
-mesurées au §3. Télécharger le jar Velocity publié et relancer sur lui les deux comptages
-`net/kyori` et `lang/messages` : c'est ce jar-là que les gens installent.
+mesurées au §3 (quelques octets d'écart : horodatages). Télécharger les jars publiés et refaire
+les contrôles dessus : c'est ce que les gens installent.
+
+```bash
+gh release download vX.Y.Z -R FarmVivi/panel-auto-starter -D <dossier-vide>
+unzip -p panel-auto-starter-velocity-X.Y.Z.jar velocity-plugin.json | grep '"version"'
+unzip -p panel-auto-starter-bungee-X.Y.Z.jar bungee.yml | grep version   # bungee.yml, pas plugin.yml
+```
+
+Les PR rendues obsolètes par la release (bump déjà appliqué sur `master`) se ferment avec un
+commentaire qui cite le commit. En mode auto, `gh pr close` est refusé : le laisser à
+l'utilisateur.
 
 ### 8. Entretenir ce skill (dernière étape, systématique)
 
@@ -193,9 +209,13 @@ Signaler dans le rapport final ce qui a été ajouté, élagué ou corrigé dans
 - **Annonces devenues fausses.** Les notes jusqu'à v3.4.2 disent que Pterodactyl4J est vérifié à
   la main parce que Dependabot ne l'indexe pas ; Renovate le suit désormais. Ne pas recopier
   une phrase d'une release précédente sans la revérifier.
+- **Promesse de comportement non vérifiée.** Le brouillon de v3.4.3 affirmait qu'après une panne
+  du panel « la tentative suivante marche » ; le code (`MinecraftServer`, fenêtre de 15 min en
+  `STARTING`) disait le contraire. Pour chaque phrase qui décrit ce qui se passe en cas
+  d'échec, relire le code qui le décide avant de publier.
 
 ## Journal des passages
 
 | Date | Version | Ce que le passage a changé dans le skill |
 |---|---|---|
-| — | — | Skill créé le 2026-11-07, pas encore exécuté. |
+| 2026-11-07 | v3.4.3 | Premier passage. Ajouts : attendre la CI du push avant de taguer, contrôles sur les jars téléchargés (`bungee.yml`), PR obsolètes à fermer, piège des promesses de comportement. Rien d'élagué : tout a servi. |
