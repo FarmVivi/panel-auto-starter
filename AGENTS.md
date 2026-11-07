@@ -229,11 +229,14 @@ working tree merges them; the split afterwards is fiddly. Stage by path.
 - **Both proxies load plugin classes parent-first**, so any class the proxy
   already ships shadows our shaded copy, which is then dead weight. Each
   platform pom therefore excludes from the shade what its proxy provides:
-  Adventure and slf4j on Velocity, `bungeecord-config` on BungeeCord, the
+  Adventure on Velocity, `bungeecord-config` on BungeeCord, slf4j and the
   annotation jars on both. Adventure stays shaded for BungeeCord, which does not
   ship it. Guava is excluded at the source (`bungeecord-config` declares it but
   never calls it). The 3.4.2 jars were 5.2 MB, half of it Guava; they are now
-  about 1.2 MB (Velocity) and 2.1 MB (BungeeCord). No test sees this — a missing
+  about 1.2 MB (Velocity) and 2.0 MB (BungeeCord). This is done with shade
+  `artifactSet` excludes, not `provided`: a dependency arriving through `common`
+  at compile scope keeps the wider scope whatever a platform module declares,
+  which is how Guava stayed shaded until 3.4.2. No test sees this — a missing
   class only fails on a real proxy. Re-check against the proxy jars when adding
   a runtime dependency.
 - **Dependency updates come from Renovate** (`renovate.json5`), which replaced
