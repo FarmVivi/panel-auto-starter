@@ -1,0 +1,2 @@
+# core.autocrlf ressort les fichiers en CRLF ; bash refuse un script en CRLF.
+*.sh text eol=lf
