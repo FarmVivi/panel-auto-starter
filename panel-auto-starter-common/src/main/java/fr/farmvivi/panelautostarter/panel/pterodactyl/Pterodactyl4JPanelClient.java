@@ -27,7 +27,7 @@ public class Pterodactyl4JPanelClient implements PanelClient {
 
     @Override
     public PanelServer retrieveServer(String identifier) {
-        return new Pterodactyl4JPanelServer(identifier, client.retrieveServerByIdentifier(identifier).execute());
+        return new Pterodactyl4JPanelServer(identifier, client);
     }
 
     /**

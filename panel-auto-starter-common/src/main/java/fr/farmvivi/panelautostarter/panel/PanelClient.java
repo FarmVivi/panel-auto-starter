@@ -18,7 +18,9 @@ public interface PanelClient {
     /**
      * Récupère un serveur depuis son identifiant côté panel.
      * <p>
-     * Appel <strong>bloquant</strong>.
+     * Ne contacte pas le panel : le serveur est résolu à sa première
+     * utilisation. Un panel injoignable au démarrage du proxy ne doit pas
+     * condamner le serveur jusqu'au redémarrage suivant.
      *
      * @param identifier l'identifiant du serveur
      * @return le serveur correspondant
