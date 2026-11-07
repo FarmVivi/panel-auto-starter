@@ -20,8 +20,9 @@ Trois règles centrales :
   est `provided` ou déjà présente dans le proxy (voir « Où tourne quoi »). Le build vert ne prouve
   rien sur la version que le serveur charge réellement.
 
-Travailler une dépendance (ou un groupe couplé) à la fois, de bout en bout. Ne rien commiter ni
-pousser sans accord : le projet livre par étapes, l'utilisateur teste sur son réseau entre deux.
+Travailler une dépendance (ou un groupe couplé) à la fois, de bout en bout. Commiter localement,
+un commit par dépendance, mais ne **jamais pousser** sans accord : le projet livre par étapes,
+l'utilisateur teste sur son réseau entre deux.
 
 Lire d'abord la section **MAJ en attente** en bas de ce fichier.
 
@@ -43,6 +44,11 @@ Conséquence : pour une dépendance `provided`, la question n'est pas « la nouv
 compile-t-elle ? » mais « les proxys que les utilisateurs font tourner fournissent-ils cette
 version ? ». Compiler contre une API plus récente que celle du proxy donne un `NoSuchMethodError`
 en prod, jamais en test.
+
+Inversement, **`provided` ne veut pas dire « absent du jar » pour ses transitives** : quand une
+autre dépendance tire la même librairie en `compile`, Maven garde la version la plus proche et
+la portée la plus large. C'est ainsi que `velocity-api` choisit la version de Guava et de slf4j
+shadés dans le jar Velocity (détail dans [velocity-api.md](velocity-api.md)).
 
 ## Déroulé
 
@@ -112,8 +118,23 @@ la PR reflète le travail, ou en local puis fermer la PR : le demander à l'util
 
 ### 6. Vérifier
 
-- `mvn clean verify -P release` avec **JDK 25**, et **zéro nouveau warning** (comparer la
-  sortie avec celle de `master` : `mvn -q clean verify -P release 2>&1 | grep -i warn`).
+- `mvn clean verify -P release` avec **JDK 25**, à lire dans `mvn -v` : le `java` du shell
+  peut être un autre JDK (1.8 sur ce poste) sans que Maven l'utilise.
+- **Zéro nouveau warning.** Faire le build de référence sur `master` **avant** de bumper, puis
+  comparer en neutralisant les numéros de ligne :
+
+  ```bash
+  mvn -B clean verify -P release > build-before.log 2>&1   # avant le bump
+  mvn -B clean verify -P release > build-after.log 2>&1    # après
+  norm(){ grep WARN "$1" | sed -E 's/:[0-9]+:/:N:/; s/[0-9]+ warnings/N warnings/' | sort; }
+  diff <(norm build-before.log) <(norm build-after.log)
+  ```
+
+  Le diff montre aussi les jars embarqués par le shade (warnings « overlapping ») : un
+  changement de version là, c'est le contenu du jar livré qui change.
+- Si `common` ne trouve plus **ses propres classes** à la compilation des tests alors que le
+  bump ne le touche pas : relancer avant de chercher. Vu une fois, disparu au second build,
+  probablement l'IDE qui réécrivait `target/` en parallèle.
 - Un test vert ne prouve rien sur un changement de défaut : écrire un test ciblé sur chaque
   comportement identifié au §3, et **le vérifier en cassant le code** (AGENTS.md, *Working
   method* : copie de côté, mutation qui échoue si le motif est absent, une seule classe de test,
@@ -158,7 +179,8 @@ l'absence de mise à jour) du skill dans le rapport final.
 - **`velocity-api`** : son bytecode impose le JDK de build (4.0.0 = Java 25). Il suit les
   versions du jeu, comme **PacketEvents** : les deux se montent ensemble quand une version de
   Minecraft sort, sinon un client trop récent reçoit des paquets dans l'ancien format sans
-  qu'aucune erreur ne le signale (AGENTS.md, *Gotchas*).
+  qu'aucune erreur ne le signale (AGENTS.md, *Gotchas*). Release notes quasi absentes :
+  méthode de lecture et pièges dans [velocity-api.md](velocity-api.md).
 - **`maven.compiler.release` (21)** : ce n'est pas une dépendance, ne pas le monter pour suivre
   un JDK. Il garde le jar BungeeCord chargeable sur Java 21.
 - **`adventure.version`** : une propriété pour six artefacts. Une majeure touche le rendu des
