@@ -150,6 +150,18 @@
                 <artifactId>bungeecord-config</artifactId>
                 <version>${bungeecord.version}</version>
                 <scope>compile</scope>
+                <exclusions>
+                    <!-- Guava est declare par son POM mais aucune de ses classes
+                         ne l'appelle (verifie au bytecode : snakeyaml et Gson
+                         seulement). Sans cette exclusion, il etait shade en
+                         entier dans les deux jars : 2,5 Mo, la moitie de chaque
+                         jar, que le chargeur parent-first du proxy masquait de
+                         toute facon. -->
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- Pterodactyl4J -->

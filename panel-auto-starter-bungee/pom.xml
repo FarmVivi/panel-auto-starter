@@ -69,6 +69,24 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- BungeeCord charge les classes d'un plugin en
+                                 parent-first : ce que le proxy embarque deja
+                                 masque notre copie. C'est le cas de
+                                 bungeecord-config, module du proxy lui-meme, et
+                                 des annotations (verifie contre le build 2111).
+                                 Adventure reste shade : BungeeCord ne le fournit
+                                 pas. slf4j aussi, qu'il fournit aujourd'hui,
+                                 mais rien ne garantit que les builds 1.21 les
+                                 plus anciens l'aient, et Pterodactyl4J en a
+                                 besoin. -->
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>net.md-5:bungeecord-config</exclude>
+                                    <exclude>org.jetbrains:annotations</exclude>
+                                    <exclude>org.jspecify:jspecify</exclude>
+                                    <exclude>com.google.auto.service:auto-service-annotations</exclude>
+                                </excludes>
+                            </artifactSet>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>fr.farmvivi.panelautostarter.bungee.BungeePlugin</mainClass>

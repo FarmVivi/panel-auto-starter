@@ -226,6 +226,16 @@ working tree merges them; the split afterwards is fiddly. Stage by path.
   returns null.
 - **Gson is `provided`**, supplied by both proxies, so no second copy is shaded
   in.
+- **Both proxies load plugin classes parent-first**, so any class the proxy
+  already ships shadows our shaded copy, which is then dead weight. Each
+  platform pom therefore excludes from the shade what its proxy provides:
+  Adventure and slf4j on Velocity, `bungeecord-config` on BungeeCord, the
+  annotation jars on both. Adventure stays shaded for BungeeCord, which does not
+  ship it. Guava is excluded at the source (`bungeecord-config` declares it but
+  never calls it). The 3.4.2 jars were 5.2 MB, half of it Guava; they are now
+  about 1.2 MB (Velocity) and 2.1 MB (BungeeCord). No test sees this — a missing
+  class only fails on a real proxy. Re-check against the proxy jars when adding
+  a runtime dependency.
 - **Dependency updates come from Renovate** (`renovate.json5`), which replaced
   Dependabot. Work each PR through the `update-deps` skill
   (`.claude/skills/update-deps/`), not on a green build alone. Dependabot
@@ -285,6 +295,8 @@ javap -verbose -cp panel-auto-starter-velocity/target/classes \
 grep -rn "mattmalec" panel-auto-starter-common/src/main/java | grep -v /panel/pterodactyl/
 unzip -l $V | grep -c retrooper/packetevents  # 0
 unzip -l $V | grep -c lang/messages           # 2
+unzip -l $V | grep -c com/google/common       # 0
+unzip -l $V | grep -c net/kyori               # 0, Velocity provides Adventure
 ```
 
 **Name that jar, do not glob `*-SNAPSHOT.jar`.** After `-P release` the

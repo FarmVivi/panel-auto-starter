@@ -69,6 +69,23 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- Velocity charge les classes d'un plugin en
+                                 parent-first : tout ce que le proxy embarque
+                                 deja masque notre copie, qui n'est jamais
+                                 chargee. Adventure, slf4j et leurs annotations
+                                 en font partie (verifie classe par classe contre
+                                 le jar de Velocity 4.3.1). Les shader ne ferait
+                                 que grossir le jar. bungeecord-config, lui,
+                                 reste : Velocity ne l'a pas. -->
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>net.kyori:*</exclude>
+                                    <exclude>org.slf4j:*</exclude>
+                                    <exclude>org.jetbrains:annotations</exclude>
+                                    <exclude>org.jspecify:jspecify</exclude>
+                                    <exclude>com.google.auto.service:auto-service-annotations</exclude>
+                                </excludes>
+                            </artifactSet>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>fr.farmvivi.panelautostarter.velocity.VelocityPlugin</mainClass>
