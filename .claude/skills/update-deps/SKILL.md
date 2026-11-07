@@ -35,28 +35,30 @@ Avant tout bump, situer la dépendance dans ce tableau. C'est lui qui dit où ch
 | `velocity-api`, `bungeecord-api` | `provided` | le proxy |
 | `packetevents-api` | `provided`, optionnelle | le plugin PacketEvents s'il est installé (jamais shadé) |
 | `gson` | `provided` | le proxy |
-| `adventure-*`, `slf4j-api` | `compile`, exclus du shade Velocity | Velocity : le proxy. BungeeCord : notre jar (il n'a pas Adventure) |
+| `adventure-*` | `compile`, exclu du shade Velocity | Velocity : le proxy. BungeeCord : notre jar (il n'a pas Adventure) |
+| `slf4j-api` | `runtime` (Pterodactyl4J), exclu des deux shades | le proxy (BungeeCord depuis 2021) |
 | `bungeecord-config` | `compile`, exclu du shade BungeeCord | BungeeCord : le proxy. Velocity : notre jar |
 | `Pterodactyl4J`, okhttp, okio, `org.json` | `compile` / `runtime`, shadés | notre jar, partout |
 | Guava | exclu à la source | personne ne l'appelle (vérifié au bytecode) |
+| `junit-jupiter`, `mockito-core`, `snakeyaml` | `test` | personne en prod |
+| plugins Maven, actions, JDK | build | la CI / le poste |
 
 Les deux proxys chargent en **parent-first** (code de leur `PluginClassLoader` lu) : une classe
 que le proxy embarque masque toujours la nôtre. Une nouvelle dépendance d'exécution se compare
 donc aux jars des proxys (BungeeCord : jars imbriqués dans `META-INF/libraries/`), et la
 vérification passe par un vrai proxy : aucun test ne voit une classe manquante. Méthode et
 commandes : [jar-audit.md](jar-audit.md).
-| `junit-jupiter`, `mockito-core`, `snakeyaml` | `test` | personne en prod |
-| plugins Maven, actions, JDK | build | la CI / le poste |
 
 Conséquence : pour une dépendance `provided`, la question n'est pas « la nouvelle version
 compile-t-elle ? » mais « les proxys que les utilisateurs font tourner fournissent-ils cette
 version ? ». Compiler contre une API plus récente que celle du proxy donne un `NoSuchMethodError`
 en prod, jamais en test.
 
-Inversement, **`provided` ne veut pas dire « absent du jar » pour ses transitives** : quand une
-autre dépendance tire la même librairie en `compile`, Maven garde la version la plus proche et
-la portée la plus large. C'est ainsi que `velocity-api` choisit la version de Guava et de slf4j
-shadés dans le jar Velocity (détail dans [velocity-api.md](velocity-api.md)).
+**Exclure du shade, pas déclarer `provided`** : une dépendance qui arrive par `common` en
+`compile` ne se laisse pas rétrograder en `provided` depuis un module plateforme. Maven garde la
+version la plus proche mais la portée la plus large : c'est ainsi que Guava, `provided` via
+`velocity-api`, était shadé quand même jusqu'en 3.4.2. `artifactSet/excludes` agit sur le jar
+lui-même et ne dépend pas de la médiation.
 
 ## Déroulé
 

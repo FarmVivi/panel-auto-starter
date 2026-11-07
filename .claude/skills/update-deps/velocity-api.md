@@ -23,14 +23,12 @@ le plugin agit : ping (status), connexion au serveur initial, arrêt.
 Les versions publiées, y compris celles sans tag :
 `curl -s https://repo.papermc.io/repository/maven-public/com/velocitypowered/velocity-api/maven-metadata.xml`
 
-## Ce que le jar Velocity embarque à cause d'elle
+## Ce qu'elle fournit à l'exécution
 
-`velocity-api` est `provided`, mais elle **dicte la version de Guava et de slf4j shadés** dans le
-jar Velocity : `bungeecord-config` tire Guava en `compile` et Pterodactyl4J tire slf4j en
-`runtime` ; Maven retient la version (plus proche) de `velocity-api` et la portée (plus large) de
-l'autre chemin. Un bump de `velocity-api` change donc le contenu du jar livré. Signal : la liste
-de jars du warning « define N overlapping resource » du shade change de version dans le diff des
-warnings. Voir `mvn dependency:tree -Dverbose -pl panel-auto-starter-velocity -am`.
+Velocity embarque Adventure, slf4j, Guava et Gson ; le shade Velocity les exclut (voir
+[jar-audit.md](jar-audit.md)). Un bump qui change la version d'Adventure dans
+`libs.versions.toml` change donc celle que le plugin utilise sur Velocity, quelle que soit
+`adventure.version` : la comparer à la nôtre.
 
 ## Compatibilité avec les proxys plus anciens
 
