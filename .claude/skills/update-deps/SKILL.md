@@ -35,8 +35,16 @@ Avant tout bump, situer la dépendance dans ce tableau. C'est lui qui dit où ch
 | `velocity-api`, `bungeecord-api` | `provided` | le proxy |
 | `packetevents-api` | `provided`, optionnelle | le plugin PacketEvents s'il est installé (jamais shadé) |
 | `gson` | `provided` | le proxy |
-| `adventure-*` | `compile`, shadé sans relocation | le jar… **et** Velocity, qui embarque déjà Adventure : vérifier laquelle gagne au chargement |
-| `Pterodactyl4J`, `bungeecord-config` | `compile`, shadé | le jar |
+| `adventure-*`, `slf4j-api` | `compile`, exclus du shade Velocity | Velocity : le proxy. BungeeCord : notre jar (il n'a pas Adventure) |
+| `bungeecord-config` | `compile`, exclu du shade BungeeCord | BungeeCord : le proxy. Velocity : notre jar |
+| `Pterodactyl4J`, okhttp, okio, `org.json` | `compile` / `runtime`, shadés | notre jar, partout |
+| Guava | exclu à la source | personne ne l'appelle (vérifié au bytecode) |
+
+Les deux proxys chargent en **parent-first** (code de leur `PluginClassLoader` lu) : une classe
+que le proxy embarque masque toujours la nôtre. Une nouvelle dépendance d'exécution se compare
+donc aux jars des proxys (BungeeCord : jars imbriqués dans `META-INF/libraries/`), et la
+vérification passe par un vrai proxy : aucun test ne voit une classe manquante. Méthode et
+commandes : [jar-audit.md](jar-audit.md).
 | `junit-jupiter`, `mockito-core`, `snakeyaml` | `test` | personne en prod |
 | plugins Maven, actions, JDK | build | la CI / le poste |
 
