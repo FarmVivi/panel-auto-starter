@@ -1,0 +1,71 @@
+// Renovate replaces Dependabot for version updates on this repository.
+// Each PR it opens is meant to be worked through the `update-deps` skill
+// (.claude/skills/update-deps), not merged on a green build alone: the suite
+// cannot see a changed default or a protocol PacketEvents resolves wrongly.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    // History reads chore(deps) / chore(deps-dev), the Dependabot convention.
+    // Renovate's default would label runtime bumps "fix", which is wrong here:
+    // a bump is not a bug fix for server owners until proven otherwise.
+    ':semanticCommits',
+    ':semanticCommitTypeAll(chore)',
+  ],
+  timezone: 'Europe/Paris',
+  // One batch a week instead of Dependabot's daily trickle: every PR costs a
+  // full review pass, and a week rarely matters for a proxy plugin.
+  // Security updates ignore this schedule (vulnerabilityAlerts default).
+  schedule: ['* 0-5 * * 1'],
+  labels: ['dependencies'],
+  prBodyNotes: [
+    'Before merging, run the `update-deps` skill on this PR: release notes for every intermediate version, impact checked against real usage, full `mvn clean verify -P release`.',
+  ],
+  packageRules: [
+    {
+      // Test libraries and build plugins never reach the shipped jar.
+      description: 'Keep the deps / deps-dev split of the existing history',
+      matchManagers: ['maven'],
+      matchDepTypes: ['test', 'build'],
+      semanticCommitScope: 'deps-dev',
+    },
+    {
+      // A handful of actions, all touching CI only: one PR is enough.
+      description: 'Group non-major GitHub Actions updates',
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['minor', 'patch', 'digest'],
+      groupName: 'GitHub Actions',
+    },
+    {
+      // velocity-api 4.0.0 ships Java 25 bytecode, and PacketEvents resolves
+      // an unknown protocol to the newest one it knows instead of refusing it.
+      // Both must follow game releases, and both can force a JDK change.
+      description: 'Flag the bumps coupled to Minecraft releases',
+      matchPackageNames: ['com.velocitypowered:velocity-api', 'com.github.retrooper:packetevents-api'],
+      prPriority: 5,
+      prBodyNotes: [
+        'Tracks Minecraft releases (AGENTS.md, *Gotchas*): check the protocol versions it adds, the JDK its bytecode requires, and bump `velocity-api` and PacketEvents together when a new game version lands.',
+      ],
+    },
+    {
+      // Renovate reads `java-version` from setup-java and would offer every
+      // six-monthly JDK. The build JDK is set by velocity-api's bytecode
+      // (25 today), and a non-LTS one is unsupported within months. Only the
+      // LTS line moves: one every two years, every fourth release.
+      description: 'CI JDK: LTS releases only',
+      matchDepNames: ['java-jdk'],
+      allowedVersions: '/^(25|29|33|37)(\\..*)?$/',
+    },
+    {
+      // Pterodactyl4J numbers releases 2.BETA_<n> and lives on
+      // repo.mattmalec.com. Dependabot compared those character by character
+      // and kept proposing 2.BETA_142 -> 2.BETA_99 (PR #8). Renovate's Maven
+      // versioning splits digits from letters and orders them correctly; this
+      // rule only refuses anything that is not of that form, should the
+      // upstream scheme ever change under us.
+      description: 'Pterodactyl4J: only accept 2.BETA_<n> releases',
+      matchPackageNames: ['com.mattmalec:Pterodactyl4J'],
+      allowedVersions: '/^2\\.BETA_\\d+$/',
+    },
+  ],
+}

@@ -226,8 +226,12 @@ working tree merges them; the split afterwards is fiddly. Stage by path.
   returns null.
 - **Gson is `provided`**, supplied by both proxies, so no second copy is shaded
   in.
-- **Pterodactyl4J cannot be updated by Dependabot** — see the comment in
-  `.github/dependabot.yml`. Check for new versions by hand.
+- **Dependency updates come from Renovate** (`renovate.json5`), which replaced
+  Dependabot. Work each PR through the `update-deps` skill
+  (`.claude/skills/update-deps/`), not on a green build alone. Dependabot
+  ordered Pterodactyl4J's `2.BETA_<n>` versions character by character and kept
+  proposing downgrades; Renovate orders them correctly (checked against its
+  Maven comparator), so that library no longer needs watching by hand.
 - **Pelican panels older than `1.0.0-beta15`** never display the full API token,
   only its 16-character identifier, which yields a `401`. See the README.
 - **Mockito is attached as an explicit `-javaagent`**, wired through
