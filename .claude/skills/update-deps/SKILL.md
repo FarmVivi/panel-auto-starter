@@ -221,8 +221,13 @@ LOG_LEVEL=debug LOG_FORMAT=json RENOVATE_BASE_DIR=<scratchpad>/renov-cache \
 
 Le message `packageFiles with updates` du log liste chaque dépendance et les MAJ proposées. Les
 nombreux `error fetching versions … not-found` sont normaux : Renovate interroge chaque dépôt du
-pom et seul celui qui héberge l'artefact répond. Sans `GITHUB_COM_TOKEN`, les actions GitHub
-sortent en `github-token-required` : seules les MAJ Maven sont vérifiables ainsi.
+pom et seul celui qui héberge l'artefact répond. Préfixer la commande par
+`GITHUB_COM_TOKEN=$(gh auth token)` : sans token, les actions GitHub sortent en
+`github-token-required` et seules les MAJ Maven sont vérifiées.
+
+Une action GitHub ne se teste pas en local. Le push exerce `setup-java` via le workflow
+SonarQube, et une release exerce `Release Build` : surveiller ces exécutions plutôt que de
+déclarer l'action vérifiée.
 
 ## MAJ en attente
 
