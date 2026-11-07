@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Set up JDK
-        uses: actions/setup-java@v6.1.0
+        uses: actions/setup-java@v6.2.0
         with:
           java-version: '25'
           distribution: "temurin"
@@ -39,7 +39,7 @@ jobs:
 
       # Upload des JARs sur la release GitHub
       - name: Upload JARs to release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@v3.0.4
         with:
           files: |
             panel-auto-starter-bungee/target/panel-auto-starter-bungee-*.jar
