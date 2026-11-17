@@ -19,15 +19,20 @@ jobs:
         with:
           java-version: '25'
           distribution: "temurin"
-          cache: maven
 
-      # Cache Maven packages
-      - name: Cache Maven packages
+      # Un seul cache : « cache: maven » de setup-java doublait celui-ci sur le
+      # même dossier. Seul le dépôt local est mis en cache, pas ~/.m2 entier,
+      # sinon la restauration écraserait le settings.xml que setup-java vient
+      # d'écrire par une copie ancienne. Voir sonarqube-analysis.yml pour le
+      # repli par préfixe et le préfixe propre à chaque workflow.
+      - name: Cache Maven repository
         uses: actions/cache@v6.1.0
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-release-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-release-
+            ${{ runner.os }}-m2-
 
       # Étape pour enlever "-SNAPSHOT" dans le pom.xml (multi-module)
       - name: Remove -SNAPSHOT from pom.xml (all modules)

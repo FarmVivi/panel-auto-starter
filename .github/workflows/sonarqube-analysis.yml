@@ -30,7 +30,27 @@ jobs:
         with:
           java-version: '25'
           distribution: temurin
-          cache: maven
+
+      # Pas de « cache: maven » de setup-java : sa clé est le hash des pom.xml
+      # sans aucun repli, si bien que chaque bump de dépendance repartait d'un
+      # dépôt local vide et retéléchargeait tout. Pterodactyl4J n'est publié que
+      # sur repo.mattmalec.com ; quand ce serveur tombe (522 en novembre 2026),
+      # tout bump échouait, même sans rapport avec cette librairie. Le repli par
+      # préfixe repart du cache précédent, qui la contient déjà.
+      # Limite assumée : GitHub évince un cache non lu depuis sept jours. Après
+      # une pause plus longue, le run repart à vide et redépend de ce serveur ;
+      # un keep-alive planifié a été écarté, le relancer après la panne suffit.
+      # Préfixe propre à ce workflow : un cache partagé avec la release, sauvé
+      # par l'un, manquerait des plugins de l'autre (jacoco, sonar) et une clé
+      # exacte n'est jamais réécrite.
+      - name: Cache Maven repository
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-sonar-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-sonar-
+            ${{ runner.os }}-m2-
 
       - name: Cache SonarQube packages
         uses: actions/cache@v6.1.0
